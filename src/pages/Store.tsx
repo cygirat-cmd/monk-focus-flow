@@ -23,6 +23,14 @@ export default function Store() {
   useEffect(() => {
     if (!ready || !containerRef.current) return;
     // TODO: Initialize Shopify Buy Button using your shop domain and access token
+    // Theme-aware styling overrides (best-effort; Shopify Buy Button may render in iframe)
+    const style = document.createElement('style');
+    style.textContent = `
+      .shopify-buy__btn { background: hsl(var(--primary)) !important; color: hsl(var(--primary-foreground)) !important; border-radius: var(--radius); }
+      .shopify-buy__product__title, .shopify-buy__product__price { color: hsl(var(--foreground)) !important; }
+    `;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
   }, [ready]);
 
   return (

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CircularProgress } from '@/components/timer/CircularProgress';
 import BottomNav from '@/components/layout/BottomNav';
-import { useNavigate } from 'react-router-dom';
+import WindDownModal from '@/components/modals/WindDownModal';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
 import { loadSettings } from '@/utils/storage';
@@ -16,11 +16,11 @@ const presets = [15, 25, 45] as const;
 type Mode = 'fixed' | 'flow';
 
 const Index = () => {
-  const nav = useNavigate();
   const [mode, setMode] = useState<Mode>('fixed');
   const [minutes, setMinutes] = useState<number>(loadSettings().defaultMinutes);
   const [remaining, setRemaining] = useState<number>(minutes * 60_000);
   const [running, setRunning] = useState(false);
+  const [windOpen, setWindOpen] = useState(false);
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
@@ -33,21 +33,21 @@ const Index = () => {
     setRemaining(minutes * 60_000);
   }, [minutes]);
 
-  useEffect(() => {
-    const w = new Worker(new URL('../workers/timerWorker.ts', import.meta.url), { type: 'module' } as any);
-    workerRef.current = w;
-    w.onmessage = (e) => {
-      const { type, remaining } = e.data || {};
-      if (type === 'tick') setRemaining(remaining);
-      if (type === 'done') {
-        setRunning(false);
-        showLocalNotification('Session complete', 'Breathe. Take a short break.');
-        analytics.track({ type: 'session_stop', completed: true });
-        nav('/wind-down');
-      }
-    };
-    return () => w.terminate();
-  }, [nav]);
+useEffect(() => {
+  const w = new Worker(new URL('../workers/timerWorker.ts', import.meta.url), { type: 'module' } as any);
+  workerRef.current = w;
+  w.onmessage = (e) => {
+    const { type, remaining } = e.data || {};
+    if (type === 'tick') setRemaining(remaining);
+    if (type === 'done') {
+      setRunning(false);
+      showLocalNotification('Session complete', 'Breathe. Take a short break.');
+      analytics.track({ type: 'session_stop', completed: true });
+      setWindOpen(true);
+    }
+  };
+  return () => w.terminate();
+}, []);
 
   const start = () => {
     if (!workerRef.current) return;
@@ -139,6 +139,7 @@ const Index = () => {
           </div>
         </section>
       </main>
+      <WindDownModal open={windOpen} onClose={() => setWindOpen(false)} />
       <BottomNav />
     </div>
   );
