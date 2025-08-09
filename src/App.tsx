@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,34 +16,35 @@ import { ThemeProvider } from "next-themes";
 
 const queryClient = new QueryClient();
 
-const AppRoot = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <ThemeAuto />
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/store" element={<Store />} />
-            <Route path="/focus-club" element={<FocusClub />} />
-            <Route path="/settings" element={<Settings />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-        {/* Splash overlay on initial load */}
-        <Splash onDone={() => {
-          const el = document.getElementById('monk-splash-hidden-anchor');
-          if (el) el.remove();
-        }} />
-        {/* Hidden anchor to ensure SSR-less hydration safety */}
-        <div id="monk-splash-hidden-anchor" className="hidden" />
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const AppRoot = () => {
+  const [showSplash, setShowSplash] = useState(true);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeAuto />
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/store" element={<Store />} />
+              <Route path="/focus-club" element={<FocusClub />} />
+              <Route path="/settings" element={<Settings />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+          {/* Splash overlay on initial load */}
+          {showSplash && (
+            <Splash onDone={() => setShowSplash(false)} />
+          )}
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default AppRoot;
