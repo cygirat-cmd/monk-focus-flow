@@ -15,6 +15,7 @@ import TreasureHall from "./pages/TreasureHall";
 import Splash from "./components/Splash";
 import ThemeAuto from "./components/ThemeAuto";
 import { ThemeProvider } from "next-themes";
+import DevPanel from "./components/dev/DevPanel";
 
 const queryClient = new QueryClient();
 

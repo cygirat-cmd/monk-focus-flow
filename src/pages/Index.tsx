@@ -57,6 +57,19 @@ const Index = () => {
     setRemaining(minutes * 60_000);
   }, [minutes]);
 
+  // Dev tools: allow granting sessions via window event
+  useEffect(() => {
+    const handler = (e: any) => {
+      try {
+        const detail = e.detail as { mode: 'flow' | 'pomodoro'; seconds: number };
+        if (!detail) return;
+        handleSessionComplete(detail);
+      } catch {}
+    };
+    window.addEventListener('monk:sessionComplete', handler as any);
+    return () => window.removeEventListener('monk:sessionComplete', handler as any);
+  }, []);
+
 useEffect(() => {
   const w = new Worker(new URL('../workers/timerWorker.ts', import.meta.url), { type: 'module' } as any);
   workerRef.current = w;
