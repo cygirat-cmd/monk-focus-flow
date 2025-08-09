@@ -4,7 +4,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import WindDownModal from '@/components/modals/WindDownModal';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
-import { loadSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/utils/storage';
+import { loadSettings, loadProgress, GardenStep, Relic } from '@/utils/storage';
 import { getRandomGardenStep, getRandomRelic, getRandomZenQuote } from '@/utils/zenData';
 import { Play, Square } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -93,7 +93,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   const progress = loadProgress();
   const v = validateSession(payload, progress as any);
   if (!(v as any).ok) {
-    saveProgress(progress);
+    localStorage.setItem('monk.progress', JSON.stringify(progress));
     setNewGardenStep(undefined);
     setNewRelic(undefined);
     setZenQuote('');
@@ -130,7 +130,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   addFocusPoints(progress as any, payload.seconds);
   updateStreak(progress as any);
 
-  saveProgress(progress);
+  localStorage.setItem('monk.progress', JSON.stringify(progress));
   analytics.track({ type: 'session_complete' });
 
   setNewGardenStep(newStep);

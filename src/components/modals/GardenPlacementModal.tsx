@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { loadProgress, saveProgress, GardenStep } from '@/utils/storage';
+import { loadProgress, GardenStep } from '@/utils/storage';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -40,7 +40,7 @@ export default function GardenPlacementModal({ open, onClose }: GardenPlacementM
     }
     next.gardenGrid[selectedIndex] = pending;
     next.pendingTokens = next.pendingTokens.slice(1);
-    saveProgress(next);
+    localStorage.setItem('monk.progress', JSON.stringify(next));
     setProgress(next);
 
     if (navigator.vibrate) {

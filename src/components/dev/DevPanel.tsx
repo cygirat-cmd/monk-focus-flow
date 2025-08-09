@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { loadProgress, saveProgress } from '@/utils/storage';
+import { loadProgress } from '@/utils/storage';
 import { GARDEN_POOL } from '@/utils/zenData';
 
 // Feature flag
@@ -37,7 +37,7 @@ export default function DevPanel() {
   const saveRules = (partial: Partial<typeof p.rules>) => {
     const prog = loadProgress();
     (prog as any).rules = { ...(prog as any).rules, ...partial };
-    saveProgress(prog);
+    localStorage.setItem('monk.progress', JSON.stringify(prog));
     setP(prog);
   };
 
@@ -62,7 +62,7 @@ export default function DevPanel() {
     const prog = loadProgress();
     const pick = GARDEN_POOL[Math.floor(Math.random() * GARDEN_POOL.length)];
     (prog as any).pendingTokens = [ ...(prog as any).pendingTokens || [], pick ];
-    saveProgress(prog);
+    localStorage.setItem('monk.progress', JSON.stringify(prog));
     setP(prog);
     alert('Garden token queued. Open WindDown or Garden to place.');
   };
@@ -70,7 +70,7 @@ export default function DevPanel() {
   const addFP = () => {
     const prog = loadProgress();
     (prog as any).focusPoints = ((prog as any).focusPoints || 0) + 10;
-    saveProgress(prog);
+    localStorage.setItem('monk.progress', JSON.stringify(prog));
     setP(prog);
   };
 
@@ -78,7 +78,7 @@ export default function DevPanel() {
     const prog = loadProgress();
     (prog as any).counters = { ...(prog as any).counters, placementsToday: 0 };
     localStorage.setItem('monk.today', new Date().toDateString());
-    saveProgress(prog);
+    localStorage.setItem('monk.progress', JSON.stringify(prog));
     setP(prog);
   };
 
@@ -87,7 +87,7 @@ export default function DevPanel() {
     const d = new Date();
     d.setDate(d.getDate() - 1);
     (prog as any).streak = { ...(prog as any).streak, lastDate: d.toISOString() };
-    saveProgress(prog);
+    localStorage.setItem('monk.progress', JSON.stringify(prog));
     setP(prog);
   };
 
