@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, CheckSquare, Store, Settings, TreePine } from 'lucide-react';
+import { Home, CheckSquare, Store, Settings, TreePine, Sprout } from 'lucide-react';
 
 const Tab = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => (
   <NavLink
@@ -17,10 +17,11 @@ const Tab = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }
 export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-      <div className="mx-auto max-w-md grid grid-cols-5 gap-1 px-2">
+      <div className="mx-auto max-w-md grid grid-cols-6 gap-1 px-2">
         <Tab to="/" icon={Home} label="Timer" />
         <Tab to="/tasks" icon={CheckSquare} label="Tasks" />
         <Tab to="/zen-path" icon={TreePine} label="Path" />
+        <Tab to="/garden" icon={Sprout} label="Garden" />
         <Tab to="/store" icon={Store} label="Store" />
         <Tab to="/settings" icon={Settings} label="Settings" />
       </div>

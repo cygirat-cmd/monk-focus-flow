@@ -1,70 +1,73 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { loadProgress, GardenStep } from '@/utils/storageClient';
+import { loadProgress, GardenStep, placeGardenItem } from '@/utils/storageClient';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 interface GardenPlacementModalProps {
   open: boolean;
   onClose: () => void;
+  token?: GardenStep; // optional explicit token (e.g., from Inventory or WindDown)
+  onPlaced?: () => void; // callback after successful placement
 }
 
-export default function GardenPlacementModal({ open, onClose }: GardenPlacementModalProps) {
+export default function GardenPlacementModal({ open, onClose, token, onPlaced }: GardenPlacementModalProps) {
   const [progress, setProgress] = useState(loadProgress());
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selected, setSelected] = useState<{ x: number; y: number } | null>(null);
+  const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
 
   useEffect(() => {
     if (open) {
-      setProgress(loadProgress());
-      setSelectedIndex(null);
+      const p = loadProgress();
+      setProgress(p);
+      setSelected(null);
+      setRotation(0);
     }
   }, [open]);
 
-  const pending = progress.pendingTokens?.[0] as GardenStep | undefined;
-  const isFull = useMemo(() => progress.gardenGrid.every((c) => c !== null), [progress.gardenGrid]);
+  const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: 'gravel_light.png' };
+  const targetToken: GardenStep | undefined = token || progress.pendingToken || progress.pendingTokens?.[0];
+
+  const isFull = useMemo(() => (garden.placed?.length || 0) >= garden.cols * garden.rows, [garden]);
+
+  const isOccupied = (x: number, y: number) => garden.placed?.some((it) => it.x === x && it.y === y);
 
   const handleCellClick = (i: number) => {
-    if (!pending) return;
-    if (progress.gardenGrid[i]) {
+    if (!targetToken) return;
+    const x = i % garden.cols;
+    const y = Math.floor(i / garden.cols);
+    if (isOccupied(x, y)) {
       toast.error('That spot is taken');
       return;
     }
-    setSelectedIndex(i);
+    setSelected({ x, y });
   };
 
   const confirmPlacement = () => {
-    if (selectedIndex == null || !pending) return;
-    const next = loadProgress(); // re-read latest
-    if (next.gardenGrid[selectedIndex]) {
-      toast.error('That spot is taken');
+    if (!targetToken || !selected) return;
+    const res = placeGardenItem(targetToken, selected.x, selected.y, rotation);
+    if (!(res as any).ok) {
+      toast.error((res as any).reason === 'occupied' ? 'That spot is taken' : 'Could not place item');
       return;
     }
-    next.gardenGrid[selectedIndex] = pending;
-    next.pendingTokens = next.pendingTokens.slice(1);
-    localStorage.setItem('monk.progress', JSON.stringify(next));
-    setProgress(next);
-
+    setProgress(loadProgress());
     if (navigator.vibrate) {
       try { navigator.vibrate(10); } catch {}
     }
-
-    toast.success('Placed on your garden');
-    if (!next.pendingTokens.length) {
-      onClose();
-    } else {
-      setSelectedIndex(null);
-    }
+    toast.success('Placed in your garden');
+    onPlaced?.();
+    onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[560px]">
         <div className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold">Place on Garden Map</h2>
-            <p className="text-sm text-muted-foreground">Tap an empty cell to place your new item.</p>
+            <p className="text-sm text-muted-foreground">Tap an empty cell to choose where to place your item.</p>
           </div>
 
-          {!pending && (
+          {!targetToken && (
             <div className="text-sm text-muted-foreground">No items to place right now.</div>
           )}
 
@@ -72,30 +75,49 @@ export default function GardenPlacementModal({ open, onClose }: GardenPlacementM
             <div className="rounded-lg border bg-card p-3 text-sm">Garden is full. Manage items to free space.</div>
           )}
 
-          <div className="grid grid-cols-6 gap-2">
-            {Array.from({ length: 24 }).map((_, i) => {
-              const cell = progress.gardenGrid[i];
-              const isSelected = selectedIndex === i;
-              return (
-                <button
-                  key={i}
-                  className={`relative aspect-square rounded-md border transition-all ${
-                    cell
-                      ? 'bg-card'
-                      : 'bg-background hover:bg-accent'
-                  } ${isSelected ? 'ring-2 ring-primary' : ''}`}
-                  onClick={() => handleCellClick(i)}
-                  disabled={!pending || !!cell || isFull}
-                >
-                  {cell ? (
-                    <img src={cell.img} alt={cell.label} className="absolute inset-0 m-auto w-10 h-10 object-contain" />
-                  ) : pending ? (
-                    <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">Empty</div>
-                  ) : null}
-                </button>
-              );
-            })}
+          {/* 12x8 grid */}
+          <div className="relative">
+            <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${garden.cols}, minmax(0, 1fr))` }}>
+              {Array.from({ length: garden.cols * garden.rows }).map((_, i) => {
+                const x = i % garden.cols;
+                const y = Math.floor(i / garden.cols);
+                const occupied = isOccupied(x, y);
+                const isSel = selected?.x === x && selected?.y === y;
+                const imgAtCell = garden.placed?.find((it) => it.x === x && it.y === y)?.img;
+                return (
+                  <button
+                    key={i}
+                    className={`relative aspect-square rounded-md border transition-all ${
+                      occupied ? 'bg-card' : 'bg-background hover:bg-accent'
+                    } ${isSel ? 'ring-2 ring-primary' : ''}`}
+                    onClick={() => handleCellClick(i)}
+                    disabled={!targetToken || occupied || isFull}
+                    aria-label={`Cell ${x + 1}, ${y + 1}`}
+                  >
+                    {imgAtCell ? (
+                      <img src={imgAtCell} alt="Placed item" className="absolute inset-0 m-auto w-8 h-8 object-contain" />
+                    ) : targetToken ? (
+                      <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">Empty</div>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
+          {/* Rotate / preview */}
+          {!!targetToken && (
+            <div className="flex items-center justify-between rounded-lg border bg-card p-2">
+              <div className="flex items-center gap-2">
+                <img src={targetToken.img} alt={targetToken.label} className="w-8 h-8 object-contain" />
+                <span className="text-sm">{targetToken.label}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="px-3 py-1.5 rounded-md border text-sm" onClick={() => setRotation((r) => ((r + 90) % 360) as any)}>Rotate 90°</button>
+                <span className="text-xs text-muted-foreground">{rotation}°</span>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2 justify-end">
             <button
@@ -106,7 +128,7 @@ export default function GardenPlacementModal({ open, onClose }: GardenPlacementM
             </button>
             <button
               className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50"
-              disabled={selectedIndex == null || !pending}
+              disabled={!targetToken || selected == null}
               onClick={confirmPlacement}
             >
               Confirm placement

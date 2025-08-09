@@ -12,6 +12,7 @@ import FocusClub from "./pages/FocusClub";
 import Settings from "./pages/Settings";
 import ZenPath from "./pages/ZenPath";
 import TreasureHall from "./pages/TreasureHall";
+import Garden from "./pages/Garden";
 import Splash from "./components/Splash";
 import ThemeAuto from "./components/ThemeAuto";
 import { ThemeProvider } from "next-themes";
@@ -38,6 +39,7 @@ const AppRoot = () => {
               <Route path="/settings" element={<Settings />} />
               <Route path="/zen-path" element={<ZenPath />} />
               <Route path="/treasure-hall" element={<TreasureHall />} />
+              <Route path="/garden" element={<Garden />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
