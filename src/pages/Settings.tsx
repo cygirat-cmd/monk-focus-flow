@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
 import { Settings as SettingsType, loadSettings, saveSettings } from '@/utils/storage';
+import ThemeSelector from '@/components/ThemeSelector';
 
 export default function Settings() {
-  const [s, setS] = useState<SettingsType>(loadSettings());
+  const [settings, setSettings] = useState<SettingsType>(loadSettings());
 
   useEffect(() => { document.title = 'Settings – Monk'; }, []);
-  useEffect(() => { saveSettings(s); }, [s]);
+  useEffect(() => { saveSettings(settings); }, [settings]);
 
   const triggerA2HS = async () => {
     const api = (window as any).monkA2HS;
@@ -23,6 +24,16 @@ export default function Settings() {
         <h1 className="text-xl font-semibold">Settings</h1>
 
         <section className="rounded-xl border bg-card p-4">
+          <h2 className="font-semibold mb-3">Appearance</h2>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium mb-3 block">Theme</label>
+              <ThemeSelector settings={settings} onSettingsChange={setSettings} />
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-xl border bg-card p-4">
           <h2 className="font-semibold mb-3">Timer Defaults</h2>
           <label className="flex items-center justify-between py-2">
             <span className="text-sm">Default minutes</span>
@@ -30,8 +41,8 @@ export default function Settings() {
               type="number"
               min={5}
               max={90}
-              value={s.defaultMinutes}
-              onChange={(e) => setS({ ...s, defaultMinutes: Number(e.target.value) })}
+              value={settings.defaultMinutes}
+              onChange={(e) => setSettings({ ...settings, defaultMinutes: Number(e.target.value) })}
               className="w-20 px-2 py-1 rounded border bg-background"
             />
           </label>
@@ -48,8 +59,8 @@ export default function Settings() {
               <span className="text-sm">{opt.label}</span>
               <input
                 type="checkbox"
-                checked={(s as any)[opt.key]}
-                onChange={(e) => setS({ ...s, [opt.key]: e.target.checked } as any)}
+                checked={(settings as any)[opt.key]}
+                onChange={(e) => setSettings({ ...settings, [opt.key]: e.target.checked } as any)}
               />
             </label>
           ))}

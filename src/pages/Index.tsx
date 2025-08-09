@@ -4,8 +4,10 @@ import BottomNav from '@/components/layout/BottomNav';
 import WindDownModal from '@/components/modals/WindDownModal';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
-import { loadSettings } from '@/utils/storage';
+import { loadSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/utils/storage';
+import { getRandomGardenStep, getRandomRelic, getRandomZenQuote } from '@/utils/zenData';
 import { Play, Square } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 // SEO
 const TITLE = 'Monk: ADHD Pomodoro Timer';
@@ -21,13 +23,33 @@ const Index = () => {
   const [remaining, setRemaining] = useState<number>(minutes * 60_000);
   const [running, setRunning] = useState(false);
   const [windOpen, setWindOpen] = useState(false);
+  const [windDownMode, setWindDownMode] = useState<'SessionComplete' | 'BreakStart'>('SessionComplete');
+  const [newGardenStep, setNewGardenStep] = useState<GardenStep | undefined>();
+  const [newRelic, setNewRelic] = useState<Relic | undefined>();
+  const [zenQuote, setZenQuote] = useState<string>('');
   const workerRef = useRef<Worker | null>(null);
+  const { theme } = useTheme();
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     document.title = TITLE;
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', DESC);
   }, []);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      const isDarkTheme = document.documentElement.classList.contains('dark') || 
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDark(isDarkTheme);
+    };
+    
+    checkTheme();
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
+  }, [theme]);
 
   useEffect(() => {
     setRemaining(minutes * 60_000);
@@ -43,11 +65,40 @@ useEffect(() => {
       setRunning(false);
       showLocalNotification('Session complete', 'Breathe. Take a short break.');
       analytics.track({ type: 'session_stop', completed: true });
-      setWindOpen(true);
+      handleSessionComplete();
     }
   };
   return () => w.terminate();
 }, []);
+
+const handleSessionComplete = () => {
+  const progress = loadProgress();
+  progress.completedSessions++;
+
+  let newStep: GardenStep | undefined;
+  let newRelicUnlocked: Relic | undefined;
+  let quote = '';
+
+  // Add garden step or unlock relic
+  if (progress.currentPath.length + 1 < progress.pathLength) {
+    newStep = getRandomGardenStep();
+    progress.currentPath.push(newStep);
+  } else {
+    newRelicUnlocked = getRandomRelic();
+    progress.relics.push(newRelicUnlocked);
+    progress.currentPath = [];
+    quote = getRandomZenQuote();
+  }
+
+  saveProgress(progress);
+  analytics.track({ type: 'session_complete' });
+
+  setNewGardenStep(newStep);
+  setNewRelic(newRelicUnlocked);
+  setZenQuote(quote);
+  setWindDownMode('SessionComplete');
+  setWindOpen(true);
+};
 
   const start = () => {
     if (!workerRef.current) return;
@@ -63,9 +114,17 @@ useEffect(() => {
   const stop = () => {
     if (!workerRef.current) return;
     setRunning(false);
-    analytics.track({ type: 'session_stop', completed: false });
     workerRef.current.postMessage({ type: 'stop' });
-    showLocalNotification('Session stopped');
+    
+    if (mode === 'flow') {
+      // Flow mode triggers wind-down on stop
+      analytics.track({ type: 'session_stop', completed: true });
+      showLocalNotification('Flow session complete', 'Well done. Take a mindful break.');
+      handleSessionComplete();
+    } else {
+      analytics.track({ type: 'session_stop', completed: false });
+      showLocalNotification('Session stopped');
+    }
   };
 
   const total = mode === 'flow' ? Math.max(remaining, minutes * 60_000) : minutes * 60_000;
@@ -84,20 +143,52 @@ useEffect(() => {
     return tips[Math.floor(Math.random() * tips.length)];
   }, []);
 
+  const logo = isDark
+    ? '/lovable-uploads/0832e63d-9a3b-4522-9c16-56d6b4cd8fc3.png'
+    : '/lovable-uploads/20a958db-a342-42f8-a711-30e17af81a0e.png';
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Monk</h1>
+          <img
+            src={logo}
+            alt="Monk Zen logo"
+            className="h-8 w-auto object-contain mb-2"
+            onError={(e) => {
+              // Fallback to text if image fails
+              e.currentTarget.style.display = 'none';
+              const fallback = document.createElement('h1');
+              fallback.textContent = 'Monk';
+              fallback.className = 'text-2xl font-semibold tracking-tight';
+              e.currentTarget.parentNode?.appendChild(fallback);
+            }}
+          />
           <p className="text-sm text-muted-foreground">ADHD Pomodoro Timer</p>
         </header>
 
         <section className="flex flex-col items-center gap-6">
-          <CircularProgress progress={mode === 'flow' ? 0.999 : Math.max(0, Math.min(1, 1 - remaining / total))} />
-          <div className="text-6xl font-semibold tabular-nums leading-none" aria-live="polite">
-            {mm}:{ss}
-          </div>
-          {!running && <p className="text-sm text-muted-foreground animate-fade-in">{ritualTip}</p>}
+          {mode === 'flow' ? (
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-semibold">Flow Mode</h2>
+              <p className="text-muted-foreground max-w-xs">
+                Start and stop when you feel the best — no fixed timer.
+              </p>
+              {running && (
+                <div className="text-4xl font-semibold tabular-nums text-primary" aria-live="polite">
+                  {mm}:{ss}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <CircularProgress progress={Math.max(0, Math.min(1, 1 - remaining / total))} />
+              <div className="text-6xl font-semibold tabular-nums leading-none" aria-live="polite">
+                {mm}:{ss}
+              </div>
+            </>
+          )}
+          {!running && mode !== 'flow' && <p className="text-sm text-muted-foreground animate-fade-in">{ritualTip}</p>}
 
           <div className="grid grid-cols-4 gap-2 w-full">
             {presets.map((m) => (
@@ -139,7 +230,19 @@ useEffect(() => {
           </div>
         </section>
       </main>
-      <WindDownModal open={windOpen} onClose={() => setWindOpen(false)} />
+      <WindDownModal 
+        open={windOpen} 
+        onClose={() => {
+          setWindOpen(false);
+          setNewGardenStep(undefined);
+          setNewRelic(undefined);
+          setZenQuote('');
+        }}
+        mode={windDownMode}
+        newGardenStep={newGardenStep}
+        newRelic={newRelic}
+        zenQuote={zenQuote}
+      />
       <BottomNav />
     </div>
   );

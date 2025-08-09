@@ -87,6 +87,40 @@
   }
 }
 
+/* Shopify Buy Button overrides */
+.shopify-buy__layout-vertical,
+.shopify-buy__product,
+.shopify-buy__carousel {
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+}
+
+/* Product titles */
+.shopify-buy__product__title {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+}
+
+/* Prices */
+.shopify-buy__product__price {
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 13px !important;
+}
+
+/* Buttons */
+.shopify-buy__btn {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  border: none !important;
+}
+.shopify-buy__btn:hover {
+  opacity: 0.9 !important;
+}
+
 @layer base {
   * {
     @apply border-border;

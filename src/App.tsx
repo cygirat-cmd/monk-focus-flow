@@ -10,6 +10,8 @@ import Tasks from "./pages/Tasks";
 import Store from "./pages/Store";
 import FocusClub from "./pages/FocusClub";
 import Settings from "./pages/Settings";
+import ZenPath from "./pages/ZenPath";
+import TreasureHall from "./pages/TreasureHall";
 import Splash from "./components/Splash";
 import ThemeAuto from "./components/ThemeAuto";
 import { ThemeProvider } from "next-themes";
@@ -33,6 +35,8 @@ const AppRoot = () => {
               <Route path="/store" element={<Store />} />
               <Route path="/focus-club" element={<FocusClub />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/zen-path" element={<ZenPath />} />
+              <Route path="/treasure-hall" element={<TreasureHall />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
