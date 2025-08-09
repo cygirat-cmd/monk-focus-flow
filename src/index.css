@@ -132,3 +132,14 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+/* Header brand styles */
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-header__brand img {
+  height: 24px;
+  width: auto;
+}

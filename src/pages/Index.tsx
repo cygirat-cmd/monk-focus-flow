@@ -80,15 +80,18 @@ const handleSessionComplete = () => {
   let quote = '';
 
   // Add garden step or unlock relic
-  if (progress.currentPath.length + 1 < progress.pathLength) {
-    newStep = getRandomGardenStep();
-    progress.currentPath.push(newStep);
-  } else {
-    newRelicUnlocked = getRandomRelic();
-    progress.relics.push(newRelicUnlocked);
-    progress.currentPath = [];
-    quote = getRandomZenQuote();
-  }
+   if (progress.currentPath.length + 1 < progress.pathLength) {
+     newStep = getRandomGardenStep();
+     progress.currentPath.push(newStep);
+     // Queue for Garden Map placement
+     // @ts-ignore - fallback for older stored progress without field
+     (progress as any).pendingTokens = [...((progress as any).pendingTokens || []), newStep];
+   } else {
+     newRelicUnlocked = getRandomRelic();
+     progress.relics.push(newRelicUnlocked);
+     progress.currentPath = [];
+     quote = getRandomZenQuote();
+   }
 
   saveProgress(progress);
   analytics.track({ type: 'session_complete' });
@@ -151,20 +154,21 @@ const handleSessionComplete = () => {
     <div className="min-h-screen bg-background text-foreground pb-20">
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-6">
-          <img
-            src={logo}
-            alt="Monk Zen logo"
-            className="h-8 w-auto object-contain mb-2"
-            onError={(e) => {
-              // Fallback to text if image fails
-              e.currentTarget.style.display = 'none';
-              const fallback = document.createElement('h1');
-              fallback.textContent = 'Monk';
-              fallback.className = 'text-2xl font-semibold tracking-tight';
-              e.currentTarget.parentNode?.appendChild(fallback);
-            }}
-          />
-          <p className="text-sm text-muted-foreground">ADHD Pomodoro Timer</p>
+          <div className="app-header__brand">
+            <img
+              src={logo}
+              alt="Monk logo"
+              className="w-auto object-contain"
+              onError={(e) => {
+                // Fallback to text if image fails
+                e.currentTarget.style.display = 'none';
+                const fallback = document.createElement('h1');
+                fallback.textContent = 'Monk';
+                fallback.className = 'text-2xl font-semibold tracking-tight';
+                e.currentTarget.parentNode?.appendChild(fallback);
+              }}
+            />
+          </div>
         </header>
 
         <section className="flex flex-col items-center gap-6">
@@ -174,11 +178,6 @@ const handleSessionComplete = () => {
               <p className="text-muted-foreground max-w-xs">
                 Start and stop when you feel the best — no fixed timer.
               </p>
-              {running && (
-                <div className="text-4xl font-semibold tabular-nums text-primary" aria-live="polite">
-                  {mm}:{ss}
-                </div>
-              )}
             </div>
           ) : (
             <>

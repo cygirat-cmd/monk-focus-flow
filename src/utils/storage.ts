@@ -23,11 +23,15 @@ export type Relic = {
   unlockedAt: string;
 };
 
+export type GardenGrid = (GardenStep | null)[];
+
 export type ProgressData = {
   completedSessions: number;
   pathLength: number;
   currentPath: GardenStep[];
   relics: Relic[];
+  gardenGrid: GardenGrid; // 6x4 grid (24 cells)
+  pendingTokens: GardenStep[]; // items awaiting placement
 };
 
 const TASKS_KEY = 'monk_tasks_v1';
@@ -62,11 +66,31 @@ export const loadSettings = (): Settings => {
 export const loadProgress = (): ProgressData => {
   try {
     const raw = localStorage.getItem(PROGRESS_KEY);
-    if (!raw)
-      return { completedSessions: 0, pathLength: 8, currentPath: [], relics: [] };
-    return JSON.parse(raw);
+    const defaults: ProgressData = {
+      completedSessions: 0,
+      pathLength: 8,
+      currentPath: [],
+      relics: [],
+      gardenGrid: Array(24).fill(null),
+      pendingTokens: [],
+    };
+    if (!raw) return defaults;
+    const parsed = JSON.parse(raw);
+    return {
+      ...defaults,
+      ...parsed,
+      gardenGrid: parsed.gardenGrid ?? defaults.gardenGrid,
+      pendingTokens: parsed.pendingTokens ?? defaults.pendingTokens,
+    } as ProgressData;
   } catch {
-    return { completedSessions: 0, pathLength: 8, currentPath: [], relics: [] };
+    return {
+      completedSessions: 0,
+      pathLength: 8,
+      currentPath: [],
+      relics: [],
+      gardenGrid: Array(24).fill(null),
+      pendingTokens: [],
+    };
   }
 };
 

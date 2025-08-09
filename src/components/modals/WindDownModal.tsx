@@ -1,8 +1,8 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { GardenStep, Relic } from '@/utils/storage';
-import { getRandomZenQuote } from '@/utils/zenData';
 import { X, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import GardenPlacementModal from '@/components/modals/GardenPlacementModal';
 
 type WindDownMode = 'SessionComplete' | 'BreakStart';
 
@@ -24,6 +24,7 @@ export default function WindDownModal({
   zenQuote
 }: WindDownModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [placeOpen, setPlaceOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -32,35 +33,34 @@ export default function WindDownModal({
   useEffect(() => {
     if (open && mounted) {
       // Load Shopify script when modal opens
-      const script = document.createElement('script');
-      script.src = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
-      script.onload = () => {
-        if ((window as any).ShopifyBuy) {
-          initShopifyCarousel();
-        }
-      };
-      document.head.appendChild(script);
-
-      return () => {
-        const existingScript = document.querySelector('script[src*="buy-button-storefront"]');
-        if (existingScript) {
-          document.head.removeChild(existingScript);
-        }
-      };
+      const existing = document.querySelector('script[src*="buy-button-storefront"]');
+      if (!existing) {
+        const script = document.createElement('script');
+        script.src = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
+        script.onload = () => {
+          if ((window as any).ShopifyBuy) initShopifyCarousel();
+        };
+        document.head.appendChild(script);
+      } else {
+        initShopifyCarousel();
+      }
     }
   }, [open, mounted]);
 
   const initShopifyCarousel = () => {
     try {
-      const client = (window as any).ShopifyBuy.buildClient({
-        domain: 'zenmodoro.com',
-        storefrontAccessToken: '657052401989'
-      });
-      
-      const ui = (window as any).ShopifyBuy.UI.init(client);
+      const ShopifyBuy = (window as any).ShopifyBuy;
       const targetElement = document.getElementById('winddown-recs');
-      
-      if (targetElement) {
+      if (!ShopifyBuy || !targetElement) return;
+
+      const client = ShopifyBuy.buildClient({
+        domain: 'zenmodoro.com',
+        storefrontAccessToken: 'YOUR_TOKEN_HERE'
+      });
+
+      ShopifyBuy.UI.onReady(client).then((ui: any) => {
+        // Clear previous mount if any
+        targetElement.innerHTML = '';
         ui.createComponent('collection', {
           id: '657052401989',
           node: targetElement,
@@ -73,7 +73,7 @@ export default function WindDownModal({
             carousel: true
           }
         });
-      }
+      });
     } catch (error) {
       console.log('Shopify integration not available:', error);
     }
@@ -158,16 +158,26 @@ export default function WindDownModal({
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <a href="/store" className="flex-1 py-3 rounded-lg text-center bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity">
-                Shop Focus Essentials
-              </a>
-              <button 
-                onClick={onClose} 
-                className="flex-1 py-3 rounded-lg text-center bg-accent text-accent-foreground font-medium hover:opacity-90 transition-opacity"
-              >
-                Continue
-              </button>
+            <div className="flex flex-col gap-3">
+              {isSessionComplete && (newGardenStep) && (
+                <button
+                  onClick={() => setPlaceOpen(true)}
+                  className="w-full py-3 rounded-lg text-center bg-secondary text-secondary-foreground font-medium hover:opacity-90 transition-opacity"
+                >
+                  Place on Garden Map
+                </button>
+              )}
+              <div className="flex gap-3">
+                <a href="/store" className="flex-1 py-3 rounded-lg text-center bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity">
+                  Shop Focus Essentials
+                </a>
+                <button 
+                  onClick={onClose} 
+                  className="flex-1 py-3 rounded-lg text-center bg-accent text-accent-foreground font-medium hover:opacity-90 transition-opacity"
+                >
+                  Continue
+                </button>
+              </div>
             </div>
           </main>
         </div>
