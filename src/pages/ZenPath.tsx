@@ -30,7 +30,7 @@ export default function ZenPath() {
         </div>
       </header>
 
-      <main className="p-4">
+      <main className="p-4 mx-auto max-w-md">
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="text-primary" size={18} />

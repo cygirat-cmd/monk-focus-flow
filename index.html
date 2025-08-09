@@ -33,10 +33,13 @@
             var dark = mode==='dark' || (mode==='auto' && (prefersDark || isNight()));
             document.body.classList.toggle('dark', !!dark);
             document.documentElement.classList.toggle('dark', !!dark);
+            // keep next-themes in sync to avoid flicker
+            var nextThemeKey = mode === 'auto' ? 'system' : (dark ? 'dark' : 'light');
+            try { localStorage.setItem('theme', nextThemeKey); } catch(e) {}
           };
           apply(saved);
           (window).__monkSetTheme = function(mode){
-            localStorage.setItem('monk.ui.theme', mode);
+            try { localStorage.setItem('monk.ui.theme', mode); } catch(e) {}
             apply(mode);
           };
         } catch(e) {}

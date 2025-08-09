@@ -55,7 +55,7 @@ export default function WindDownModal({
 
       const client = ShopifyBuy.buildClient({
         domain: 'zenmodoro.com',
-        storefrontAccessToken: 'YOUR_TOKEN_HERE'
+        storefrontAccessToken: '657052401989'
       });
 
       ShopifyBuy.UI.onReady(client).then((ui: any) => {

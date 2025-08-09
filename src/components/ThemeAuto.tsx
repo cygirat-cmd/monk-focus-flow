@@ -5,6 +5,9 @@ export default function ThemeAuto() {
   const { setTheme } = useTheme();
 
   useEffect(() => {
+    const mode = (localStorage.getItem('monk.ui.theme') || 'auto') as 'light' | 'dark' | 'auto';
+    if (mode !== 'auto') return; // respect explicit user choice; only auto follows system/night
+
     const compute = () => {
       const hour = new Date().getHours();
       const night = hour >= 19 || hour < 7; // 19:00–07:00
