@@ -15,20 +15,17 @@ export default function Splash({ onDone }: { onDone?: () => void }) {
   }, [onDone]);
 
   // Use CSS custom property to detect theme instead of classList
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   
   useEffect(() => {
     const checkTheme = () => {
-      const isDarkTheme = document.documentElement.classList.contains('dark') || 
-        window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDarkTheme = document.documentElement.classList.contains('dark');
       setIsDark(isDarkTheme);
     };
-    
     checkTheme();
     // Watch for theme changes
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
     return () => observer.disconnect();
   }, []);
 
