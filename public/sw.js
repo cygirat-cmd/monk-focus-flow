@@ -1,8 +1,11 @@
-const CACHE_NAME = 'monk-cache-v1';
+const CACHE_NAME = 'monk-cache-v2';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
+  '/src/main.tsx',
+  '/src/App.tsx',
+  '/src/index.css',
 ];
 
 self.addEventListener('install', (event) => {
