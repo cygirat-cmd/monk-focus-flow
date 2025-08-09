@@ -1,0 +1,29 @@
+import { NavLink } from 'react-router-dom';
+import { Home, ListChecks, Store, Crown, Settings, Sparkles } from 'lucide-react';
+
+const Tab = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => (
+  <NavLink
+    to={to}
+    className={({ isActive }) => `flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-md transition-colors duration-200 ${
+      isActive ? 'text-primary bg-accent' : 'text-muted-foreground hover:text-foreground'
+    }`}
+    aria-label={label}
+  >
+    <Icon size={22} />
+    <span className="text-xs">{label}</span>
+  </NavLink>
+);
+
+export default function BottomNav() {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <div className="mx-auto max-w-md grid grid-cols-5 gap-1 px-2">
+        <Tab to="/" icon={Home} label="Timer" />
+        <Tab to="/tasks" icon={ListChecks} label="Tasks" />
+        <Tab to="/wind-down" icon={Sparkles} label="Wind" />
+        <Tab to="/store" icon={Store} label="Store" />
+        <Tab to="/focus-club" icon={Crown} label="Club" />
+      </div>
+    </nav>
+  );
+}

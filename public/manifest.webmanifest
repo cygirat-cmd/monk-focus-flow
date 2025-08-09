@@ -1,0 +1,17 @@
+{
+  "name": "Monk: ADHD Pomodoro Timer & Focus App",
+  "short_name": "Monk",
+  "description": "ADHD-friendly Pomodoro timer with Flowtime, tasks, store, and zen UI.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f0",
+  "theme_color": "#f5f5f0",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 72x72 96x96 128x128 256x256",
+      "type": "image/x-icon"
+    }
+  ]
+}
