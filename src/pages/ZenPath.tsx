@@ -17,7 +17,7 @@ export default function ZenPath() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="path-screen bg-background text-foreground pb-20">
       <header className="flex items-center gap-3 p-4 border-b border-border">
         <Link to="/" className="p-2 hover:bg-accent rounded-lg transition-colors">
           <ArrowLeft size={20} />
@@ -44,21 +44,20 @@ export default function ZenPath() {
           </div>
         </div>
 
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-3 min-w-max">
-            {Array.from({ length: progress.pathLength }).map((_, index) => {
-              const step = progress.currentPath[index];
-              const isEmpty = !step;
-              
-              return (
-                <div
-                  key={index}
-                  className={`min-w-[120px] h-[100px] rounded-lg border-2 border-dashed flex flex-col items-center justify-center transition-all ${
-                    isEmpty 
-                      ? 'border-border bg-card/50' 
-                      : 'border-primary bg-card shadow-sm'
-                  }`}
-                >
+        <div className="path-grid">
+          {Array.from({ length: progress.pathLength }).map((_, index) => {
+            const step = progress.currentPath[index];
+            const isEmpty = !step;
+            
+            return (
+              <div
+                key={index}
+                className={`path-card flex-col ${
+                  isEmpty 
+                    ? '' 
+                    : 'border-primary bg-card shadow-sm'
+                }`}
+              >
                   {step ? (
                     <>
                       <img 
@@ -82,7 +81,6 @@ export default function ZenPath() {
                 </div>
               );
             })}
-          </div>
         </div>
 
         <div className="mt-8">

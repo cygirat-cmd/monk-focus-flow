@@ -32,6 +32,10 @@ export type ProgressData = {
   relics: Relic[];
   gardenGrid: GardenGrid; // 6x4 grid (24 cells)
   pendingTokens: GardenStep[]; // items awaiting placement
+  focusPoints: number;
+  rules: { minSecondsPomodoro: number; minSecondsFlow: number; dailyMaxPlacements: number; cooldownSeconds: number };
+  counters: { placementsToday: number; lastSessionEndedAt: number };
+  streak: { days: number; lastDate: string };
 };
 
 const TASKS_KEY = 'monk_tasks_v1';
@@ -73,6 +77,10 @@ export const loadProgress = (): ProgressData => {
       relics: [],
       gardenGrid: Array(24).fill(null),
       pendingTokens: [],
+      focusPoints: 0,
+      rules: { minSecondsPomodoro: 180, minSecondsFlow: 180, dailyMaxPlacements: 6, cooldownSeconds: 30 },
+      counters: { placementsToday: 0, lastSessionEndedAt: 0 },
+      streak: { days: 0, lastDate: '' },
     };
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
@@ -90,6 +98,10 @@ export const loadProgress = (): ProgressData => {
       relics: [],
       gardenGrid: Array(24).fill(null),
       pendingTokens: [],
+      focusPoints: 0,
+      rules: { minSecondsPomodoro: 180, minSecondsFlow: 180, dailyMaxPlacements: 6, cooldownSeconds: 30 },
+      counters: { placementsToday: 0, lastSessionEndedAt: 0 },
+      streak: { days: 0, lastDate: '' },
     };
   }
 };

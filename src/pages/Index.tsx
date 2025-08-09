@@ -8,6 +8,7 @@ import { loadSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/u
 import { getRandomGardenStep, getRandomRelic, getRandomZenQuote } from '@/utils/zenData';
 import { Play, Square } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { validateSession, addFocusPoints, updateStreak } from '@/utils/progression';
 
 // SEO
 const TITLE = 'Monk: ADHD Pomodoro Timer';
@@ -28,6 +29,7 @@ const Index = () => {
   const [newRelic, setNewRelic] = useState<Relic | undefined>();
   const [zenQuote, setZenQuote] = useState<string>('');
   const workerRef = useRef<Worker | null>(null);
+  const startAtRef = useRef<number | null>(null);
   const { theme } = useTheme();
   const [isDark, setIsDark] = useState(false);
 
@@ -63,49 +65,87 @@ useEffect(() => {
     if (type === 'tick') setRemaining(remaining);
     if (type === 'done') {
       setRunning(false);
+      const seconds = startAtRef.current ? Math.max(1, Math.round((performance.now() - startAtRef.current) / 1000)) : minutes * 60;
+      startAtRef.current = null;
       showLocalNotification('Session complete', 'Breathe. Take a short break.');
       analytics.track({ type: 'session_stop', completed: true });
-      handleSessionComplete();
+      handleSessionComplete({ mode: 'pomodoro', seconds });
     }
   };
   return () => w.terminate();
 }, []);
 
-const handleSessionComplete = () => {
+const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: number }) => {
   const progress = loadProgress();
+  const v = validateSession(payload, progress as any);
+  if (!(v as any).ok) {
+    saveProgress(progress);
+    setNewGardenStep(undefined);
+    setNewRelic(undefined);
+    setZenQuote('');
+    setWindDownMode('SessionComplete');
+    setWindOpen(true);
+    return;
+  }
+
   progress.completedSessions++;
 
   let newStep: GardenStep | undefined;
   let newRelicUnlocked: Relic | undefined;
   let quote = '';
 
-  // Add garden step or unlock relic
-   if (progress.currentPath.length + 1 < progress.pathLength) {
-     newStep = getRandomGardenStep();
-     progress.currentPath.push(newStep);
-     // Queue for Garden Map placement
-     // @ts-ignore - fallback for older stored progress without field
-     (progress as any).pendingTokens = [...((progress as any).pendingTokens || []), newStep];
-   } else {
-     newRelicUnlocked = getRandomRelic();
-     progress.relics.push(newRelicUnlocked);
-     progress.currentPath = [];
-     quote = getRandomZenQuote();
-   }
+  if (progress.currentPath.length + 1 < progress.pathLength) {
+    newStep = getRandomGardenStep();
+    progress.currentPath.push(newStep);
+    (progress as any).pendingTokens = [...((progress as any).pendingTokens || []), newStep];
+    analytics.track({ type: 'garden_step_added' });
+  } else {
+    newRelicUnlocked = getRandomRelic();
+    progress.relics.push(newRelicUnlocked);
+    progress.currentPath = [];
+    quote = getRandomZenQuote();
+    analytics.track({ type: 'relic_unlocked' });
+  }
+
+  (progress as any).counters = {
+    ...(progress as any).counters,
+    lastSessionEndedAt: Date.now(),
+    placementsToday: ((progress as any).counters?.placementsToday || 0) + 1,
+  };
+
+  addFocusPoints(progress as any, payload.seconds);
+  updateStreak(progress as any);
 
   saveProgress(progress);
   analytics.track({ type: 'session_complete' });
 
   setNewGardenStep(newStep);
   setNewRelic(newRelicUnlocked);
-  setZenQuote(quote);
   setWindDownMode('SessionComplete');
   setWindOpen(true);
 };
 
+  const switchMode = (next: Mode, nextMinutes?: number) => {
+    if (workerRef.current) {
+      try { workerRef.current.postMessage({ type: 'stop' }); } catch {}
+    }
+    setRunning(false);
+    startAtRef.current = null;
+    if (nextMinutes != null) {
+      setMinutes(nextMinutes);
+      setRemaining(nextMinutes * 60_000);
+    } else if (next === 'fixed') {
+      setRemaining(minutes * 60_000);
+    } else {
+      setRemaining(0);
+    }
+    setMode(next);
+  };
+
   const start = () => {
     if (!workerRef.current) return;
     setRunning(true);
+    startAtRef.current = performance.now();
     analytics.track({ type: 'session_start', minutes, mode });
     showLocalNotification('Session started', 'Focus mode engaged.');
     workerRef.current.postMessage({
@@ -120,10 +160,11 @@ const handleSessionComplete = () => {
     workerRef.current.postMessage({ type: 'stop' });
     
     if (mode === 'flow') {
-      // Flow mode triggers wind-down on stop
+      const seconds = startAtRef.current ? Math.max(1, Math.round((performance.now() - startAtRef.current) / 1000)) : 0;
+      startAtRef.current = null;
       analytics.track({ type: 'session_stop', completed: true });
       showLocalNotification('Flow session complete', 'Well done. Take a mindful break.');
-      handleSessionComplete();
+      handleSessionComplete({ mode: 'flow', seconds });
     } else {
       analytics.track({ type: 'session_stop', completed: false });
       showLocalNotification('Session stopped');
@@ -158,7 +199,7 @@ const handleSessionComplete = () => {
             <img
               src={logo}
               alt="Monk logo"
-              className="w-auto object-contain"
+              className="h-6 w-auto object-contain"
               onError={(e) => {
                 // Fallback to text if image fails
                 e.currentTarget.style.display = 'none';
@@ -193,10 +234,7 @@ const handleSessionComplete = () => {
             {presets.map((m) => (
               <button
                 key={m}
-                onClick={() => {
-                  setMode('fixed');
-                  setMinutes(m);
-                }}
+                onClick={() => switchMode('fixed', m)}
                 className={`py-2 rounded-md border transition-colors ${
                   minutes === m && mode === 'fixed' ? 'bg-primary text-primary-foreground' : 'bg-card text-foreground'
                 }`}
@@ -206,7 +244,7 @@ const handleSessionComplete = () => {
               </button>
             ))}
             <button
-              onClick={() => setMode('flow')}
+              onClick={() => switchMode('flow')}
               className={`py-2 rounded-md border transition-colors ${
                 mode === 'flow' ? 'bg-primary text-primary-foreground' : 'bg-card text-foreground'
               }`}

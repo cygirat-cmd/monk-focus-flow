@@ -13,12 +13,13 @@ export default function ThemeSelector({ settings, onSettingsChange }: ThemeSelec
   const handleThemeChange = (theme: 'light' | 'dark' | 'auto') => {
     const newSettings = { ...settings, theme };
     onSettingsChange(newSettings);
-    
-    if (theme === 'auto') {
-      setTheme('system');
-    } else {
-      setTheme(theme);
-    }
+
+    try {
+      (window as any).__monkSetTheme?.(theme);
+      localStorage.setItem('monk.ui.theme', theme);
+    } catch {}
+
+    setTheme(theme === 'auto' ? 'system' : theme);
   };
 
   const themes = [

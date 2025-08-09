@@ -45,6 +45,12 @@
     --sidebar-accent-foreground: 220 15% 13%;
     --sidebar-border: 0 0% 88%;
     --sidebar-ring: 220 10% 30%;
+
+    /* Mappings for external embeds */
+    --text-color: hsl(var(--foreground));
+    --text-color-secondary: hsl(var(--muted-foreground));
+    --accent-color: hsl(var(--primary));
+    --accent-color-hover: hsl(var(--ring));
   }
 
   .dark {
@@ -121,6 +127,12 @@
   opacity: 0.9 !important;
 }
 
+/* Dark mode tweaks */
+body.dark .shopify-buy__product__title,
+body.dark .shopify-buy__product__price {
+  color: #f0f0f0 !important;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -142,4 +154,32 @@
 .app-header__brand img {
   height: 24px;
   width: auto;
+}
+
+/* Path screen responsive sizing */
+.path-screen {
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  display: flex;
+  flex-direction: column;
+}
+.path-grid {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 8px 0;
+  -webkit-overflow-scrolling: touch;
+}
+.path-card {
+  flex: 0 0 72px;
+  height: 72px;
+  border-radius: 12px;
+  border: 1px dashed hsl(var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--card));
+}
+@media (min-width: 480px){
+  .path-card { flex-basis: 88px; height: 88px; }
 }
