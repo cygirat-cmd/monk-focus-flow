@@ -32,6 +32,7 @@ const Index = () => {
   const startAtRef = useRef<number | null>(null);
   const { theme } = useTheme();
   const [isDark, setIsDark] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     document.title = TITLE;
@@ -209,19 +210,16 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-6">
           <div className="app-header__brand">
-            <img
-              src={logo}
-              alt="Monk logo"
-              className="h-6 w-auto object-contain"
-              onError={(e) => {
-                // Fallback to text if image fails
-                e.currentTarget.style.display = 'none';
-                const fallback = document.createElement('h1');
-                fallback.textContent = 'Monk';
-                fallback.className = 'text-2xl font-semibold tracking-tight';
-                e.currentTarget.parentNode?.appendChild(fallback);
-              }}
-            />
+            {logoError ? (
+              <h1 className="text-2xl font-semibold tracking-tight">Monk</h1>
+            ) : (
+              <img
+                src={logo}
+                alt="Monk logo"
+                className="h-6 w-auto object-contain"
+                onError={() => setLogoError(true)}
+              />
+            )}
           </div>
         </header>
 

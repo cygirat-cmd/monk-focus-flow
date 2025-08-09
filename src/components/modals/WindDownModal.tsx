@@ -25,6 +25,7 @@ export default function WindDownModal({
 }: WindDownModalProps) {
   const [mounted, setMounted] = useState(false);
   const [placeOpen, setPlaceOpen] = useState(false);
+  const [shopifyReady, setShopifyReady] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -32,6 +33,7 @@ export default function WindDownModal({
 
   useEffect(() => {
     if (open && mounted) {
+      setShopifyReady(false);
       // Load Shopify script when modal opens
       const existing = document.querySelector('script[src*="buy-button-storefront"]');
       if (!existing) {
@@ -59,11 +61,11 @@ export default function WindDownModal({
       });
 
       ShopifyBuy.UI.onReady(client).then((ui: any) => {
-        // Clear previous mount if any
-        targetElement.innerHTML = '';
+        const mountNode = document.getElementById('winddown-recs');
+        if (!mountNode) return;
         ui.createComponent('collection', {
           id: '657052401989',
-          node: targetElement,
+          node: mountNode,
           options: {
             product: {
               buttonDestination: 'checkout',
@@ -73,6 +75,7 @@ export default function WindDownModal({
             carousel: true
           }
         });
+        setShopifyReady(true);
       });
     } catch (error) {
       console.log('Shopify integration not available:', error);
@@ -153,9 +156,12 @@ export default function WindDownModal({
             {/* Shopify Recommendations */}
             <div className="rounded-xl border bg-card p-4 mb-6">
               <h2 className="font-semibold mb-3">Recommended</h2>
-              <div id="winddown-recs" className="min-h-[120px] flex items-center justify-center">
-                <div className="text-sm text-muted-foreground">Loading recommendations...</div>
-              </div>
+              {!shopifyReady && (
+                <div className="min-h-[120px] flex items-center justify-center">
+                  <div className="text-sm text-muted-foreground">Loading recommendations...</div>
+                </div>
+              )}
+              <div id="winddown-recs" />
             </div>
 
             <div className="flex flex-col gap-3">
