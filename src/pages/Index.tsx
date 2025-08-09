@@ -4,7 +4,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import WindDownModal from '@/components/modals/WindDownModal';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
-import { loadSettings, loadProgress, GardenStep, Relic } from '@/utils/storage';
+import { loadSettings, loadProgress, GardenStep, Relic } from '@/utils/storageClient';
 import { getRandomGardenStep, getRandomRelic, getRandomZenQuote } from '@/utils/zenData';
 import { Play, Square } from 'lucide-react';
 import { useTheme } from 'next-themes';

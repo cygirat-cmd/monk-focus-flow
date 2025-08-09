@@ -1,5 +1,5 @@
 import { useTheme } from 'next-themes';
-import { Settings } from '@/utils/storage';
+import { Settings } from '@/utils/storageClient';
 import { Moon, Sun, Monitor } from 'lucide-react';
 
 interface ThemeSelectorProps {

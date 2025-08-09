@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import BottomNav from '@/components/layout/BottomNav';
-import { loadProgress } from '@/utils/storage';
-import { ProgressData } from '@/utils/storage';
+import { loadProgress } from '@/utils/storageClient';
+import { ProgressData } from '@/utils/storageClient';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function ZenPath() {

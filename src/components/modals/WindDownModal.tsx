@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { GardenStep, Relic } from '@/utils/storage';
+import { GardenStep, Relic } from '@/utils/storageClient';
 import { X, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import GardenPlacementModal from '@/components/modals/GardenPlacementModal';

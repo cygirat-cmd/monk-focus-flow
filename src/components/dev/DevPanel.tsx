@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { loadProgress } from '@/utils/storage';
+import { loadProgress } from '@/utils/storageClient';
 import { GARDEN_POOL } from '@/utils/zenData';
 
 // Feature flag

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import BottomNav from '@/components/layout/BottomNav';
-import { loadProgress } from '@/utils/storage';
-import { ProgressData } from '@/utils/storage';
+import { loadProgress } from '@/utils/storageClient';
+import { ProgressData } from '@/utils/storageClient';
 import { RELICS_POOL } from '@/utils/zenData';
 import { ArrowLeft, Lock, Calendar } from 'lucide-react';
 

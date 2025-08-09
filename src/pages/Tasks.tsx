@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
-import { Task, TasksState, loadTasks, saveTasks } from '@/utils/storage';
+import { Task, TasksState, loadTasks, saveTasks } from '@/utils/storageClient';
 import { analytics } from '@/utils/analytics';
 import { useNavigate } from 'react-router-dom';
 

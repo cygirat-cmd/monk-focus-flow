@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
-import { Settings as SettingsType, loadSettings, saveSettings } from '@/utils/storage';
+import { Settings as SettingsType, loadSettings, saveSettings } from '@/utils/storageClient';
 import ThemeSelector from '@/components/ThemeSelector';
 
 export default function Settings() {
