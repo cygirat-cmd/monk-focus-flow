@@ -2,7 +2,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { loadProgress, saveProgress, GardenPlacedItem, GardenStep } from '@/utils/storageClient';
 import { placeGardenItem, moveGardenItem, rotateGardenItem, removeGardenItem } from '@/utils/gardenHelpers';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
+
 import GardenPlacementModal from '@/components/modals/GardenPlacementModal';
 import { Trash2, Check, Sprout } from 'lucide-react';
 import { isTileLocked } from '@/utils/gardenMap';
@@ -205,28 +205,37 @@ export default function Garden() {
         )}
       </main>
 
-      {/* Inventory Drawer */}
-      <Drawer open={inventoryOpen} onOpenChange={setInventoryOpen}>
-        <DrawerContent className="px-4 pb-6">
-          <DrawerHeader>
-            <DrawerTitle>Inventory</DrawerTitle>
-            <DrawerDescription>Items you can place in your garden.</DrawerDescription>
-          </DrawerHeader>
-          <div className="space-y-3">
-            {(!progress.pendingTokens || progress.pendingTokens.length === 0) && (
-              <div className="text-sm text-muted-foreground">You have no items to place.</div>
-            )}
-            {progress.pendingTokens && progress.pendingTokens.map((token, i) => (
-              <div key={`${token.id}-${i}`} className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                <div className="flex items-center gap-2"><img src={token.img} alt={token.label} className="w-8 h-8 object-contain"/><div><div className="text-sm font-medium">{token.label}</div><div className="text-xs text-muted-foreground">Pending</div></div></div>
-                <div className="flex gap-2">
-                  <button className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm" onClick={() => openPlaceFor(token)}>Place</button>
+      {/* Inventory Overlay */}
+      {inventoryOpen && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setInventoryOpen(false)} />
+          <div className="relative mx-auto max-w-md h-full p-4 flex items-end sm:items-center">
+            <div className="w-full rounded-t-2xl sm:rounded-xl border bg-background p-4 shadow-lg max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h2 className="text-lg font-semibold">Inventory</h2>
+                  <p className="text-sm text-muted-foreground">Items you can place in your garden.</p>
                 </div>
+                <button className="px-3 py-1.5 rounded-md bg-accent text-accent-foreground text-sm" onClick={() => setInventoryOpen(false)}>Close</button>
               </div>
-            ))}
+
+              <div className="space-y-3">
+                {(!progress.pendingTokens || progress.pendingTokens.length === 0) && (
+                  <div className="text-sm text-muted-foreground">You have no items to place.</div>
+                )}
+                {progress.pendingTokens && progress.pendingTokens.map((token, i) => (
+                  <div key={`${token.id}-${i}`} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                    <div className="flex items-center gap-2"><img src={token.img} alt={token.label} className="w-8 h-8 object-contain"/><div><div className="text-sm font-medium">{token.label}</div><div className="text-xs text-muted-foreground">Pending</div></div></div>
+                    <div className="flex gap-2">
+                      <button className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm" onClick={() => openPlaceFor(token)}>Place</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </DrawerContent>
-      </Drawer>
+        </div>
+      )}
 
       {/* Placement modal */}
       <GardenPlacementModal open={placeOpen} onClose={() => setPlaceOpen(false)} token={placeToken || undefined} onPlaced={onPlaced} />
