@@ -415,7 +415,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
             ) : (
               <>
                 <div className="w-56 h-56">
-                  <CircularProgress progress={progress} size={224} strokeWidth={8} />
+                  <CircularProgress progress={progress} size={224} stroke={8} />
                 </div>
                 <div className="text-5xl font-semibold tabular-nums">{mm}:{ss}</div>
                 <button onClick={stop} className="px-6 py-3 rounded-lg bg-accent text-accent-foreground">End Session</button>
