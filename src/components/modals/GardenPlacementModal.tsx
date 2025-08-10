@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { loadProgress, GardenStep } from '@/utils/storageClient';
 import { placeGardenItem } from '@/utils/gardenHelpers';
 import { isTileLocked } from '@/utils/gardenMap';
@@ -58,7 +58,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
   const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: 'gravel_light.png' };
   const targetToken: GardenStep | undefined = token || progress.pendingToken || progress.pendingTokens?.[0];
 
-  const isFull = useMemo(() => (garden.placed?.length || 0) >= garden.cols * garden.rows, [garden]);
+  const isFull = (garden.placed?.length || 0) >= garden.cols * garden.rows;
   const isOccupied = (x: number, y: number) => garden.placed?.some((it) => it.x === x && it.y === y);
 
   const handleCellClick = (x: number, y: number) => {
