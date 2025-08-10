@@ -4,11 +4,13 @@ import BottomNav from '@/components/layout/BottomNav';
 import WindDownModal from '@/components/modals/WindDownModal';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
-import { loadSettings, loadProgress, GardenStep, Relic } from '@/utils/storageClient';
-import { getRandomGardenStep, getRandomRelic, getRandomZenQuote } from '@/utils/zenData';
+import { loadSettings, saveSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/utils/storage';
+import { getRandomGardenStep, getRandomRelic, getRandomZenQuote, moveNPC, getRandomNPCMessage } from '@/utils/zenData';
+import { calculateFlowScore, getRarityFromFlowScore } from '@/utils/flowScoring';
 import { Play, Square } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { validateSession, addFocusPoints, updateStreak } from '@/utils/progression';
+import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
 
 // SEO
 const TITLE = 'Monk: ADHD Pomodoro Timer';
@@ -93,7 +95,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   const progress = loadProgress();
   const v = validateSession(payload, progress as any);
   if (!(v as any).ok) {
-    localStorage.setItem('monk.progress', JSON.stringify(progress));
+    saveProgress(progress);
     setNewGardenStep(undefined);
     setNewRelic(undefined);
     setZenQuote('');
@@ -108,10 +110,29 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   let newRelicUnlocked: Relic | undefined;
   let quote = '';
 
+  // Calculate flow score for flow sessions
+  let flowScore = 0;
+  let rarity: 'common' | 'rare' | 'epic' | 'legendary' = 'common';
+  
+  if (payload.mode === 'flow') {
+    flowScore = calculateFlowScore(payload.seconds);
+    rarity = getRarityFromFlowScore(flowScore);
+    
+    // Update flow score and best session
+    progress.flowScore += flowScore;
+    if (!progress.bestFlowSession || flowScore > progress.bestFlowSession.flowScore) {
+      progress.bestFlowSession = {
+        seconds: payload.seconds,
+        flowScore,
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
+
   if (progress.currentPath.length + 1 < progress.pathLength) {
-    newStep = getRandomGardenStep();
+    newStep = getRandomGardenStep(progress.season, rarity);
     progress.currentPath.push(newStep);
-    (progress as any).pendingTokens = [...((progress as any).pendingTokens || []), newStep];
+    progress.pendingTokens = [...(progress.pendingTokens || []), newStep];
     analytics.track({ type: 'garden_step_added' });
   } else {
     newRelicUnlocked = getRandomRelic();
@@ -121,16 +142,50 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     analytics.track({ type: 'relic_unlocked' });
   }
 
-  (progress as any).counters = {
-    ...(progress as any).counters,
+  // Move NPC after each session and occasionally show message
+  const newPos = moveNPC(progress.npc.x, progress.npc.y);
+  progress.npc.x = newPos.x;
+  progress.npc.y = newPos.y;
+  
+  // 30% chance to show NPC message for 30 seconds
+  if (Math.random() < 0.3) {
+    const npcMsg = getRandomNPCMessage();
+    progress.npc.message = npcMsg.message;
+    progress.npc.messageExpiry = Date.now() + 30000;
+  }
+
+  progress.counters = {
+    ...progress.counters,
     lastSessionEndedAt: Date.now(),
-    placementsToday: ((progress as any).counters?.placementsToday || 0) + 1,
+    placementsToday: (progress.counters?.placementsToday || 0) + 1,
+    consecutiveDays: progress.counters?.consecutiveDays || 0,
   };
 
   addFocusPoints(progress as any, payload.seconds);
   updateStreak(progress as any);
+  
+  // Update trials and check for new ones
+  progress.trials = updateTrialProgress(progress.trials, payload, progress);
+  progress.trials = checkForNewTrials(progress);
+  
+  // Check for completed trials and award rewards
+  const completedTrials = progress.trials.filter(t => t.completed && t.reward);
+  completedTrials.forEach(trial => {
+    if (trial.reward) {
+      progress.pendingTokens = [...(progress.pendingTokens || []), trial.reward];
+    }
+  });
+  
+  // Update last active timestamp and check for rebirth
+  progress.lastActive = new Date().toISOString();
+  if (progress.isWithered && progress.streak.days >= 3) {
+    progress.isWithered = false;
+    // Grant special rebirth collectible
+    const rebirthStep = { id: 'rebirth-lotus', img: '/assets/garden/rebirth_lotus.png', label: 'Rebirth Lotus' };
+    progress.pendingTokens = [...(progress.pendingTokens || []), rebirthStep];
+  }
 
-  localStorage.setItem('monk.progress', JSON.stringify(progress));
+  saveProgress(progress);
   analytics.track({ type: 'session_complete' });
 
   setNewGardenStep(newStep);

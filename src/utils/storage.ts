@@ -25,6 +25,33 @@ export type Relic = {
 
 export type GardenGrid = (GardenStep | null)[];
 
+export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
+
+export type NPC = {
+  x: number;
+  y: number;
+  outfit: string;
+  message?: string;
+  messageExpiry?: number;
+};
+
+export type ZenTrial = {
+  id: string;
+  title: string;
+  description: string;
+  target: number;
+  progress: number;
+  expiresAt: string;
+  completed: boolean;
+  reward?: GardenStep;
+};
+
+export type FlowSession = {
+  seconds: number;
+  flowScore: number;
+  timestamp: string;
+};
+
 export type ProgressData = {
   completedSessions: number;
   pathLength: number;
@@ -33,9 +60,18 @@ export type ProgressData = {
   gardenGrid: GardenGrid; // 6x4 grid (24 cells)
   pendingTokens: GardenStep[]; // items awaiting placement
   focusPoints: number;
+  flowScore: number;
+  bestFlowSession: FlowSession | null;
   rules: { minSecondsPomodoro: number; minSecondsFlow: number; dailyMaxPlacements: number; cooldownSeconds: number };
-  counters: { placementsToday: number; lastSessionEndedAt: number };
+  counters: { placementsToday: number; lastSessionEndedAt: number; consecutiveDays: number };
   streak: { days: number; lastDate: string };
+  npc: NPC;
+  season: Season;
+  lastActive: string;
+  isWithered: boolean;
+  trials: ZenTrial[];
+  offlineMode: boolean;
+  gardenBonuses: Record<string, { type: string; value: number }>; // item ID -> bonus
 };
 
 const TASKS_KEY = 'monk_tasks_v1';
@@ -67,6 +103,14 @@ export const loadSettings = (): Settings => {
   }
 };
 
+const getCurrentSeason = (): Season => {
+  const month = new Date().getMonth();
+  if (month >= 2 && month <= 4) return 'spring';
+  if (month >= 5 && month <= 7) return 'summer';
+  if (month >= 8 && month <= 10) return 'autumn';
+  return 'winter';
+};
+
 export const loadProgress = (): ProgressData => {
   try {
     const raw = localStorage.getItem(PROGRESS_KEY);
@@ -78,17 +122,34 @@ export const loadProgress = (): ProgressData => {
       gardenGrid: Array(24).fill(null),
       pendingTokens: [],
       focusPoints: 0,
+      flowScore: 0,
+      bestFlowSession: null,
       rules: { minSecondsPomodoro: 180, minSecondsFlow: 180, dailyMaxPlacements: 6, cooldownSeconds: 30 },
-      counters: { placementsToday: 0, lastSessionEndedAt: 0 },
+      counters: { placementsToday: 0, lastSessionEndedAt: 0, consecutiveDays: 0 },
       streak: { days: 0, lastDate: '' },
+      npc: { x: 6, y: 4, outfit: 'default' },
+      season: getCurrentSeason(),
+      lastActive: new Date().toISOString(),
+      isWithered: false,
+      trials: [],
+      offlineMode: false,
+      gardenBonuses: {},
     };
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
+    
+    // Check for decay (7+ days inactive)
+    const lastActive = new Date(parsed.lastActive || new Date().toISOString());
+    const daysSinceActive = Math.floor((Date.now() - lastActive.getTime()) / (24 * 60 * 60 * 1000));
+    
     return {
       ...defaults,
       ...parsed,
       gardenGrid: parsed.gardenGrid ?? defaults.gardenGrid,
       pendingTokens: parsed.pendingTokens ?? defaults.pendingTokens,
+      season: getCurrentSeason(),
+      isWithered: daysSinceActive >= 7,
+      lastActive: parsed.lastActive || defaults.lastActive,
     } as ProgressData;
   } catch {
     return {
@@ -99,9 +160,18 @@ export const loadProgress = (): ProgressData => {
       gardenGrid: Array(24).fill(null),
       pendingTokens: [],
       focusPoints: 0,
+      flowScore: 0,
+      bestFlowSession: null,
       rules: { minSecondsPomodoro: 180, minSecondsFlow: 180, dailyMaxPlacements: 6, cooldownSeconds: 30 },
-      counters: { placementsToday: 0, lastSessionEndedAt: 0 },
+      counters: { placementsToday: 0, lastSessionEndedAt: 0, consecutiveDays: 0 },
       streak: { days: 0, lastDate: '' },
+      npc: { x: 6, y: 4, outfit: 'default' },
+      season: getCurrentSeason(),
+      lastActive: new Date().toISOString(),
+      isWithered: false,
+      trials: [],
+      offlineMode: false,
+      gardenBonuses: {},
     };
   }
 };
