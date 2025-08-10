@@ -84,9 +84,7 @@ export const randomEmptyGardenTile = (): { x: number; y: number } | null => {
   const candidates: { x: number; y: number }[] = [];
   for (let y = 0; y < g.rows; y++) {
     for (let x = 0; x < g.cols; x++) {
-      if (!isTileLocked(x, y) && !occupied.has(`${x},${y}`)) {
-        candidates.push({ x, y });
-      }
+      if (!isTileLocked(x, y) && !occupied.has(`${x},${y}`)) candidates.push({ x, y });
     }
   }
   if (!candidates.length) return null;

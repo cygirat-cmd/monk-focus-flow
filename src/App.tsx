@@ -15,7 +15,7 @@ const TreasureHall = React.lazy(() => import("./pages/TreasureHall"));
 const Garden = React.lazy(() => import("./pages/Garden"));
 import Splash from "./components/Splash";
 import ThemeAuto from "./components/ThemeAuto";
-// import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "next-themes";
 import DevPanel from "./components/dev/DevPanel";
 
 const queryClient = new QueryClient();
@@ -25,30 +25,32 @@ const AppRoot = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeAuto />
-      {/* <Toaster /> */}
-      <Sonner />
-      <BrowserRouter>
-        <React.Suspense fallback={<div className="p-6 text-center text-muted-foreground">Loading…</div>}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/store" element={<Store />} />
-            <Route path="/focus-club" element={<FocusClub />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/zen-path" element={<ZenPath />} />
-            <Route path="/treasure-hall" element={<TreasureHall />} />
-            <Route path="/garden" element={<Garden />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </React.Suspense>
-      </BrowserRouter>
-      {/* Splash overlay on initial load */}
-      {showSplash && (
-        <Splash onDone={() => setShowSplash(false)} />
-      )}
-      <DevPanel />
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeAuto />
+        {/* <Toaster /> */}
+        <Sonner />
+        <BrowserRouter>
+          <React.Suspense fallback={<div className="p-6 text-center text-muted-foreground">Loading…</div>}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/store" element={<Store />} />
+              <Route path="/focus-club" element={<FocusClub />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/zen-path" element={<ZenPath />} />
+              <Route path="/treasure-hall" element={<TreasureHall />} />
+              <Route path="/garden" element={<Garden />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </React.Suspense>
+        </BrowserRouter>
+        {/* Splash overlay on initial load */}
+        {showSplash && (
+          <Splash onDone={() => setShowSplash(false)} />
+        )}
+        <DevPanel />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };
