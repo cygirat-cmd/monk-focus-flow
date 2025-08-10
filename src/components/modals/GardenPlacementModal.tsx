@@ -1,7 +1,9 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { loadProgress, GardenStep, placeGardenItem } from '@/utils/storageClient';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { loadProgress, saveProgress, GardenStep, placeGardenItem } from '@/utils/storageClient';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { RotateCw } from 'lucide-react';
 
 interface GardenPlacementModalProps {
   open: boolean;
