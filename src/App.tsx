@@ -5,14 +5,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Tasks from "./pages/Tasks";
-import Store from "./pages/Store";
-import FocusClub from "./pages/FocusClub";
-import Settings from "./pages/Settings";
-import ZenPath from "./pages/ZenPath";
-import TreasureHall from "./pages/TreasureHall";
-import Garden from "./pages/Garden";
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+const Tasks = React.lazy(() => import("./pages/Tasks"));
+const Store = React.lazy(() => import("./pages/Store"));
+const FocusClub = React.lazy(() => import("./pages/FocusClub"));
+const Settings = React.lazy(() => import("./pages/Settings"));
+const ZenPath = React.lazy(() => import("./pages/ZenPath"));
+const TreasureHall = React.lazy(() => import("./pages/TreasureHall"));
+const Garden = React.lazy(() => import("./pages/Garden"));
 import Splash from "./components/Splash";
 import ThemeAuto from "./components/ThemeAuto";
 // import { ThemeProvider } from "next-themes";
@@ -29,18 +29,20 @@ const AppRoot = () => {
       {/* <Toaster /> */}
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/store" element={<Store />} />
-          <Route path="/focus-club" element={<FocusClub />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/zen-path" element={<ZenPath />} />
-          <Route path="/treasure-hall" element={<TreasureHall />} />
-          <Route path="/garden" element={<Garden />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <React.Suspense fallback={<div className="p-6 text-center text-muted-foreground">Loading…</div>}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/store" element={<Store />} />
+            <Route path="/focus-club" element={<FocusClub />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/zen-path" element={<ZenPath />} />
+            <Route path="/treasure-hall" element={<TreasureHall />} />
+            <Route path="/garden" element={<Garden />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </React.Suspense>
       </BrowserRouter>
       {/* Splash overlay on initial load */}
       {showSplash && (
