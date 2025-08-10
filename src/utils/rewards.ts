@@ -1,4 +1,4 @@
-import { GardenStep, Relic, ProgressData } from './storage';
+import { GardenStep, Relic, ProgressData } from './storageClient';
 import { RELICS_POOL } from './zenData';
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
@@ -94,7 +94,17 @@ export function drawReward(seconds: number): RewardItem | null {
   else if (pickR === 'rare') pool = RARE;
   else if (pickR === 'epic') pool = EPIC;
   else pool = [...LEGENDARY_NON_RELIC, ...LEGENDARY_RELICS];
-  const pick = pool[Math.floor(Math.random() * pool.length)];
+  // Seasonal gating
+  const month = new Date().getMonth();
+  const season = month >= 2 && month <= 4 ? 'spring' : month >= 5 && month <= 7 ? 'summer' : month >= 8 && month <= 10 ? 'autumn' : 'winter';
+  const seasonalIds: Record<string, 'spring'|'summer'|'autumn'|'winter'> = {
+    'cherry-blossom-tree': 'spring', 'spring-waterfall': 'spring', 'lucky-carp': 'spring', 'eternal-bloom-sakura': 'spring',
+    'lotus-pond': 'summer', 'bamboo-pavilion': 'summer', 'lazy-panda-hammock': 'summer', 'sun-spirit-fountain': 'summer',
+    'maple-tree': 'autumn', 'harvest-rice-stack': 'autumn', 'fox-spirit-shrine': 'autumn', 'golden-leaf-whirlpool': 'autumn',
+    'snow-stone': 'winter', 'ice-bridge': 'winter', 'snowman-monk': 'winter', 'northern-light-lantern': 'winter',
+  };
+  const filtered = pool.filter(p => !seasonalIds[p.id] || seasonalIds[p.id] === season);
+  const pick = filtered[Math.floor(Math.random() * filtered.length)];
   return { ...pick };
 }
 

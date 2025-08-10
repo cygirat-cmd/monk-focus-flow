@@ -152,7 +152,7 @@ export default function WindDownModal({
                     <div className="text-sm text-muted-foreground">{products[0].price}</div>
                   </div>
                 </div>
-                <article className="prose prose-sm prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: products[0].descriptionHtml }} />
+                <article className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: products[0].descriptionHtml }} />
                 <div className="mt-3 flex justify-end">
                   <a href={`https://zenmodoro.myshopify.com/products/${products[0].handle}`} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-md bg-primary text-primary-foreground">View on store</a>
                 </div>
@@ -202,7 +202,7 @@ export default function WindDownModal({
           open={placeOpen} 
           onClose={() => setPlaceOpen(false)} 
           token={newGardenStep}
-          onPlaced={() => setPlaced(true)}
+          onPlaced={() => { setPlaced(true); }}
         />
       </div>
     </div>

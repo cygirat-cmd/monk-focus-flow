@@ -139,6 +139,7 @@ export default function Garden() {
   
   // Locked temple area helper
   const isTempleArea = (x: number, y: number) => isTileLocked(x, y);
+  const withered = (progress.decayStage ?? 0) === 2;
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/1337a8ad-5f94-4e78-bf0f-78894287492d.png")' }}>
@@ -149,10 +150,10 @@ export default function Garden() {
             <p className="text-sm text-muted-foreground">Arrange your zen space</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setInventoryOpen(true)} className="px-3 py-1.5 rounded-md border bg-card text-sm flex items-center gap-1">
+            <button onClick={() => setInventoryOpen(true)} className="px-3 py-1.5 rounded-md border bg-card text-sm flex items-center gap-1" disabled={withered}>
               <Sprout size={16}/> Inventory
             </button>
-            <button onClick={() => setManage(m => !m)} className={`px-3 py-1.5 rounded-md text-sm ${manage ? 'bg-primary text-primary-foreground' : 'border bg-card'}`}>{manage ? 'Done' : 'Manage'}</button>
+            <button onClick={() => setManage(m => !m)} disabled={withered} className={`px-3 py-1.5 rounded-md text-sm ${manage ? 'bg-primary text-primary-foreground' : 'border bg-card'}`}>{manage ? 'Done' : 'Manage'}</button>
           </div>
         </header>
 
@@ -172,11 +173,11 @@ export default function Garden() {
               {/* Using the shared GardenCanvas to ensure perfect alignment */}
               <GardenCanvas 
                 placed={garden.placed}
-                showGrid={manage || placeOpen}
+                showGrid={(manage || placeOpen) && !withered}
                 showLockedOverlay={false}
                 npc={npc}
                 onItemPointerDown={(e, it) => beginDrag(e, it)}
-                className="absolute inset-0"
+                className={`absolute inset-0 ${withered ? 'grayscale-[60%] saturate-50' : ''}`}
               />
 
               
@@ -199,13 +200,25 @@ export default function Garden() {
         </section>
 
         {/* Placement hint */}
-        {progress.pendingTokens && progress.pendingTokens.length > 0 && (
+        {progress.pendingTokens && progress.pendingTokens.length > 0 && !withered && (
           <div className="mt-4 p-3 rounded-lg glass-panel text-sm flex items-center justify-between">
             <div className="flex items-center gap-2"><img src={progress.pendingTokens[0].img} alt={progress.pendingTokens[0].label} className="w-8 h-8 object-contain"/><span>{progress.pendingTokens[0].label}</span></div>
             <button className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm" onClick={() => openPlaceFor(progress.pendingTokens[0])}>Place</button>
           </div>
         )}
       </main>
+
+      {/* Withered overlay */}
+      {withered && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center p-4">
+          <div className="max-w-sm w-full rounded-xl glass-panel p-4 text-center border-dashed">
+            <h3 className="font-semibold mb-1">Your garden has withered</h3>
+            <p className="text-sm text-muted-foreground mb-3">Complete 3 focus sessions to revive it.</p>
+            <div className="text-xs text-muted-foreground">Progress: {progress.reviveProgress || 0} / 3</div>
+          </div>
+        </div>
+      )}
+
 
       {/* Inventory Overlay */}
       {inventoryOpen && (

@@ -137,7 +137,7 @@ export default function Store() {
                   <div className="text-sm text-muted-foreground">{selected.price}</div>
                 </div>
               </div>
-              <article className="prose prose-sm prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: selected.descriptionHtml }} />
+              <article className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: selected.descriptionHtml }} />
               <div className="mt-4 flex justify-end">
                 <a href={`https://${SHOP_DOMAIN}/products/${selected.handle}`} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-md bg-primary text-primary-foreground">View on store</a>
               </div>

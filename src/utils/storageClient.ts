@@ -53,14 +53,29 @@ export type ProgressData = {
   // Legacy
   gardenGrid: GardenGrid; // 6x4 grid (24 cells)
   pendingTokens: GardenStep[]; // items awaiting placement (legacy queue)
-  // New
+  // New Garden system
   garden?: GardenState;
   pendingToken?: GardenStep | null;
   inventory?: GardenStep[]; // removed items stored here
   focusPoints: number;
+  // Flow stats
+  flowScore?: number;
+  bestFlowSession?: { seconds: number; flowScore: number; timestamp: string } | null;
+  // Rules & counters
   rules: { minSecondsPomodoro: number; minSecondsFlow: number; dailyMaxPlacements: number; cooldownSeconds: number };
-  counters: { placementsToday: number; lastSessionEndedAt: number };
+  counters: { placementsToday: number; lastSessionEndedAt: number; consecutiveDays?: number; itemsReceivedToday?: number; itemsDate?: string; lastRewardAt?: number };
   streak: { days: number; lastDate: string };
+  // NPC & season
+  npc?: { x: number; y: number; message?: string; messageExpiry?: number };
+  season?: 'spring' | 'summer' | 'autumn' | 'winter';
+  // Trials & flags
+  trials?: any[];
+  // Decay system
+  lastActive?: string; // last session completed timestamp
+  lastOpenedAt?: number; // last time app opened
+  decayStage?: 0 | 1 | 2; // 0 normal, 1 thirsty, 2 withered
+  isWithered?: boolean; // legacy flag
+  reviveProgress?: number; // sessions after wither
 };
 
 const TASKS_KEY = 'monk_tasks_v1';
@@ -99,6 +114,7 @@ export const saveSettings = (settings: Settings) => {
 export const loadProgress = (): ProgressData => {
   try {
     const raw = localStorage.getItem(PROGRESS_KEY);
+    const nowIso = new Date().toISOString();
     const defaults: ProgressData = {
       completedSessions: 0,
       pathLength: 8,
@@ -110,12 +126,26 @@ export const loadProgress = (): ProgressData => {
       pendingToken: null,
       inventory: [],
       focusPoints: 0,
+      flowScore: 0,
+      bestFlowSession: null,
       rules: { minSecondsPomodoro: 180, minSecondsFlow: 180, dailyMaxPlacements: 6, cooldownSeconds: 30 },
-      counters: { placementsToday: 0, lastSessionEndedAt: 0 },
+      counters: { placementsToday: 0, lastSessionEndedAt: 0, consecutiveDays: 0, itemsReceivedToday: 0, itemsDate: new Date().toDateString(), lastRewardAt: 0 },
       streak: { days: 0, lastDate: '' },
+      npc: { x: 6, y: 4 },
+      season: undefined,
+      lastActive: nowIso,
+      lastOpenedAt: Date.now(),
+      decayStage: 0,
+      reviveProgress: 0,
     };
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
+
+    // Derive decay stage from lastOpenedAt / lastActive
+    const lastOpenedAt = parsed.lastOpenedAt || Date.now();
+    const daysSinceOpen = Math.floor((Date.now() - lastOpenedAt) / (24 * 60 * 60 * 1000));
+    let decayStage: 0 | 1 | 2 = 0;
+    if (daysSinceOpen >= 14) decayStage = 2; else if (daysSinceOpen >= 7) decayStage = 1;
 
     // Migrations for legacy structure
     const migrated: ProgressData = {
@@ -126,6 +156,14 @@ export const loadProgress = (): ProgressData => {
       garden: parsed.garden ?? defaults.garden,
       pendingToken: parsed.pendingToken ?? (parsed.pendingTokens?.length ? parsed.pendingTokens[0] : null),
       inventory: parsed.inventory ?? [],
+      flowScore: parsed.flowScore ?? defaults.flowScore,
+      bestFlowSession: parsed.bestFlowSession ?? defaults.bestFlowSession,
+      counters: { ...defaults.counters, ...(parsed.counters || {}) },
+      npc: parsed.npc ?? defaults.npc,
+      lastActive: parsed.lastActive || defaults.lastActive,
+      lastOpenedAt: parsed.lastOpenedAt || defaults.lastOpenedAt,
+      decayStage: parsed.decayStage ?? decayStage,
+      reviveProgress: parsed.reviveProgress ?? 0,
     } as ProgressData;
 
     return migrated;
@@ -141,9 +179,17 @@ export const loadProgress = (): ProgressData => {
       pendingToken: null,
       inventory: [],
       focusPoints: 0,
+      flowScore: 0,
+      bestFlowSession: null,
       rules: { minSecondsPomodoro: 180, minSecondsFlow: 180, dailyMaxPlacements: 6, cooldownSeconds: 30 },
-      counters: { placementsToday: 0, lastSessionEndedAt: 0 },
+      counters: { placementsToday: 0, lastSessionEndedAt: 0, consecutiveDays: 0, itemsReceivedToday: 0, itemsDate: new Date().toDateString(), lastRewardAt: 0 },
       streak: { days: 0, lastDate: '' },
+      npc: { x: 6, y: 4 },
+      season: undefined,
+      lastActive: new Date().toISOString(),
+      lastOpenedAt: Date.now(),
+      decayStage: 0,
+      reviveProgress: 0,
     };
   }
 };

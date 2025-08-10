@@ -5,7 +5,7 @@ import WindDownModal from '@/components/modals/WindDownModal';
 import RewardDrawModal from '@/components/modals/RewardDrawModal';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
-import { loadSettings, saveSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/utils/storage';
+import { loadSettings, saveSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/utils/storageClient';
 import { getRandomGardenStep, getRandomRelic, getRandomZenQuote, getRandomNPCMessage } from '@/utils/zenData';
 import { calculateFlowScore, getRarityFromFlowScore } from '@/utils/flowScoring';
 import { Play, Square } from 'lucide-react';
@@ -13,7 +13,7 @@ import { Play, Square } from 'lucide-react';
 import { validateSession, addFocusPoints, updateStreak } from '@/utils/progression';
 import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
 import { randomEmptyGardenTile } from '@/utils/gardenHelpers';
-import { grantReward, RewardItem } from '@/utils/rewards';
+import { grantReward, RewardItem, drawReward } from '@/utils/rewards';
 
 
 // SEO
@@ -54,6 +54,10 @@ const Index = () => {
     document.title = TITLE;
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', DESC);
+    // mark app opened for decay tracking
+    const p = loadProgress();
+    p.lastOpenedAt = Date.now();
+    saveProgress(p);
   }, []);
 
   useEffect(() => {
@@ -70,6 +74,16 @@ const Index = () => {
     return () => observer.disconnect();
   }, []);
 
+  // Push notifications for decay stages (on open)
+  useEffect(() => {
+    const p = loadProgress();
+    if ((p.decayStage ?? 0) === 1) {
+      showLocalNotification('Your Zen Garden is getting thirsty…', 'Time to focus!');
+    }
+    if ((p.decayStage ?? 0) === 2) {
+      showLocalNotification('Your garden has withered — revive it by focusing!', 'Complete 3 sessions to revive it.');
+    }
+  }, []);
   useEffect(() => {
     if (running) return;
     if (mode === 'fixed') {
@@ -236,6 +250,16 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
 
   saveProgress(progress);
   analytics.track({ type: 'session_complete' });
+
+  // Decay revival: if withered, count sessions and revive after 3
+  if ((progress.decayStage ?? 0) === 2) {
+    progress.reviveProgress = (progress.reviveProgress || 0) + 1;
+    if (progress.reviveProgress >= 3) {
+      progress.decayStage = 0;
+      progress.reviveProgress = 0;
+    }
+    saveProgress(progress);
+  }
 
   setNewGardenStep(newStep);
   setNewRelic(newRelicUnlocked);

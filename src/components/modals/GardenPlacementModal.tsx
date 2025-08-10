@@ -56,7 +56,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
   if (!open) return null;
 
   const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: 'gravel_light.png' };
-  const targetToken: GardenStep | undefined = token || progress.pendingToken || progress.pendingTokens?.[0];
+  const targetToken: GardenStep | undefined = token || progress.pendingToken || (progress.pendingTokens?.find(t => !!t) || undefined);
 
   const isFull = (garden.placed?.length || 0) >= garden.cols * garden.rows;
   const isOccupied = (x: number, y: number) => garden.placed?.some((it) => it.x === x && it.y === y);

@@ -1,9 +1,17 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { loadProgress, saveProgress } from '@/utils/storageClient'
 
 const root = createRoot(document.getElementById("root")!);
 root.render(<App />);
+
+// Mark app opened for decay tracking
+try {
+  const p = loadProgress();
+  p.lastOpenedAt = Date.now();
+  saveProgress(p);
+} catch {}
 
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
