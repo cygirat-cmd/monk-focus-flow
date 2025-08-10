@@ -49,16 +49,15 @@ export function GardenCanvas({
       className={`relative overflow-hidden ${className}`}
       style={{ width: w, height: h }}
     >
-      {/* Background map image (pixel-perfect) */}
       <img
         src={defaultGardenBg}
         alt="Zen garden map background"
         width={w}
         height={h}
+        className="pixelated"
         style={{
           width: w,
           height: h,
-          imageRendering: 'pixelated' as any,
           display: 'block',
         }}
       />
@@ -141,15 +140,20 @@ export function GardenCanvas({
         </div>
       ))}
 
-      {/* NPC Monk placeholder */}
+      {/* NPC (Cat) */}
       {npc && (
         <div
           className="absolute z-20 pointer-events-none"
           style={{ left: npc.x * TILE_PX, top: npc.y * TILE_PX, width: TILE_PX, height: TILE_PX }}
         >
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-6 h-6 rounded-sm border" style={{ backgroundColor: 'hsl(var(--primary) / 0.8)', borderColor: 'hsl(var(--primary))' }} />
-          </div>
+          <img
+            src="/lovable-uploads/cbffb95e-4299-4f2f-8bb8-8738acdacad8.png"
+            alt={npc.message || 'Garden cat'}
+            width={TILE_PX}
+            height={TILE_PX}
+            className="pixelated"
+            style={{ width: TILE_PX, height: TILE_PX, objectFit: 'contain' }}
+          />
         </div>
       )}
     </div>

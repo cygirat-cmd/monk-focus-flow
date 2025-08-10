@@ -10,4 +10,4 @@ export const isTileLocked = (x: number, y: number): boolean => {
   );
 };
 
-export const defaultGardenBg = '/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png';
+export const defaultGardenBg = '/lovable-uploads/54b5b4ae-8aa8-48b7-bca1-19ecbde2be2d.png';

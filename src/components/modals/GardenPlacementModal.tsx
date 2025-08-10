@@ -121,6 +121,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
                 selected={selected}
                 onCellClick={handleCellClick}
                 className="select-none"
+                npc={null}
               />
             </div>
           </div>

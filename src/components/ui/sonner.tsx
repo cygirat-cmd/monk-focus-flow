@@ -5,7 +5,10 @@ import React from "react"
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const theme: ToasterProps["theme"] = typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  const theme: ToasterProps["theme"] =
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+      ? 'dark'
+      : 'light'
 
   return (
     <Sonner

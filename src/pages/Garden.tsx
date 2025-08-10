@@ -172,7 +172,7 @@ export default function Garden() {
               {/* Using the shared GardenCanvas to ensure perfect alignment */}
               <GardenCanvas 
                 placed={garden.placed}
-                showGrid 
+                showGrid={manage || placeOpen}
                 showLockedOverlay={false}
                 npc={npc}
                 onItemPointerDown={(e, it) => beginDrag(e, it)}

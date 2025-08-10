@@ -16,7 +16,7 @@ export const SEASONAL_GARDEN_POOLS: Record<Season, GardenStep[]> = {
     { id: 'bamboo-shoot', img: '/assets/garden/bamboo_shoot.png', label: 'Bamboo Shoot' },
   ],
   summer: [
-    { id: 'lotus-pond', img: '/assets/garden/lotus_pond.png', label: 'Lotus Pond' },
+    { id: 'lotus-pond', img: '/lovable-uploads/b82ce638-3ac2-42a1-a65f-8d3e8a479d37.png', label: 'Lotus Pond' },
     { id: 'zen-fan', img: '/assets/garden/zen_fan.png', label: 'Cooling Fan' },
     { id: 'water-basin', img: '/assets/garden/water_basin.png', label: 'Water Basin' },
   ],

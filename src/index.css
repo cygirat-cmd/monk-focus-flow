@@ -204,6 +204,10 @@ body.dark .shopify-buy__product__price {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
   }
+  img.pixelated, canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
   .glass-panel {
     background: var(--glass-bg);
     backdrop-filter: blur(18px);
