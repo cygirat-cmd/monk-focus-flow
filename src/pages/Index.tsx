@@ -310,7 +310,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     : '/lovable-uploads/20a958db-a342-42f8-a711-30e17af81a0e.png';
 
   return (
-    <div className={`min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed ${showPomodoro ? 'overflow-hidden' : ''}`} style={{ backgroundImage: 'url("/lovable-uploads/38e689b7-1bc3-4e46-95bf-9af15e856b04.png")' }}>
+    <div className={`min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed ${showPomodoro ? 'overflow-hidden' : ''}`} style={{ backgroundImage: 'url("/lovable-uploads/b2b7cc3b-adba-4a2a-8b4c-777fc4a39055.png")' }}>
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-6 flex justify-center">
           <div className="app-header__brand text-center">
@@ -320,7 +320,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
               <img
                 src={logo}
                 alt="Monk logo"
-                className="h-6 w-auto object-contain mx-auto"
+                className="h-10 w-auto object-contain mx-auto pixelated"
                 onError={() => setLogoError(true)}
               />
             )}
@@ -333,12 +333,12 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
             <>
               <button
                 onClick={() => { setMode('flow'); setPhase('work'); setElapsedMs(0); start(); }}
-                className="w-full py-4 rounded-xl bg-primary text-primary-foreground text-lg font-semibold hover:opacity-90 transition-opacity"
+                className="w-full py-4 rounded-xl text-lg font-semibold hero-button hover:opacity-90 transition-opacity"
               >
                 Start Flow
               </button>
               <button
-                className="w-full py-4 rounded-xl bg-primary text-primary-foreground text-lg font-semibold hover:opacity-90 transition-opacity"
+                className="w-full py-4 rounded-xl text-lg font-semibold hero-button hover:opacity-90 transition-opacity"
                 onClick={() => setShowPomodoro((v) => !v)}
               >
                 {showPomodoro ? 'Hide Pomodoro Options' : 'Switch to Pomodoro Mode'}
@@ -349,7 +349,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
 
           {/* Pomodoro Timer */}
           {showPomodoro && (
-            <article className="rounded-xl border border-border/40 bg-background/60 backdrop-blur p-5 space-y-4">
+            <article className="rounded-xl glass-panel p-5 space-y-4">
               <div>
                 <h2 className="text-xl font-semibold">Pomodoro Timer</h2>
                 <p className="text-sm text-muted-foreground">Choose a session and break. Sessions auto-cycle.</p>
@@ -398,7 +398,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
 
       {/* Full-screen timer overlay when running */}
       {running && (
-        <div className="fixed inset-0 z-50 text-foreground bg-background bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: mode === 'flow' ? 'url("/lovable-uploads/14193c49-bc91-4fd8-8d8f-4e4f1f8fcfa3.png")' : undefined }}>
+        <div className="fixed inset-0 z-50 text-foreground bg-background bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: mode === 'flow' ? 'url("/lovable-uploads/38e689b7-1bc3-4e46-95bf-9af15e856b04.png")' : undefined }}>
           <div className="h-full max-w-md mx-auto px-4 flex flex-col items-center justify-center gap-6">
             {mode === 'flow' ? (
               <>

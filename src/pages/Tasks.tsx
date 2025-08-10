@@ -33,16 +33,23 @@ export default function Tasks() {
   const onDrop = (to: keyof TasksState) => {
     if (!drag) return;
     setState((s) => {
+      // If dropping into the same column, do nothing to avoid duplicates
+      if (to === drag.from) return s;
       const fromList = s[drag.from].filter((t) => t.id !== drag.id);
-      const moved = Object.values(s).flat().find((t) => t.id === drag.id)!;
+      const moved = s[drag.from].find((t) => t.id === drag.id) || Object.values(s).flat().find((t) => t.id === drag.id);
+      if (!moved) return s;
+      // Prevent duplicates in target
+      if (s[to].some((t) => t.id === drag.id)) {
+        return { ...s, [drag.from]: fromList } as TasksState;
+      }
       const toList = [moved, ...s[to]];
-      return { ...s, [drag.from]: fromList, [to]: toList };
+      return { ...s, [drag.from]: fromList, [to]: toList } as TasksState;
     });
     setDrag(null);
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/b2b7cc3b-adba-4a2a-8b4c-777fc4a39055.png")' }}>
+    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/14193c49-bc91-4fd8-8d8f-4e4f1f8fcfa3.png")' }}>
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-4">
           <h1 className="text-xl font-semibold">Tasks</h1>
@@ -54,20 +61,20 @@ export default function Tasks() {
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
             placeholder="Add a task"
-            className="flex-1 px-3 py-2 rounded-md border border-border/50 bg-background/60 backdrop-blur"
+            className="flex-1 px-3 py-2 rounded-md glass-panel border"
           />
           <button onClick={addTask} className="px-3 py-2 rounded-md bg-primary text-primary-foreground">Add</button>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
           {columns.map((c) => (
-            <section key={c.key} className="rounded-md border border-border/40 p-2 bg-background/60 backdrop-blur min-h-[320px]" onDragOver={(e) => e.preventDefault()} onDrop={() => onDrop(c.key)}>
+            <section key={c.key} className="rounded-md glass-panel p-2 min-h-[320px]" onDragOver={(e) => e.preventDefault()} onDrop={() => onDrop(c.key)}>
               <h2 className="text-sm font-semibold mb-2">{c.label}</h2>
               <div className="flex flex-col gap-2">
                 {state[c.key].map((t) => (
                   <article
                     key={t.id}
-                    className="p-2 rounded border bg-background cursor-move"
+                    className="p-2 rounded glass-panel cursor-move"
                     draggable
                     onDragStart={() => setDrag({ id: t.id, from: c.key })}
                     onDoubleClick={() => {

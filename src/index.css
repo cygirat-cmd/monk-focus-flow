@@ -51,6 +51,15 @@
     --text-color-secondary: hsl(var(--muted-foreground));
     --accent-color: hsl(var(--primary));
     --accent-color-hover: hsl(var(--ring));
+
+    /* Glass & Hero tokens */
+    --glass-bg: rgba(255, 255, 255, 0.35);
+    --glass-border: rgba(0, 0, 0, 0.08);
+
+    --hero-bg: #ffffff;
+    --hero-fg: #1B1F1D;
+    --hero-border: rgba(0, 0, 0, 0.08);
+    --hero-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   }
 
   .dark {
@@ -90,6 +99,15 @@
     --sidebar-accent-foreground: 60 20% 96%;
     --sidebar-border: 0 0% 14%;
     --sidebar-ring: 220 60% 55%;
+
+    /* Glass & Hero tokens (dark) */
+    --glass-bg: rgba(20, 24, 22, 0.25);
+    --glass-border: rgba(255, 255, 255, 0.12);
+
+    --hero-bg: rgba(255, 255, 255, 0.10);
+    --hero-fg: hsl(var(--foreground));
+    --hero-border: rgba(255, 255, 255, 0.14);
+    --hero-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -180,3 +198,25 @@ body.dark .shopify-buy__product__price {
 @media (min-width: 480px){
   .path-card { flex-basis: 88px; height: 88px; }
 }
+
+@layer utilities {
+  .pixelated {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--glass-border);
+  }
+  .hero-button {
+    background: var(--hero-bg);
+    color: var(--hero-fg);
+    border: 1px solid var(--hero-border);
+    box-shadow: var(--hero-shadow);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+}
+

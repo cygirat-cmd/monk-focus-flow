@@ -18,6 +18,7 @@ export default function Garden() {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const [scale, setScale] = useState(1);
+  const [containerH, setContainerH] = useState<number>(0);
 
   useEffect(() => {
     document.title = 'Garden – Monk';
@@ -43,8 +44,9 @@ export default function Garden() {
       const ww = wrapperRef.current.clientWidth;
       const rect = wrapperRef.current.getBoundingClientRect();
       const availH = window.innerHeight - rect.top - 140; // leave space for header/nav
-      const s = Math.min(1, ww / 768, availH / 512);
-      setScale(Math.max(0.3, s));
+      const s = Math.min(ww / 768, availH / 512);
+      setContainerH(availH);
+      setScale(Math.max(0.1, Math.min(1, s)));
     };
     calc();
     window.addEventListener('resize', calc);
@@ -157,12 +159,12 @@ export default function Garden() {
         <section className="garden-wrap">
           <div 
             ref={wrapperRef}
-            className="relative overflow-hidden flex items-center justify-center"
-            style={{ height: 512 * scale }}
+            className="relative overflow-hidden"
+            style={{ height: containerH ? `${containerH}px` : 'calc(100vh - 160px)' }}
             onPointerMove={onDragMove} onPointerUp={endDrag}
           >
-            {/* Pixel-perfect canvas at 768x512 scaled to fit */}
-            <div ref={stageRef} className="relative" style={{ width: 768, height: 512, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+            {/* Pixel-perfect canvas at 768x512 scaled to fit (centered) */}
+            <div ref={stageRef} className="absolute" style={{ width: 768, height: 512, left: '50%', top: '50%', transform: `translate(-50%, -50%) scale(${scale})`, transformOrigin: 'center center' }}>
               {/* Shared renderer (background + grid) */}
               {/* ... keep existing code (renderer import and usage) */}
               {/* We render items and NPC on top to keep manage UX intact */}
@@ -185,7 +187,7 @@ export default function Garden() {
                 if (!it) return null;
                 return (
                   <div className="garden-toolbar absolute z-10" style={{ left: `${(it.x + 0.5) * cellW}px`, top: `${(it.y + 0.5) * cellH}px`, transform: 'translate(-50%, -100%)' }}>
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-background/70 backdrop-blur border border-border/40 shadow-sm">
+                    <div className="flex items-center gap-2 p-2 rounded-lg glass-panel shadow-sm">
                       <button className="px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs flex items-center gap-1" onClick={() => setSelectedId(null)}><Check size={14}/> Done</button>
                       <button className="px-2 py-1 rounded-md border text-destructive text-xs flex items-center gap-1" onClick={() => onRemove(it.id)}><Trash2 size={14}/> Remove</button>
                     </div>
@@ -198,7 +200,7 @@ export default function Garden() {
 
         {/* Placement hint */}
         {progress.pendingTokens && progress.pendingTokens.length > 0 && (
-          <div className="mt-4 p-3 rounded-lg border border-border/40 bg-background/60 backdrop-blur text-sm flex items-center justify-between">
+          <div className="mt-4 p-3 rounded-lg glass-panel text-sm flex items-center justify-between">
             <div className="flex items-center gap-2"><img src={progress.pendingTokens[0].img} alt={progress.pendingTokens[0].label} className="w-8 h-8 object-contain"/><span>{progress.pendingTokens[0].label}</span></div>
             <button className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm" onClick={() => openPlaceFor(progress.pendingTokens[0])}>Place</button>
           </div>
@@ -210,7 +212,7 @@ export default function Garden() {
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/60 animate-fade-in" onClick={() => setInventoryOpen(false)} />
           <div className="relative mx-auto max-w-md h-full p-4 flex items-end sm:items-center">
-            <div className="w-full rounded-t-2xl sm:rounded-xl border bg-background p-4 shadow-lg max-h-[80vh] overflow-y-auto animate-slide-in-right sm:animate-scale-in">
+            <div className="w-full rounded-t-2xl sm:rounded-xl glass-panel p-4 shadow-lg max-h-[80vh] overflow-y-auto animate-slide-in-right sm:animate-scale-in">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h2 className="text-lg font-semibold">Inventory</h2>

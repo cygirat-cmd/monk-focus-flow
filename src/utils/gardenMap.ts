@@ -5,8 +5,8 @@ export const TILE_PX = 64; // visual reference
 // Locked temple area: specific blocked tiles
 export const isTileLocked = (x: number, y: number): boolean => {
   return (
-    (x === 6 && (y === 2 || y === 3 || y === 4)) ||
-    (x === 7 && (y === 2 || y === 3 || y === 4))
+    (x === 5 && (y === 1 || y === 2 || y === 3)) ||
+    (x === 6 && (y === 1 || y === 2 || y === 3))
   );
 };
 
