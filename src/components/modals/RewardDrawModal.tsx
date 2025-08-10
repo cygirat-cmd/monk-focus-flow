@@ -11,7 +11,16 @@ interface RewardDrawModalProps {
   onResult: (reward: RewardItem | null) => void;
 }
 
-const silhouettes = ['/placeholder.svg'];
+const silhouettes = [
+  '/assets/garden/stone_1.png',
+  '/assets/garden/stone_2.png',
+  '/assets/garden/lantern_1.png',
+  '/assets/garden/bonsai_1.png',
+  '/assets/relics/tea_bowl.png',
+  '/assets/relics/fan.png',
+  '/assets/relics/koan_scroll.png',
+  '/assets/relics/hand_bell.png',
+];
 
 export default function RewardDrawModal({ open, seconds, onClose, onResult }: RewardDrawModalProps) {
   const [spinning, setSpinning] = useState(true);
@@ -53,7 +62,7 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
         <div className="rounded-xl border bg-card p-6 flex flex-col items-center gap-4">
           <div className={`w-40 h-40 rounded-lg border flex items-center justify-center ${glow ? 'shadow-[0_0_24px_hsl(var(--primary)/0.5)]' : ''}`}>
             {spinning && (
-              <img src={silhouettes[idx]} alt="mystery" className="w-28 h-28 opacity-60" />
+              <img src={silhouettes[idx]} alt="mystery" className="w-28 h-28 opacity-60 animate-spin" />
             )}
             {!spinning && finalItem && (
               <img src={finalItem.kind === 'garden' ? finalItem.img : finalItem.img} alt={finalItem.kind === 'garden' ? finalItem.label : finalItem.title} className="w-32 h-32 object-contain" />
