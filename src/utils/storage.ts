@@ -63,7 +63,7 @@ export type ProgressData = {
   flowScore: number;
   bestFlowSession: FlowSession | null;
   rules: { minSecondsPomodoro: number; minSecondsFlow: number; dailyMaxPlacements: number; cooldownSeconds: number };
-  counters: { placementsToday: number; lastSessionEndedAt: number; consecutiveDays: number };
+  counters: { placementsToday: number; lastSessionEndedAt: number; consecutiveDays: number; itemsReceivedToday: number; itemsDate: string; lastRewardAt?: number };
   streak: { days: number; lastDate: string };
   npc: NPC;
   season: Season;
@@ -125,7 +125,7 @@ export const loadProgress = (): ProgressData => {
       flowScore: 0,
       bestFlowSession: null,
       rules: { minSecondsPomodoro: 180, minSecondsFlow: 180, dailyMaxPlacements: 6, cooldownSeconds: 30 },
-      counters: { placementsToday: 0, lastSessionEndedAt: 0, consecutiveDays: 0 },
+      counters: { placementsToday: 0, lastSessionEndedAt: 0, consecutiveDays: 0, itemsReceivedToday: 0, itemsDate: new Date().toDateString(), lastRewardAt: 0 },
       streak: { days: 0, lastDate: '' },
       npc: { x: 6, y: 4, outfit: 'default' },
       season: getCurrentSeason(),
@@ -163,7 +163,7 @@ export const loadProgress = (): ProgressData => {
       flowScore: 0,
       bestFlowSession: null,
       rules: { minSecondsPomodoro: 180, minSecondsFlow: 180, dailyMaxPlacements: 6, cooldownSeconds: 30 },
-      counters: { placementsToday: 0, lastSessionEndedAt: 0, consecutiveDays: 0 },
+      counters: { placementsToday: 0, lastSessionEndedAt: 0, consecutiveDays: 0, itemsReceivedToday: 0, itemsDate: new Date().toDateString(), lastRewardAt: 0 },
       streak: { days: 0, lastDate: '' },
       npc: { x: 6, y: 4, outfit: 'default' },
       season: getCurrentSeason(),

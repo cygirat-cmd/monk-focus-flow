@@ -8,7 +8,13 @@ export function midnightReset(progress: any) {
   const now = Date.now();
   const last = progress.streak?.lastDate ? new Date(progress.streak.lastDate).getTime() : 0;
   if (!isSameDay(now, last)) {
-    progress.counters = { ...(progress.counters || {}), placementsToday: 0, lastSessionEndedAt: progress.counters?.lastSessionEndedAt || 0 };
+    progress.counters = {
+      ...(progress.counters || {}),
+      placementsToday: 0,
+      itemsReceivedToday: 0,
+      itemsDate: new Date().toDateString(),
+      lastSessionEndedAt: progress.counters?.lastSessionEndedAt || 0,
+    };
   }
 }
 

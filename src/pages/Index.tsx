@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { CircularProgress } from '@/components/timer/CircularProgress';
 import BottomNav from '@/components/layout/BottomNav';
 import WindDownModal from '@/components/modals/WindDownModal';
+import RewardDrawModal from '@/components/modals/RewardDrawModal';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
 import { loadSettings, saveSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/utils/storage';
@@ -12,6 +13,8 @@ import { Play, Square } from 'lucide-react';
 import { validateSession, addFocusPoints, updateStreak } from '@/utils/progression';
 import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
 import { randomEmptyGardenTile } from '@/utils/gardenHelpers';
+import { grantReward, RewardItem } from '@/utils/rewards';
+import { playEnd } from '@/utils/audio';
 
 // SEO
 const TITLE = 'Monk Flow Timer • Zen Pomodoro';
@@ -42,6 +45,10 @@ const Index = () => {
   const [logoError, setLogoError] = useState(false);
   const [pendingStartBreak, setPendingStartBreak] = useState(false);
   const [showPomodoro, setShowPomodoro] = useState(false);
+  const [rewardOpen, setRewardOpen] = useState(false);
+  const [rewardSeconds, setRewardSeconds] = useState<number>(0);
+  const [rewardPromptOpen, setRewardPromptOpen] = useState(false);
+  const [rewardAdLoading, setRewardAdLoading] = useState(false);
 
   useEffect(() => {
     document.title = TITLE;
@@ -159,18 +166,26 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     }
   }
 
-  if (progress.currentPath.length + 1 < progress.pathLength) {
-    newStep = getRandomGardenStep(progress.season, rarity);
-    progress.currentPath.push(newStep);
-    progress.pendingTokens = [...(progress.pendingTokens || []), newStep];
-    analytics.track({ type: 'garden_step_added' });
-  } else {
-    newRelicUnlocked = getRandomRelic();
-    progress.relics.push(newRelicUnlocked);
-    progress.currentPath = [];
-    quote = getRandomZenQuote();
-    analytics.track({ type: 'relic_unlocked' });
+  // Daily reward system: max 1 reward per day, with rewarded-ad bypass
+  const today = new Date().toDateString();
+  if (progress.counters.itemsDate !== today) {
+    progress.counters.itemsReceivedToday = 0;
+    progress.counters.itemsDate = today;
   }
+  playEnd();
+
+  const minutes = payload.seconds / 60;
+  if (minutes >= 10) {
+    if ((progress.counters.itemsReceivedToday || 0) < 1) {
+      setRewardSeconds(payload.seconds);
+      setRewardOpen(true);
+    } else {
+      // prompt to watch ad
+      setRewardSeconds(payload.seconds);
+      setRewardPromptOpen(true);
+    }
+  }
+
 
   // Move NPC after each session to a valid empty tile
   const t = randomEmptyGardenTile();
@@ -433,6 +448,48 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
           zenQuote={zenQuote}
         />
       )}
+      {rewardOpen && (
+        <RewardDrawModal
+          open={rewardOpen}
+          seconds={rewardSeconds}
+          onClose={() => setRewardOpen(false)}
+          onResult={(item) => {
+            if (item) {
+              const p = loadProgress();
+              grantReward(p, item);
+              saveProgress(p);
+              analytics.track({ type: item.kind === 'garden' ? 'garden_step_added' : 'relic_unlocked' });
+            }
+          }}
+        />
+      )}
+
+      {rewardPromptOpen && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur">
+          <div className="max-w-md mx-auto px-4 pt-12 pb-24">
+            <h2 className="text-2xl font-semibold mb-2">Daily reward limit reached</h2>
+            <p className="text-muted-foreground mb-6">Watch an ad to get another item.</p>
+            <div className="flex gap-3">
+              <button
+                className="flex-1 py-3 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60"
+                disabled={rewardAdLoading}
+                onClick={() => {
+                  setRewardAdLoading(true);
+                  window.setTimeout(() => {
+                    setRewardAdLoading(false);
+                    setRewardPromptOpen(false);
+                    setRewardOpen(true);
+                  }, 3000);
+                }}
+              >
+                {rewardAdLoading ? 'Watching…' : 'Watch Ad'}
+              </button>
+              <button className="flex-1 py-3 rounded-lg bg-accent text-accent-foreground font-medium" onClick={() => setRewardPromptOpen(false)}>No thanks</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </div>
   );
