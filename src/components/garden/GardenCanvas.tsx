@@ -115,7 +115,7 @@ export function GardenCanvas({
                 onClick={() => handleCell(x, y)}
                 disabled={locked}
                 aria-label={`Cell ${x + 1}, ${y + 1}`}
-                className="relative"
+                className={`relative outline-none ${!locked ? 'hover:bg-accent/10 focus-visible:ring-1 focus-visible:ring-accent/40 transition-colors' : ''}`}
                 style={{ width: TILE_PX, height: TILE_PX, cursor: locked ? 'not-allowed' : 'pointer', background: 'transparent' }}
               />
             );

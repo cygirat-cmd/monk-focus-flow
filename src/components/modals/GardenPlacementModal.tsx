@@ -1,12 +1,11 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { loadProgress, saveProgress, GardenStep } from '@/utils/storageClient';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { loadProgress, GardenStep } from '@/utils/storageClient';
 import { placeGardenItem } from '@/utils/gardenHelpers';
 import { isTileLocked } from '@/utils/gardenMap';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { RotateCw } from 'lucide-react';
 import GardenCanvas from '@/components/garden/GardenCanvas';
+
 interface GardenPlacementModalProps {
   open: boolean;
   onClose: () => void;
@@ -17,21 +16,35 @@ interface GardenPlacementModalProps {
 export default function GardenPlacementModal({ open, onClose, token, onPlaced }: GardenPlacementModalProps) {
   const [progress, setProgress] = useState(loadProgress());
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(null);
-  const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
+
+  // Scale to fit small screens
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const calc = () => {
+      if (!wrapRef.current) return;
+      const ww = wrapRef.current.clientWidth;
+      const s = Math.min(1, ww / 768);
+      setScale(Math.max(0.3, s));
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, []);
 
   useEffect(() => {
     if (open) {
       const p = loadProgress();
       setProgress(p);
       setSelected(null);
-      setRotation(0);
     }
   }, [open]);
 
   // Live subscribe to progress changes while open
   useEffect(() => {
     if (!open) return;
-    const handler = (e: any) => {
+    const handler = () => {
       try {
         const p = loadProgress();
         setProgress(p);
@@ -45,19 +58,16 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
   const targetToken: GardenStep | undefined = token || progress.pendingToken || progress.pendingTokens?.[0];
 
   const isFull = useMemo(() => (garden.placed?.length || 0) >= garden.cols * garden.rows, [garden]);
-
   const isOccupied = (x: number, y: number) => garden.placed?.some((it) => it.x === x && it.y === y);
 
-  const handleCellClick = (i: number) => {
+  const handleCellClick = (x: number, y: number) => {
     if (!targetToken) return;
-    const x = i % garden.cols;
-    const y = Math.floor(i / garden.cols);
     if (isTileLocked(x, y)) {
-      toast.error('Temple area is sacred — items cannot be placed here');
+      // Ignore clicks on blocked temple tiles
       return;
     }
     if (isOccupied(x, y)) {
-      toast.error('That spot is taken');
+      toast.message('That spot is taken');
       return;
     }
     setSelected({ x, y });
@@ -65,9 +75,9 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
 
   const confirmPlacement = () => {
     if (!targetToken || !selected) return;
-    const res = placeGardenItem(targetToken, selected.x, selected.y, rotation);
+    const res = placeGardenItem(targetToken, selected.x, selected.y);
     if (!(res as any).ok) {
-      toast.error((res as any).reason === 'occupied' ? 'That spot is taken' : 'Could not place item');
+      toast.message((res as any).reason === 'occupied' ? 'That spot is taken' : 'Could not place item');
       return;
     }
     setProgress(loadProgress());
@@ -96,31 +106,19 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
             <div className="rounded-lg border bg-card p-3 text-sm">Garden is full. Manage items to free space.</div>
           )}
 
-          {/* Shared Garden renderer at 768x512 for perfect alignment */}
-          <div className="relative mx-auto" style={{ width: 768, height: 512 }}>
-            <GardenCanvas
-              placed={garden.placed}
-              showGrid
-              showLockedOverlay
-              selected={selected}
-              onCellClick={(x, y) => handleCellClick(y * garden.cols + x)}
-              className="select-none"
-            />
-          </div>
-
-          {/* Rotate / preview */}
-          {!!targetToken && (
-            <div className="flex items-center justify-between rounded-lg border bg-card p-2">
-              <div className="flex items-center gap-2">
-                <img src={targetToken.img} alt={targetToken.label} className="w-8 h-8 object-contain" />
-                <span className="text-sm">{targetToken.label}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-1.5 rounded-md border text-sm" onClick={() => setRotation((r) => ((r + 90) % 360) as any)}>Rotate 90°</button>
-                <span className="text-xs text-muted-foreground">{rotation}°</span>
-              </div>
+          {/* Shared Garden renderer at 768x512 for perfect alignment, scaled to fit */}
+          <div ref={wrapRef} className="relative mx-auto w-full" style={{ height: 512 * scale }}>
+            <div className="absolute top-0 left-0" style={{ width: 768, height: 512, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+              <GardenCanvas
+                placed={garden.placed}
+                showGrid
+                showLockedOverlay
+                selected={selected}
+                onCellClick={handleCellClick}
+                className="select-none"
+              />
             </div>
-          )}
+          </div>
 
           <div className="flex gap-2 justify-end">
             <button

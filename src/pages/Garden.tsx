@@ -4,7 +4,7 @@ import { loadProgress, saveProgress, GardenPlacedItem, GardenStep } from '@/util
 import { placeGardenItem, moveGardenItem, rotateGardenItem, removeGardenItem } from '@/utils/gardenHelpers';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import GardenPlacementModal from '@/components/modals/GardenPlacementModal';
-import { RotateCw, Trash2, Check, Sprout } from 'lucide-react';
+import { Trash2, Check, Sprout } from 'lucide-react';
 import { isTileLocked } from '@/utils/gardenMap';
 import GardenCanvas from '@/components/garden/GardenCanvas';
 export default function Garden() {
@@ -44,7 +44,7 @@ export default function Garden() {
       const rect = wrapperRef.current.getBoundingClientRect();
       const availH = window.innerHeight - rect.top - 140; // leave space for header/nav
       const s = Math.min(1, ww / 768, availH / 512);
-      setScale(Math.max(0.5, s));
+      setScale(Math.max(0.3, s));
     };
     calc();
     window.addEventListener('resize', calc);
@@ -72,6 +72,7 @@ export default function Garden() {
 
   const beginDrag = (e: React.PointerEvent, item: GardenPlacedItem) => {
     if (!manage) return;
+    setSelectedId(item.id);
     const target = e.currentTarget as HTMLDivElement;
     target.setPointerCapture(e.pointerId);
     dragRef.current = { id: item.id, startX: e.clientX, startY: e.clientY, originX: item.x, originY: item.y };
@@ -168,40 +169,15 @@ export default function Garden() {
               {/* Grid/background */}
               {/* Using the shared GardenCanvas to ensure perfect alignment */}
               <GardenCanvas 
-                placed={[]} 
+                placed={garden.placed}
                 showGrid 
                 showLockedOverlay={false}
+                npc={npc}
+                onItemPointerDown={(e, it) => beginDrag(e, it)}
                 className="absolute inset-0"
               />
 
-              {/* NPC Monk */}
-              <div
-                className="absolute z-20 pointer-events-none"
-                style={{ 
-                  left: `${npc.x * cellW}px`, 
-                  top: `${npc.y * cellH}px`, 
-                  width: `${cellW}px`, 
-                  height: `${cellH}px`,
-                }}
-              >
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="w-6 h-6 bg-primary rounded-sm border" />
-                </div>
-              </div>
-
-              {/* items */}
-              {garden.placed.map((it) => (
-                <div
-                  key={it.id}
-                  id={`garden-item-${it.id}`}
-                  className={`garden-item absolute ${manage ? 'cursor-grab touch-none' : ''}`}
-                  style={{ left: `${it.x * cellW}px`, top: `${it.y * cellH}px`, width: `${cellW}px`, height: `${cellH}px`, transform: `rotate(${it.rotation}deg)` }}
-                  onPointerDown={(e) => beginDrag(e, it)}
-                  onClick={() => manage ? setSelectedId(it.id) : null}
-                >
-                  <img src={it.img} alt={it.label || 'Garden item'} style={{ width: `${cellW}px`, height: `${cellH}px`, imageRendering: 'pixelated', objectFit: 'contain' as const }} />
-                </div>
-              ))}
+              
 
               {/* floating item menu */}
               {manage && selectedId && (() => {
@@ -211,7 +187,6 @@ export default function Garden() {
                   <div className="garden-toolbar absolute z-10" style={{ left: `${(it.x + 0.5) * cellW}px`, top: `${(it.y + 0.5) * cellH}px`, transform: 'translate(-50%, -100%)' }}>
                     <div className="flex items-center gap-2 p-2 rounded-lg bg-card border shadow-sm">
                       <button className="px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs flex items-center gap-1" onClick={() => setSelectedId(null)}><Check size={14}/> Done</button>
-                      <button className="px-2 py-1 rounded-md border text-xs flex items-center gap-1" onClick={() => onRotate(it.id)}><RotateCw size={14}/> Rotate</button>
                       <button className="px-2 py-1 rounded-md border text-destructive text-xs flex items-center gap-1" onClick={() => onRemove(it.id)}><Trash2 size={14}/> Remove</button>
                     </div>
                   </div>
