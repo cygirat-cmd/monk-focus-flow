@@ -1,20 +1,25 @@
 import { useEffect } from 'react';
-import { useTheme } from 'next-themes';
 
 export default function ThemeAuto() {
-  const { setTheme } = useTheme();
-
   useEffect(() => {
     const mode = (localStorage.getItem('monk.ui.theme') || 'auto') as 'light' | 'dark' | 'auto';
-    if (mode !== 'auto') return; // respect explicit user choice; only auto follows system/night
+    const apply = (dark: boolean) => {
+      const el = document.documentElement;
+      el.classList.toggle('dark', dark);
+    };
 
     const compute = () => {
+      if (mode !== 'auto') {
+        apply(mode === 'dark');
+        return;
+      }
       const hour = new Date().getHours();
-      const night = hour >= 19 || hour < 7; // 19:00–07:00
+      const night = hour >= 19 || hour < 7;
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const dark = prefersDark || night;
-      setTheme(dark ? 'dark' : 'light');
+      apply(dark);
     };
+
     compute();
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
     mql.addEventListener('change', compute);
@@ -23,7 +28,7 @@ export default function ThemeAuto() {
       mql.removeEventListener('change', compute);
       clearInterval(iv);
     };
-  }, [setTheme]);
+  }, []);
 
   return null;
 }

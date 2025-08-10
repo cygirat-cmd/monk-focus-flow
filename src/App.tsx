@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+// import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
@@ -15,7 +15,7 @@ import TreasureHall from "./pages/TreasureHall";
 import Garden from "./pages/Garden";
 import Splash from "./components/Splash";
 import ThemeAuto from "./components/ThemeAuto";
-import { ThemeProvider } from "next-themes";
+// import { ThemeProvider } from "next-themes";
 import DevPanel from "./components/dev/DevPanel";
 
 const queryClient = new QueryClient();
@@ -25,32 +25,28 @@ const AppRoot = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <ThemeAuto />
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/store" element={<Store />} />
-              <Route path="/focus-club" element={<FocusClub />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/zen-path" element={<ZenPath />} />
-              <Route path="/treasure-hall" element={<TreasureHall />} />
-              <Route path="/garden" element={<Garden />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          {/* Splash overlay on initial load */}
-          {showSplash && (
-            <Splash onDone={() => setShowSplash(false)} />
-          )}
-          <DevPanel />
-        </TooltipProvider>
-      </ThemeProvider>
+      <ThemeAuto />
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/store" element={<Store />} />
+          <Route path="/focus-club" element={<FocusClub />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/zen-path" element={<ZenPath />} />
+          <Route path="/treasure-hall" element={<TreasureHall />} />
+          <Route path="/garden" element={<Garden />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+      {/* Splash overlay on initial load */}
+      {showSplash && (
+        <Splash onDone={() => setShowSplash(false)} />
+      )}
+      <DevPanel />
     </QueryClientProvider>
   );
 };
