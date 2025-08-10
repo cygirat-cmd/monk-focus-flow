@@ -1,13 +1,9 @@
 import BottomNav from '@/components/layout/BottomNav';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { loadProgress, saveProgress } from '@/utils/storage';
-import { placeGardenItem, moveGardenItem, rotateGardenItem, removeGardenItem, GardenPlacedItem, GardenStep } from '@/utils/storageClient';
+import { loadProgress, saveProgress, GardenPlacedItem, GardenStep, placeGardenItem, moveGardenItem, rotateGardenItem, removeGardenItem } from '@/utils/storageClient';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import GardenPlacementModal from '@/components/modals/GardenPlacementModal';
-import { RotateCw, Trash2, Wrench, Check, Sprout, Clock, Target } from 'lucide-react';
-import { SEASONAL_BACKGROUNDS } from '@/utils/zenData';
-import { getActiveTrials } from '@/utils/zenTrials';
-import { formatFlowSession } from '@/utils/flowScoring';
+import { RotateCw, Trash2, Check, Sprout } from 'lucide-react';
 
 export default function Garden() {
   const [progress, setProgress] = useState(loadProgress());
@@ -29,13 +25,13 @@ export default function Garden() {
     setProgress(loadProgress());
   }, [placeOpen]);
 
-  const garden = { cols: 12, rows: 8, placed: [], bg: SEASONAL_BACKGROUNDS[progress.season] };
+  const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: 'gravel_light.png' };
   const cellW = 100 / garden.cols;
   const cellH = 100 / garden.rows;
-  const activeTrials = getActiveTrials(progress.trials);
   
-  // Check if NPC message should still be shown
-  const showNPCMessage = progress.npc.message && progress.npc.messageExpiry && Date.now() < progress.npc.messageExpiry;
+  // Simplified NPC and features for now - using defaults
+  const npc = { x: 6, y: 4, message: null, messageExpiry: null };
+  const showNPCMessage = false;
 
   const onRotate = (id: string) => {
     rotateGardenItem(id, 90);
@@ -110,12 +106,8 @@ export default function Garden() {
 
   const bgStyle = useMemo(() => {
     const url = garden.bg ? (garden.bg.startsWith('http') || garden.bg.startsWith('/')) ? garden.bg : `/assets/garden/${garden.bg}` : '';
-    const witheredFilter = progress.isWithered ? 'grayscale(1) brightness(0.5)' : '';
-    return url ? { 
-      backgroundImage: `url(${url})`,
-      filter: witheredFilter,
-    } : { filter: witheredFilter };
-  }, [garden.bg, progress.isWithered]);
+    return url ? { backgroundImage: `url(${url})` } : {};
+  }, [garden.bg]);
   
   // Check for temple area (center 5-7, 3-5)
   const isTempleArea = (x: number, y: number) => x >= 5 && x <= 7 && y >= 3 && y <= 5;
@@ -125,8 +117,8 @@ export default function Garden() {
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-2xl font-semibold">Garden {progress.isWithered && '(Withered)'}</h1>
-            <p className="text-sm text-muted-foreground capitalize">{progress.season} season</p>
+            <h1 className="text-2xl font-semibold">Garden</h1>
+            <p className="text-sm text-muted-foreground">Arrange your zen space</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setInventoryOpen(true)} className="px-3 py-1.5 rounded-md border bg-card text-sm flex items-center gap-1">
@@ -135,30 +127,6 @@ export default function Garden() {
             <button onClick={() => setManage(m => !m)} className={`px-3 py-1.5 rounded-md text-sm ${manage ? 'bg-primary text-primary-foreground' : 'border bg-card'}`}>{manage ? 'Done' : 'Manage'}</button>
           </div>
         </header>
-        
-        {/* Stats and Trials */}
-        <div className="mb-4 space-y-3">
-          {progress.bestFlowSession && (
-            <div className="p-3 rounded-lg border bg-card text-sm">
-              <div className="font-medium">Best Flow Session</div>
-              <div className="text-muted-foreground">{formatFlowSession(progress.bestFlowSession)}</div>
-            </div>
-          )}
-          
-          {activeTrials.length > 0 && (
-            <div className="p-3 rounded-lg border bg-card text-sm">
-              <div className="font-medium flex items-center gap-1 mb-2">
-                <Target size={16}/> Active Zen Trials
-              </div>
-              {activeTrials.slice(0, 2).map((trial) => (
-                <div key={trial.id} className="flex items-center justify-between py-1">
-                  <span className="text-muted-foreground">{trial.title}</span>
-                  <span className="text-xs">{trial.progress}/{trial.target}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         <section className="garden-wrap">
           <div ref={stageRef} className="garden-stage relative w-full aspect-[12/8] rounded-xl overflow-hidden border bg-muted/30" style={bgStyle}
@@ -186,8 +154,8 @@ export default function Garden() {
             <div
               className="absolute z-20 pointer-events-none"
               style={{ 
-                left: `${progress.npc.x * cellW}%`, 
-                top: `${progress.npc.y * cellH}%`, 
+                left: `${npc.x * cellW}%`, 
+                top: `${npc.y * cellH}%`, 
                 width: `${cellW}%`, 
                 height: `${cellH}%`,
               }}
@@ -198,39 +166,18 @@ export default function Garden() {
                 </div>
               </div>
             </div>
-            
-            {/* NPC Speech Bubble */}
-            {showNPCMessage && (
-              <div
-                className="absolute z-30 pointer-events-none"
-                style={{
-                  left: `${(progress.npc.x + 0.5) * cellW}%`,
-                  top: `${progress.npc.y * cellH}%`,
-                  transform: 'translate(-50%, -100%)',
-                }}
-              >
-                <div className="bg-white text-black text-xs p-2 rounded-lg shadow-lg max-w-32 text-center relative">
-                  {progress.npc.message}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
-                </div>
-              </div>
-            )}
 
             {/* items */}
             {garden.placed.map((it) => (
               <div
                 key={it.id}
                 id={`garden-item-${it.id}`}
-                className={`garden-item absolute ${manage ? 'cursor-grab touch-none' : ''} ${progress.isWithered ? 'grayscale brightness-50' : ''}`}
+                className={`garden-item absolute ${manage ? 'cursor-grab touch-none' : ''}`}
                 style={{ left: `${it.x * cellW}%`, top: `${it.y * cellH}%`, width: `${cellW}%`, height: `${cellH}%`, transform: `rotate(${it.rotation}deg)` }}
                 onPointerDown={(e) => beginDrag(e, it)}
                 onClick={() => manage ? setSelectedId(it.id) : null}
               >
                 <img src={it.img} alt={it.label || 'Garden item'} className="w-full h-full object-contain" />
-                {/* Show bonus indicator for special items */}
-                {progress.gardenBonuses[it.id] && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full text-xs flex items-center justify-center">✨</div>
-                )}
               </div>
             ))}
 
