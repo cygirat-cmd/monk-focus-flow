@@ -394,7 +394,6 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
               )}
             </article>
           )}
-        </section>
       </main>
 
       {/* Full-screen timer overlay when running */}
