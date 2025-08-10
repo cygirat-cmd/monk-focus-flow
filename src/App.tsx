@@ -21,7 +21,7 @@ import DevPanel from "./components/dev/DevPanel";
 const queryClient = new QueryClient();
 
 const AppRoot = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
 
   return (
     <QueryClientProvider client={queryClient}>
