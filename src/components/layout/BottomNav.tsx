@@ -1,18 +1,17 @@
-import { NavLink } from 'react-router-dom';
+
 import { Home, CheckSquare, Store, Settings, TreePine, Sprout } from 'lucide-react';
 
-const Tab = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => (
-  <NavLink
-    to={to}
-    className={({ isActive }) => `flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-md transition-colors duration-200 ${
-      isActive ? 'text-primary bg-accent' : 'text-muted-foreground hover:text-foreground'
-    }`}
-    aria-label={label}
-  >
-    <Icon size={22} />
-    <span className="text-xs">{label}</span>
-  </NavLink>
-);
+const Tab = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => {
+  const isActive = typeof window !== 'undefined' && window.location?.pathname === to;
+  const base = "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-md transition-colors duration-200";
+  const cls = isActive ? `${base} text-primary bg-accent` : `${base} text-muted-foreground hover:text-foreground`;
+  return (
+    <a href={to} className={cls} aria-label={label}>
+      <Icon size={22} />
+      <span className="text-xs">{label}</span>
+    </a>
+  );
+};
 
 export default function BottomNav() {
   return (
