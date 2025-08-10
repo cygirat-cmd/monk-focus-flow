@@ -1,4 +1,3 @@
-import { useTheme } from 'next-themes';
 import { Settings } from '@/utils/storageClient';
 import { Moon, Sun, Monitor } from 'lucide-react';
 
@@ -8,8 +7,6 @@ interface ThemeSelectorProps {
 }
 
 export default function ThemeSelector({ settings, onSettingsChange }: ThemeSelectorProps) {
-  const { setTheme } = useTheme();
-
   const handleThemeChange = (theme: 'light' | 'dark' | 'auto') => {
     const newSettings = { ...settings, theme };
     onSettingsChange(newSettings);
@@ -18,10 +15,7 @@ export default function ThemeSelector({ settings, onSettingsChange }: ThemeSelec
       (window as any).__monkSetTheme?.(theme);
       localStorage.setItem('monk.ui.theme', theme);
     } catch {}
-
-    setTheme(theme === 'auto' ? 'system' : theme);
   };
-
   const themes = [
     { value: 'light' as const, label: 'Light', icon: Sun },
     { value: 'dark' as const, label: 'Dark', icon: Moon },
