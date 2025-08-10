@@ -27,12 +27,14 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
   const [finalItem, setFinalItem] = useState<RewardItem | null>(null);
   const [idx, setIdx] = useState(0);
   const [placeOpen, setPlaceOpen] = useState(false);
+  const [placedThisReward, setPlacedThisReward] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setSpinning(true);
     setFinalItem(null);
+    setPlacedThisReward(false);
     setIdx(0);
     if (timerRef.current) window.clearInterval(timerRef.current);
     timerRef.current = window.setInterval(() => setIdx((i) => (i + 1) % silhouettes.length), 120);
@@ -81,14 +83,14 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
 
         <div className="mt-6 flex gap-3">
           {!spinning && finalItem && finalItem.kind === 'garden' && (
-            <button className="flex-1 py-3 rounded-lg bg-secondary text-secondary-foreground font-medium" onClick={() => setPlaceOpen(true)}>Place in Garden</button>
+            <button className="flex-1 py-3 rounded-lg bg-secondary text-secondary-foreground font-medium disabled:opacity-50" disabled={placedThisReward} onClick={() => setPlaceOpen(true)}>{placedThisReward ? 'Placed' : 'Place in Garden'}</button>
           )}
           <button className="flex-1 py-3 rounded-lg bg-accent text-accent-foreground font-medium" onClick={onClose}>Continue</button>
         </div>
       </div>
 
       {finalItem && finalItem.kind === 'garden' && (
-        <GardenPlacementModal open={placeOpen} onClose={() => setPlaceOpen(false)} token={{ id: finalItem.id, img: finalItem.img, label: finalItem.label }} />
+        <GardenPlacementModal open={placeOpen} onClose={() => setPlaceOpen(false)} token={{ id: finalItem.id, img: finalItem.img, label: finalItem.label }} onPlaced={() => setPlacedThisReward(true)} />
       )}
     </div>
   );

@@ -78,8 +78,12 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
     try {
       if (!targetToken || !selected) return;
       const res = placeGardenItem(targetToken, selected.x, selected.y);
-      if (!(res as any).ok) {
-        toast((res as any).reason === 'occupied' ? 'That spot is taken' : 'Could not place item');
+      const r = res as any;
+      if (!r.ok) {
+        if (r.reason === 'occupied') toast('That spot is taken');
+        else if (r.reason === 'locked') toast('You cannot place on temple tiles');
+        else if (r.reason === 'not_owned') toast('This item has already been placed');
+        else toast('Could not place item');
         return;
       }
       setProgress(loadProgress());
