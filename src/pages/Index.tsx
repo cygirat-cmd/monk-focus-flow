@@ -310,7 +310,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     : '/lovable-uploads/20a958db-a342-42f8-a711-30e17af81a0e.png';
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url("/lovable-uploads/dcf05802-8567-4268-b9b7-de2e16b0c181.png")' }}>
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-6">
           <div className="app-header__brand">
