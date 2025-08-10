@@ -1,5 +1,5 @@
 import { GardenStep, Relic, ProgressData } from './storageClient';
-import { RELICS_POOL } from './zenData';
+
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 
@@ -104,7 +104,11 @@ export function drawReward(seconds: number): RewardItem | null {
   if (pickR === 'common') pool = COMMON;
   else if (pickR === 'rare') pool = RARE;
   else if (pickR === 'epic') pool = EPIC;
-  else pool = [...LEGENDARY_NON_RELIC, ...LEGENDARY_RELICS];
+  else {
+    // Lower weight for relics within legendary rarity
+    const pickRelic = Math.random() < 0.25; // 25% relics, 75% non-relic legendaries
+    pool = pickRelic ? LEGENDARY_RELICS : LEGENDARY_NON_RELIC;
+  }
   // Seasonal gating
   const month = new Date().getMonth();
   const season = month >= 2 && month <= 4 ? 'spring' : month >= 5 && month <= 7 ? 'summer' : month >= 8 && month <= 10 ? 'autumn' : 'winter';
