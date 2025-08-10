@@ -25,7 +25,18 @@ export default function WindDownModal({
   const [mounted, setMounted] = useState(false);
   const [placeOpen, setPlaceOpen] = useState(false);
   const [placed, setPlaced] = useState(false);
-  const [shopifyReady, setShopifyReady] = useState(false);
+
+  // Shopify Storefront API fetch
+  type Product = {
+    id: string;
+    title: string;
+    handle: string;
+    image: string | null;
+    price: string;
+    descriptionHtml: string;
+  };
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -33,52 +44,37 @@ export default function WindDownModal({
 
   useEffect(() => {
     if (!open || !mounted) return;
-    setShopifyReady(false);
-    const existing = document.querySelector('script[src*="buy-button-storefront"]');
-    if (!existing) {
-      const script = document.createElement('script');
-      script.src = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
-      script.onload = () => {
-        if ((window as any).ShopifyBuy) initShopifyCarousel();
-      };
-      document.head.appendChild(script);
-    } else {
-      initShopifyCarousel();
-    }
+    setLoadingProducts(true);
+    const SHOP_DOMAIN = 'zenmodoro.myshopify.com';
+    const STOREFRONT_TOKEN = '7fc2675aef49f4108fbea719cfcd10d6';
+    const API_URL = `https://${SHOP_DOMAIN}/api/2024-07/graphql.json`;
+    const query = `#graphql\n      query Products {\n        products(first: 6) {\n          edges { node { id title handle descriptionHtml images(first: 3) { edges { node { url altText } } } priceRange { minVariantPrice { amount currencyCode } } } }\n        }\n      }\n    `;
+    fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+      },
+      body: JSON.stringify({ query }),
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        const nodes = (json?.data?.products?.edges || []).map((e: any) => e.node);
+        const mapped: Product[] = nodes.map((n: any) => ({
+          id: n.id,
+          title: n.title,
+          handle: n.handle,
+          descriptionHtml: n.descriptionHtml,
+          image: n.images?.edges?.[0]?.node?.url || null,
+          price: `${n.priceRange?.minVariantPrice?.amount} ${n.priceRange?.minVariantPrice?.currencyCode}`,
+        }));
+        setProducts(mapped);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingProducts(false));
   }, [open, mounted]);
 
-  const initShopifyCarousel = () => {
-    try {
-      const ShopifyBuy = (window as any).ShopifyBuy;
-      const targetElement = document.getElementById('winddown-recs');
-      if (!ShopifyBuy || !targetElement) return;
-
-      const client = ShopifyBuy.buildClient({
-        domain: 'zenmodoro.myshopify.com',
-        storefrontAccessToken: '7fc2675aef49f4108fbea719cfcd10d6'
-      });
-
-      ShopifyBuy.UI.onReady(client).then((ui: any) => {
-        const mountNode = document.getElementById('winddown-recs');
-        if (!mountNode) return;
-        ui.createComponent('collection', {
-          id: '657052270917',
-          node: mountNode,
-          options: {
-            product: {
-              buttonDestination: 'checkout',
-              isButton: true
-            },
-            layout: 'carousel',
-            carousel: true
-          }
-        });
-        setShopifyReady(true);
-      });
-    } catch (error) {
-      console.log('Shopify integration not available:', error);
-    }
-  };
 
   if (!open) return null;
 
@@ -137,15 +133,45 @@ export default function WindDownModal({
             </div>
           )}
 
-          {/* Shopify Recommendations */}
+          {/* Recommendations */}
           <div className="rounded-xl border bg-card p-4 mb-6">
             <h2 className="font-semibold mb-3">Recommended</h2>
-            {!shopifyReady && (
+            {loadingProducts && (
               <div className="min-h-[120px] flex items-center justify-center">
                 <div className="text-sm text-muted-foreground">Loading recommendations...</div>
               </div>
             )}
-            <div id="winddown-recs" />
+            {!loadingProducts && products.length > 0 && (
+              <div>
+                <div className="flex items-start gap-3 mb-3">
+                  {products[0].image && (
+                    <img src={products[0].image} alt={products[0].title} className="w-20 h-20 object-cover rounded-md" />
+                  )}
+                  <div>
+                    <div className="font-semibold leading-tight">{products[0].title}</div>
+                    <div className="text-sm text-muted-foreground">{products[0].price}</div>
+                  </div>
+                </div>
+                <article className="prose prose-sm prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: products[0].descriptionHtml }} />
+                <div className="mt-3 flex justify-end">
+                  <a href={`https://zenmodoro.myshopify.com/products/${products[0].handle}`} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-md bg-primary text-primary-foreground">View on store</a>
+                </div>
+                {products.length > 1 && (
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    {products.slice(1, 5).map((p) => (
+                      <a key={p.id} href={`https://zenmodoro.myshopify.com/products/${p.handle}`} target="_blank" rel="noreferrer" className="rounded-lg border border-border/40 glass-panel p-2 hover:opacity-90 transition">
+                        {p.image && <img src={p.image} alt={p.title} className="w-full h-24 object-cover rounded" />}
+                        <div className="mt-2 text-xs font-medium line-clamp-2">{p.title}</div>
+                        <div className="text-[10px] text-muted-foreground">{p.price}</div>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {!loadingProducts && products.length === 0 && (
+              <div className="text-sm text-muted-foreground">No recommendations right now.</div>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
