@@ -8,7 +8,7 @@ import { loadSettings, saveSettings, loadProgress, saveProgress, GardenStep, Rel
 import { getRandomGardenStep, getRandomRelic, getRandomZenQuote, getRandomNPCMessage } from '@/utils/zenData';
 import { calculateFlowScore, getRarityFromFlowScore } from '@/utils/flowScoring';
 import { Play, Square } from 'lucide-react';
-import { useTheme } from 'next-themes';
+// import { useTheme } from 'next-themes';
 import { validateSession, addFocusPoints, updateStreak } from '@/utils/progression';
 import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
 import { randomEmptyGardenTile } from '@/utils/gardenHelpers';
@@ -37,7 +37,7 @@ const Index = () => {
   const [zenQuote, setZenQuote] = useState<string>('');
   const workerRef = useRef<Worker | null>(null);
   const startAtRef = useRef<number | null>(null);
-  const { theme } = useTheme();
+  // removed next-themes
   const [isDark, setIsDark] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [pendingStartBreak, setPendingStartBreak] = useState(false);
@@ -61,7 +61,7 @@ const Index = () => {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     
     return () => observer.disconnect();
-  }, [theme]);
+  }, []);
 
   useEffect(() => {
     if (running) return;
