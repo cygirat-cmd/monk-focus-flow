@@ -16,14 +16,18 @@ import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
 const TITLE = 'Monk Flow Timer • Zen Pomodoro';
 const DESC = 'Flow Timer and Pomodoro with a minimalist zen UI. Longer flow = rarer gifts.';
 
-const presets = [15, 25, 45] as const;
+const WORK_PRESETS = [25, 45, 60] as const;
+const BREAK_PRESETS = [5, 10] as const;
 
 type Mode = 'fixed' | 'flow';
 
 const Index = () => {
   const [mode, setMode] = useState<Mode>('flow');
-  const [minutes, setMinutes] = useState<number>(loadSettings().defaultMinutes);
+  const [minutes, setMinutes] = useState<number>(WORK_PRESETS[0]); // work session length
+  const [breakMinutes, setBreakMinutes] = useState<number>(BREAK_PRESETS[0]);
+  const [phase, setPhase] = useState<'work' | 'break'>('work');
   const [remaining, setRemaining] = useState<number>(minutes * 60_000);
+  const [elapsedMs, setElapsedMs] = useState<number>(0); // for flow mode
   const [running, setRunning] = useState(false);
   const [windOpen, setWindOpen] = useState(false);
   const [windDownMode, setWindDownMode] = useState<'SessionComplete' | 'BreakStart'>('SessionComplete');
@@ -35,6 +39,7 @@ const Index = () => {
   const { theme } = useTheme();
   const [isDark, setIsDark] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [pendingStartBreak, setPendingStartBreak] = useState(false);
 
   useEffect(() => {
     document.title = TITLE;
@@ -57,8 +62,13 @@ const Index = () => {
   }, [theme]);
 
   useEffect(() => {
-    setRemaining(minutes * 60_000);
-  }, [minutes]);
+    if (running) return;
+    if (mode === 'fixed') {
+      setRemaining((phase === 'work' ? minutes : breakMinutes) * 60_000);
+    } else {
+      setRemaining(0);
+    }
+  }, [minutes, breakMinutes, mode, phase, running]);
 
   // Dev tools: allow granting sessions via window event
   useEffect(() => {
@@ -78,18 +88,36 @@ useEffect(() => {
   workerRef.current = w;
   w.onmessage = (e) => {
     const { type, remaining } = e.data || {};
-    if (type === 'tick') setRemaining(remaining);
+    if (type === 'tick') {
+      if (mode === 'fixed') setRemaining(remaining);
+      if (mode === 'flow' && startAtRef.current != null) {
+        setElapsedMs(performance.now() - startAtRef.current);
+      }
+    }
     if (type === 'done') {
-      setRunning(false);
-      const seconds = startAtRef.current ? Math.max(1, Math.round((performance.now() - startAtRef.current) / 1000)) : minutes * 60;
-      startAtRef.current = null;
-      showLocalNotification('Session complete', 'Breathe. Take a short break.');
-      analytics.track({ type: 'session_stop', completed: true });
-      handleSessionComplete({ mode: 'pomodoro', seconds });
+      if (mode === 'fixed') {
+        setRunning(false);
+        if (phase === 'work') {
+          const seconds = Math.max(1, Math.round((minutes * 60_000) / 1000));
+          startAtRef.current = null;
+          analytics.track({ type: 'session_stop', completed: true });
+          showLocalNotification('Session complete', 'Breathe. Break starts.');
+          handleSessionComplete({ mode: 'pomodoro', seconds });
+          setWindDownMode('SessionComplete');
+          setWindOpen(true);
+          // Auto-start break immediately
+          setPhase('break');
+          setTimeout(() => start(), 0);
+        } else {
+          // Break finished -> auto start next work
+          setPhase('work');
+          setTimeout(() => start(), 0);
+        }
+      }
     }
   };
   return () => w.terminate();
-}, []);
+}, [mode, phase, minutes]);
 
 const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: number }) => {
   const progress = loadProgress();
@@ -215,12 +243,23 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     if (!workerRef.current) return;
     setRunning(true);
     startAtRef.current = performance.now();
-    analytics.track({ type: 'session_start', minutes, mode });
-    showLocalNotification('Session started', 'Focus mode engaged.');
-    workerRef.current.postMessage({
-      type: 'start',
-      payload: { durationMs: mode === 'flow' ? null : minutes * 60_000 },
-    });
+
+    if (mode === 'flow') {
+      setElapsedMs(0);
+      analytics.track({ type: 'session_start', mode: 'flow' });
+      showLocalNotification('Flow started', 'Find your rhythm.');
+      workerRef.current.postMessage({
+        type: 'start',
+        payload: { durationMs: null },
+      });
+    } else {
+      const durMin = phase === 'break' ? breakMinutes : minutes;
+      const durationMs = durMin * 60_000;
+      if (phase === 'break') setWindDownMode('BreakStart');
+      analytics.track({ type: phase === 'break' ? 'break_start' : 'session_start', minutes: durMin, mode: 'fixed' });
+      showLocalNotification(phase === 'break' ? 'Break started' : 'Focus started');
+      workerRef.current.postMessage({ type: 'start', payload: { durationMs } });
+    }
   };
 
   const stop = () => {
@@ -245,6 +284,12 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
 
   const mm = Math.floor(remaining / 60_000).toString().padStart(2, '0');
   const ss = Math.floor((remaining % 60_000) / 1000).toString().padStart(2, '0');
+
+  const elapsed = Math.max(0, elapsedMs);
+  const eh = Math.floor(elapsed / 3_600_000);
+  const em = Math.floor((elapsed % 3_600_000) / 60_000).toString().padStart(2, '0');
+  const es = Math.floor((elapsed % 60_000) / 1000).toString().padStart(2, '0');
+  const flowDisplay = eh > 0 ? `${eh}:${em}:${es}` : `${em}:${es}`;
 
   const ritualTip = useMemo(() => {
     const tips = [
@@ -278,59 +323,66 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
           </div>
         </header>
 
-        <section className="flex flex-col items-center gap-6">
-          {mode === 'flow' ? (
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-semibold">Flow Mode</h2>
-              <p className="text-muted-foreground max-w-xs">
-                Start and stop when you feel the best — no fixed timer.
-              </p>
-            </div>
-          ) : (
-            <>
-              <CircularProgress progress={Math.max(0, Math.min(1, 1 - remaining / total))} />
-              <div className="text-6xl font-semibold tabular-nums leading-none" aria-live="polite">
-                {mm}:{ss}
-              </div>
-            </>
-          )}
-          {!running && mode !== 'flow' && <p className="text-sm text-muted-foreground animate-fade-in">{ritualTip}</p>}
-
-          <div className="grid grid-cols-4 gap-2 w-full">
-            {presets.map((m) => (
+        <section className="flex flex-col items-stretch gap-6">
+          {/* Flow Timer */}
+          <article className="rounded-xl border bg-card p-5 space-y-3">
+            <h2 className="text-xl font-semibold">Flow Timer</h2>
+            <p className="text-sm text-muted-foreground">The longer the flow, the rarer the gift.</p>
+            {!running && (
               <button
-                key={m}
-                onClick={() => switchMode('fixed', m)}
-                className={`py-2 rounded-md border transition-colors ${
-                  minutes === m && mode === 'fixed' ? 'bg-primary text-primary-foreground' : 'bg-card text-foreground'
-                }`}
-                aria-pressed={minutes === m && mode === 'fixed'}
+                onClick={() => { setMode('flow'); setPhase('work'); setElapsedMs(0); start(); }}
+                className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
               >
-                {m}m
-              </button>
-            ))}
-            <button
-              onClick={() => switchMode('flow')}
-              className={`py-2 rounded-md border transition-colors ${
-                mode === 'flow' ? 'bg-primary text-primary-foreground' : 'bg-card text-foreground'
-              }`}
-              aria-pressed={mode === 'flow'}
-            >
-              Flow
-            </button>
-          </div>
-
-          <div className="flex gap-3 w-full">
-            {!running ? (
-              <button onClick={start} className="flex-1 py-4 rounded-lg bg-primary text-primary-foreground shadow-md hover:opacity-90 transition-opacity">
-                <div className="flex items-center justify-center gap-2 font-semibold"><Play size={20}/> Start</div>
-              </button>
-            ) : (
-              <button onClick={stop} className="flex-1 py-4 rounded-lg bg-accent text-foreground shadow-md hover:opacity-90 transition-opacity">
-                <div className="flex items-center justify-center gap-2 font-semibold"><Square size={20}/> Stop</div>
+                Start Flow
               </button>
             )}
-          </div>
+          </article>
+
+          {/* Pomodoro Timer */}
+          <article className="rounded-xl border bg-card p-5 space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold">Pomodoro Timer</h2>
+              <p className="text-sm text-muted-foreground">Choose a session and break. Sessions auto-cycle.</p>
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Focus</div>
+              <div className="grid grid-cols-3 gap-2">
+                {WORK_PRESETS.map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => { setMode('fixed'); setPhase('work'); setMinutes(m); setRemaining(m * 60_000); }}
+                    className={`py-2 rounded-md border transition-colors ${minutes === m && mode === 'fixed' && phase==='work' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+                    aria-pressed={minutes === m && mode === 'fixed' && phase==='work'}
+                  >
+                    {m}m
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Break</div>
+              <div className="grid grid-cols-2 gap-2">
+                {BREAK_PRESETS.map((b) => (
+                  <button
+                    key={b}
+                    onClick={() => setBreakMinutes(b)}
+                    className={`py-2 rounded-md border transition-colors ${breakMinutes === b ? 'bg-secondary text-secondary-foreground' : 'bg-background'}`}
+                    aria-pressed={breakMinutes === b}
+                  >
+                    {b}m
+                  </button>
+                ))}
+              </div>
+            </div>
+            {!running && (
+              <button
+                onClick={() => { setMode('fixed'); setPhase('work'); setRemaining(minutes * 60_000); start(); }}
+                className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+              >
+                Start Pomodoro
+              </button>
+            )}
+          </article>
         </section>
       </main>
       <WindDownModal 
