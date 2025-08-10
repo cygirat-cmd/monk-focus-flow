@@ -1,10 +1,9 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { loadProgress, GardenStep } from '@/utils/storageClient';
 import { placeGardenItem } from '@/utils/gardenHelpers';
 import { isTileLocked } from '@/utils/gardenMap';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import GardenCanvas from '@/components/garden/GardenCanvas';
+import { toast } from '@/components/ui/sonner';
 
 interface GardenPlacementModalProps {
   open: boolean;
@@ -54,6 +53,8 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
     return () => window.removeEventListener('monk:progress-updated', handler as any);
   }, [open]);
 
+  if (!open) return null;
+
   const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: 'gravel_light.png' };
   const targetToken: GardenStep | undefined = token || progress.pendingToken || progress.pendingTokens?.[0];
 
@@ -67,7 +68,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
       return;
     }
     if (isOccupied(x, y)) {
-      toast.message('That spot is taken');
+      toast('That spot is taken');
       return;
     }
     setSelected({ x, y });
@@ -77,21 +78,20 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
     if (!targetToken || !selected) return;
     const res = placeGardenItem(targetToken, selected.x, selected.y);
     if (!(res as any).ok) {
-      toast.message((res as any).reason === 'occupied' ? 'That spot is taken' : 'Could not place item');
+      toast((res as any).reason === 'occupied' ? 'That spot is taken' : 'Could not place item');
       return;
     }
     setProgress(loadProgress());
-    if (navigator.vibrate) {
-      try { navigator.vibrate(10); } catch {}
-    }
-    toast.success('Placed in your garden');
+    try { navigator.vibrate?.(10); } catch {}
+    toast('Placed in your garden');
     onPlaced?.();
     onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[560px]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative w-full max-w-[560px] rounded-lg border bg-background p-4 shadow-lg">
         <div className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold">Place on Garden Map</h2>
@@ -121,22 +121,11 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
           </div>
 
           <div className="flex gap-2 justify-end">
-            <button
-              className="px-4 py-2 rounded-md bg-accent text-accent-foreground"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50"
-              disabled={!targetToken || selected == null}
-              onClick={confirmPlacement}
-            >
-              Confirm placement
-            </button>
+            <button className="px-4 py-2 rounded-md bg-accent text-accent-foreground" onClick={onClose}>Cancel</button>
+            <button className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50" disabled={!targetToken || selected == null} onClick={confirmPlacement}>Confirm placement</button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

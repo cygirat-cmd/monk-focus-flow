@@ -427,19 +427,21 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
           </div>
         </div>
       )}
-      <WindDownModal 
-        open={windOpen} 
-        onClose={() => {
-          setWindOpen(false);
-          setNewGardenStep(undefined);
-          setNewRelic(undefined);
-          setZenQuote('');
-        }}
-        mode={windDownMode}
-        newGardenStep={newGardenStep}
-        newRelic={newRelic}
-        zenQuote={zenQuote}
-      />
+      {windOpen && (
+        <WindDownModal 
+          open={windOpen} 
+          onClose={() => {
+            setWindOpen(false);
+            setNewGardenStep(undefined);
+            setNewRelic(undefined);
+            setZenQuote('');
+          }}
+          mode={windDownMode}
+          newGardenStep={newGardenStep}
+          newRelic={newRelic}
+          zenQuote={zenQuote}
+        />
+      )}
       <BottomNav />
     </div>
   );
