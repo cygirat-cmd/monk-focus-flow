@@ -55,10 +55,6 @@ const Index = () => {
     document.title = TITLE;
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', DESC);
-    // mark app opened for decay tracking
-    const p = loadProgress();
-    p.lastOpenedAt = Date.now();
-    saveProgress(p);
   }, []);
 
   useEffect(() => {
@@ -359,12 +355,13 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
             {logoError ? (
               <h1 className="text-2xl font-semibold tracking-tight">Monk</h1>
             ) : (
-              <img
-                src={logo}
-                alt="Monk logo"
-                className="h-10 w-auto object-contain mx-auto pixelated"
-                onError={() => setLogoError(true)}
-              />
+                <img
+                  src={logo}
+                  alt="Monk logo"
+                  className="h-10 w-auto object-contain mx-auto pixelated"
+                  loading="lazy"
+                  onError={() => setLogoError(true)}
+                />
             )}
           </div>
         </header>

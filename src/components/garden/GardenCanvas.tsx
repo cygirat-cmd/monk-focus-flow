@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX, isTileLocked, defaultGardenBg } from '@/utils/gardenMap';
 import type { GardenPlacedItem } from '@/utils/storageClient';
 

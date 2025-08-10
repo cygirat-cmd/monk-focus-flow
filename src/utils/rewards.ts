@@ -64,7 +64,18 @@ const LEGENDARY_NON_RELIC: RewardItem[] = [
   { kind: 'garden', id: 'phoenix-perch', img: P, label: 'Phoenix Perch', rarity: 'legendary' },
 ];
 
-const LEGENDARY_RELICS: RewardItem[] = RELICS_POOL.map(r => ({ kind: 'relic', ...r, rarity: 'legendary' as const }));
+const LEGENDARY_RELICS: RewardItem[] = [
+  { kind: 'relic', id: 'tea-bowl', img: '/assets/relics/tea_bowl.png', title: 'Ancient Tea Bowl', unlockedAt: '', rarity: 'legendary' },
+  { kind: 'relic', id: 'fan', img: '/assets/relics/fan.png', title: 'Zen Fan', unlockedAt: '', rarity: 'legendary' },
+  { kind: 'relic', id: 'koan-scroll', img: '/assets/relics/koan_scroll.png', title: 'Koan Scroll', unlockedAt: '', rarity: 'legendary' },
+  { kind: 'relic', id: 'hand-bell', img: '/assets/relics/hand_bell.png', title: 'Hand Bell', unlockedAt: '', rarity: 'legendary' },
+  { kind: 'relic', id: 'wooden-fish-drum', img: '/placeholder.svg', title: "Monk’s Wooden Fish Drum", unlockedAt: '', rarity: 'legendary' },
+  { kind: 'relic', id: 'jade-beads', img: '/placeholder.svg', title: 'Jade Meditation Beads', unlockedAt: '', rarity: 'legendary' },
+  { kind: 'relic', id: 'celestial-compass', img: '/placeholder.svg', title: 'Celestial Compass', unlockedAt: '', rarity: 'legendary' },
+  { kind: 'relic', id: 'crane-feather-amulet', img: '/placeholder.svg', title: 'Crane Feather Amulet', unlockedAt: '', rarity: 'legendary' },
+  { kind: 'relic', id: 'timekeepers-sandglass', img: '/placeholder.svg', title: "Timekeeper’s Sandglass", unlockedAt: '', rarity: 'legendary' },
+  { kind: 'relic', id: 'zenmodoro-shukan', img: '/placeholder.svg', title: 'Zenmodoro Shukan', unlockedAt: '', rarity: 'legendary' },
+];
 
 export function getAllowedRarity(seconds: number): Array<{ rarity: Rarity; weight: number }> {
   const minutes = seconds / 60;

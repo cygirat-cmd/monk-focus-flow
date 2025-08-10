@@ -8,6 +8,8 @@ export type Settings = {
   vibration: boolean;
   notifications: boolean;
   theme: 'light' | 'dark' | 'auto';
+  reminderHour?: number;
+  reminderMinute?: number;
 };
 
 export type GardenStep = {
@@ -100,10 +102,11 @@ export const loadSettings = (): Settings => {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw)
-      return { defaultMinutes: 25, sound: true, vibration: true, notifications: true, theme: 'auto' };
-    return JSON.parse(raw);
+      return { defaultMinutes: 25, sound: true, vibration: true, notifications: true, theme: 'auto', reminderHour: 9, reminderMinute: 0 };
+    const parsed = JSON.parse(raw);
+    return { reminderHour: 9, reminderMinute: 0, ...parsed };
   } catch {
-    return { defaultMinutes: 25, sound: true, vibration: true, notifications: true, theme: 'auto' };
+    return { defaultMinutes: 25, sound: true, vibration: true, notifications: true, theme: 'auto', reminderHour: 9, reminderMinute: 0 };
   }
 };
 

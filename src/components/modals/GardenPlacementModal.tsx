@@ -15,6 +15,7 @@ interface GardenPlacementModalProps {
 export default function GardenPlacementModal({ open, onClose, token, onPlaced }: GardenPlacementModalProps) {
   const [progress, setProgress] = useState(loadProgress());
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(null);
+  const [placing, setPlacing] = useState(false);
 
   // Scale to fit small screens
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -76,10 +77,12 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
 
   const confirmPlacement = () => {
     try {
-      if (!targetToken || !selected) return;
+      if (!targetToken || !selected || placing) return;
+      setPlacing(true);
       const res = placeGardenItem(targetToken, selected.x, selected.y);
       const r = res as any;
       if (!r.ok) {
+        setPlacing(false);
         if (r.reason === 'occupied') toast('That spot is taken');
         else if (r.reason === 'locked') toast('You cannot place on temple tiles');
         else if (r.reason === 'not_owned') toast('This item has already been placed');
@@ -94,6 +97,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
     } catch (err) {
       console.error('Garden placement failed:', err);
       toast('Something went wrong placing the item');
+      setPlacing(false);
     }
   };
 

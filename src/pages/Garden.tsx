@@ -178,6 +178,7 @@ export default function Garden() {
                 npc={npc}
                 onItemPointerDown={(e, it) => beginDrag(e, it)}
                 className={`absolute inset-0 ${withered ? 'grayscale-[60%] saturate-50' : ''}`}
+                loading="lazy"
               />
 
               
