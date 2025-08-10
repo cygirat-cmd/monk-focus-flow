@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { loadProgress, saveProgress, GardenStep, placeGardenItem } from '@/utils/storageClient';
+import { loadProgress, saveProgress, GardenStep } from '@/utils/storageClient';
+import { placeGardenItem } from '@/utils/gardenHelpers';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';

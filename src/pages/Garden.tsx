@@ -1,6 +1,7 @@
 import BottomNav from '@/components/layout/BottomNav';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { loadProgress, saveProgress, GardenPlacedItem, GardenStep, placeGardenItem, moveGardenItem, rotateGardenItem, removeGardenItem } from '@/utils/storageClient';
+import { loadProgress, saveProgress, GardenPlacedItem, GardenStep } from '@/utils/storageClient';
+import { placeGardenItem, moveGardenItem, rotateGardenItem, removeGardenItem } from '@/utils/gardenHelpers';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import GardenPlacementModal from '@/components/modals/GardenPlacementModal';
 import { RotateCw, Trash2, Check, Sprout } from 'lucide-react';
