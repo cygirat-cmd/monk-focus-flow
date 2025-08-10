@@ -63,3 +63,21 @@ export const removeGardenItem = (id: string) => {
   saveProgress(p);
   return { ok: true } as const;
 };
+
+// Choose a random empty tile in the garden (not locked, not occupied)
+export const randomEmptyGardenTile = (): { x: number; y: number } | null => {
+  const p = loadProgress();
+  const g = p.garden;
+  if (!g) return null;
+  const occupied = new Set(g.placed.map(it => `${it.x},${it.y}`));
+  const candidates: { x: number; y: number }[] = [];
+  for (let y = 0; y < g.rows; y++) {
+    for (let x = 0; x < g.cols; x++) {
+      if (!isTileLocked(x, y) && !occupied.has(`${x},${y}`)) {
+        candidates.push({ x, y });
+      }
+    }
+  }
+  if (!candidates.length) return null;
+  return candidates[Math.floor(Math.random() * candidates.length)];
+};

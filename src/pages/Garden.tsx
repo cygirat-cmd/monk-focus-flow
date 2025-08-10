@@ -15,7 +15,9 @@ export default function Garden() {
   const [placeOpen, setPlaceOpen] = useState(false);
   const [placeToken, setPlaceToken] = useState<GardenStep | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
+  const [scale, setScale] = useState(1);
 
   useEffect(() => {
     document.title = 'Garden – Monk';
@@ -27,13 +29,34 @@ export default function Garden() {
     setProgress(loadProgress());
   }, [placeOpen]);
 
+  // Subscribe to global progress updates to keep garden live
+  useEffect(() => {
+    const handler = () => setProgress(loadProgress());
+    window.addEventListener('monk:progress-updated', handler as any);
+    return () => window.removeEventListener('monk:progress-updated', handler as any);
+  }, []);
+
+  // Auto-scale stage to fit viewport without scroll
+  useEffect(() => {
+    const calc = () => {
+      if (!wrapperRef.current) return;
+      const ww = wrapperRef.current.clientWidth;
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const availH = window.innerHeight - rect.top - 140; // leave space for header/nav
+      const s = Math.min(1, ww / 768, availH / 512);
+      setScale(Math.max(0.5, s));
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, []);
+
   const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: '/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png' };
   const cellW = 64; // TILE_PX
   const cellH = 64; // TILE_PX
   
-  // Simplified NPC and features for now - using defaults
-  const npc = { x: 6, y: 4, message: null, messageExpiry: null };
-  const showNPCMessage = false;
+  // NPC state
+  const npc: { x: number; y: number; message?: string } = (progress as any).npc || { x: 6, y: 4 };
 
   const onRotate = (id: string) => {
     rotateGardenItem(id, 90);
@@ -61,8 +84,8 @@ export default function Garden() {
     const stageRect = stageRef.current.getBoundingClientRect();
     const relX = Math.min(Math.max(e.clientX - stageRect.left, 0), stageRect.width);
     const relY = Math.min(Math.max(e.clientY - stageRect.top, 0), stageRect.height);
-    const gx = Math.floor(relX / cellW);
-    const gy = Math.floor(relY / cellH);
+    const gx = Math.floor(relX / (cellW * scale));
+    const gy = Math.floor(relY / (cellH * scale));
 
     // Visual feedback by setting inline style
     const ghost = document.getElementById(`garden-item-${dragRef.current.id}`);
@@ -81,8 +104,8 @@ export default function Garden() {
     const stageRect = stageRef.current.getBoundingClientRect();
     const relX = Math.min(Math.max(e.clientX - stageRect.left, 0), stageRect.width);
     const relY = Math.min(Math.max(e.clientY - stageRect.top, 0), stageRect.height);
-    const gx = Math.floor(relX / cellW);
-    const gy = Math.floor(relY / cellH);
+    const gx = Math.floor(relX / (cellW * scale));
+    const gy = Math.floor(relY / (cellH * scale));
 
     // Check vacancy
     const occupied = garden.placed.some(it => it.x === gx && it.y === gy && it.id !== id);
@@ -132,12 +155,13 @@ export default function Garden() {
 
         <section className="garden-wrap">
           <div 
-            className="relative rounded-xl overflow-auto border bg-muted/30 flex items-center justify-center"
-            style={{ padding: 8 }}
+            ref={wrapperRef}
+            className="relative rounded-xl overflow-hidden border bg-muted/30 flex items-center justify-center"
+            style={{ padding: 8, height: 512 * scale + 16 }}
             onPointerMove={onDragMove} onPointerUp={endDrag}
           >
-            {/* Pixel-perfect canvas at 768x512 */}
-            <div ref={stageRef} className="relative" style={{ width: 768, height: 512 }}>
+            {/* Pixel-perfect canvas at 768x512 scaled to fit */}
+            <div ref={stageRef} className="relative" style={{ width: 768, height: 512, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
               {/* Shared renderer (background + grid) */}
               {/* ... keep existing code (renderer import and usage) */}
               {/* We render items and NPC on top to keep manage UX intact */}

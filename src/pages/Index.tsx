@@ -5,12 +5,13 @@ import WindDownModal from '@/components/modals/WindDownModal';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
 import { loadSettings, saveSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/utils/storage';
-import { getRandomGardenStep, getRandomRelic, getRandomZenQuote, moveNPC, getRandomNPCMessage } from '@/utils/zenData';
+import { getRandomGardenStep, getRandomRelic, getRandomZenQuote, getRandomNPCMessage } from '@/utils/zenData';
 import { calculateFlowScore, getRarityFromFlowScore } from '@/utils/flowScoring';
 import { Play, Square } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { validateSession, addFocusPoints, updateStreak } from '@/utils/progression';
 import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
+import { randomEmptyGardenTile } from '@/utils/gardenHelpers';
 
 // SEO
 const TITLE = 'Monk Flow Timer • Zen Pomodoro';
@@ -171,10 +172,12 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     analytics.track({ type: 'relic_unlocked' });
   }
 
-  // Move NPC after each session and occasionally show message
-  const newPos = moveNPC(progress.npc.x, progress.npc.y);
-  progress.npc.x = newPos.x;
-  progress.npc.y = newPos.y;
+  // Move NPC after each session to a valid empty tile
+  const t = randomEmptyGardenTile();
+  if (t) {
+    progress.npc.x = t.x;
+    progress.npc.y = t.y;
+  }
   
   // 30% chance to show NPC message for 30 seconds
   if (Math.random() < 0.3) {
