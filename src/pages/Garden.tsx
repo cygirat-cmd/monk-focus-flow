@@ -6,7 +6,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } f
 import GardenPlacementModal from '@/components/modals/GardenPlacementModal';
 import { RotateCw, Trash2, Check, Sprout } from 'lucide-react';
 import { isTileLocked } from '@/utils/gardenMap';
-
+import GardenCanvas from '@/components/garden/GardenCanvas';
 export default function Garden() {
   const [progress, setProgress] = useState(loadProgress());
   const [manage, setManage] = useState(false);
@@ -27,9 +27,9 @@ export default function Garden() {
     setProgress(loadProgress());
   }, [placeOpen]);
 
-  const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: 'gravel_light.png' };
-  const cellW = 100 / garden.cols;
-  const cellH = 100 / garden.rows;
+  const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: '/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png' };
+  const cellW = 64; // TILE_PX
+  const cellH = 64; // TILE_PX
   
   // Simplified NPC and features for now - using defaults
   const npc = { x: 6, y: 4, message: null, messageExpiry: null };
@@ -61,15 +61,15 @@ export default function Garden() {
     const stageRect = stageRef.current.getBoundingClientRect();
     const relX = Math.min(Math.max(e.clientX - stageRect.left, 0), stageRect.width);
     const relY = Math.min(Math.max(e.clientY - stageRect.top, 0), stageRect.height);
-    const gx = Math.floor((relX / stageRect.width) * garden.cols);
-    const gy = Math.floor((relY / stageRect.height) * garden.rows);
+    const gx = Math.floor(relX / cellW);
+    const gy = Math.floor(relY / cellH);
 
-    // Visual feedback by setting CSS variable
+    // Visual feedback by setting inline style
     const ghost = document.getElementById(`garden-item-${dragRef.current.id}`);
     if (ghost) {
-      (ghost as HTMLElement).style.transform = `translate(${gx * cellW}%, ${gy * cellH}%) rotate(0deg)`;
-      (ghost as HTMLElement).style.left = `${gx * cellW}%`;
-      (ghost as HTMLElement).style.top = `${gy * cellH}%`;
+      (ghost as HTMLElement).style.transform = `rotate(0deg)`;
+      (ghost as HTMLElement).style.left = `${gx * cellW}px`;
+      (ghost as HTMLElement).style.top = `${gy * cellH}px`;
     }
   };
 
@@ -81,8 +81,8 @@ export default function Garden() {
     const stageRect = stageRef.current.getBoundingClientRect();
     const relX = Math.min(Math.max(e.clientX - stageRect.left, 0), stageRect.width);
     const relY = Math.min(Math.max(e.clientY - stageRect.top, 0), stageRect.height);
-    const gx = Math.floor((relX / stageRect.width) * garden.cols);
-    const gy = Math.floor((relY / stageRect.height) * garden.rows);
+    const gx = Math.floor(relX / cellW);
+    const gy = Math.floor(relY / cellH);
 
     // Check vacancy
     const occupied = garden.placed.some(it => it.x === gx && it.y === gy && it.id !== id);
@@ -131,72 +131,69 @@ export default function Garden() {
         </header>
 
         <section className="garden-wrap">
-          <div ref={stageRef} className="garden-stage relative w-full aspect-[12/8] rounded-xl overflow-hidden border bg-muted/30" style={bgStyle}
-            onPointerMove={onDragMove} onPointerUp={endDrag}>
-            {/* grid */}
-            <div className="garden-grid pointer-events-none absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${garden.cols}, 1fr)`, gridTemplateRows: `repeat(${garden.rows}, 1fr)` }}>
-              {Array.from({ length: garden.cols * garden.rows }).map((_, i) => {
-                const x = i % garden.cols;
-                const y = Math.floor(i / garden.cols);
-                const isTemple = isTempleArea(x, y);
-                return (
-                  <div 
-                    key={i} 
-                    className="garden-cell border-dashed" 
-                    style={{ 
-                      outline: '1px dashed hsl(var(--border) / 0.15)',
-                      backgroundColor: isTemple ? 'hsl(var(--muted) / 0.3)' : 'transparent',
-                    }} 
-                  />
-                );
-              })}
-            </div>
-            
-            {/* NPC Monk */}
-            <div
-              className="absolute z-20 pointer-events-none"
-              style={{ 
-                left: `${npc.x * cellW}%`, 
-                top: `${npc.y * cellH}%`, 
-                width: `${cellW}%`, 
-                height: `${cellH}%`,
-              }}
-            >
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="w-8 h-8 bg-orange-400 rounded-full border-2 border-orange-600 flex items-center justify-center text-xs">
-                  🧘
-                </div>
-              </div>
-            </div>
+          <div 
+            className="relative rounded-xl overflow-auto border bg-muted/30 flex items-center justify-center"
+            style={{ padding: 8 }}
+            onPointerMove={onDragMove} onPointerUp={endDrag}
+          >
+            {/* Pixel-perfect canvas at 768x512 */}
+            <div ref={stageRef} className="relative" style={{ width: 768, height: 512 }}>
+              {/* Shared renderer (background + grid) */}
+              {/* ... keep existing code (renderer import and usage) */}
+              {/* We render items and NPC on top to keep manage UX intact */}
+              {/* Grid/background */}
+              {/* Using the shared GardenCanvas to ensure perfect alignment */}
+              <GardenCanvas 
+                placed={[]} 
+                showGrid 
+                showLockedOverlay={false}
+                className="absolute inset-0"
+              />
 
-            {/* items */}
-            {garden.placed.map((it) => (
+              {/* NPC Monk */}
               <div
-                key={it.id}
-                id={`garden-item-${it.id}`}
-                className={`garden-item absolute ${manage ? 'cursor-grab touch-none' : ''}`}
-                style={{ left: `${it.x * cellW}%`, top: `${it.y * cellH}%`, width: `${cellW}%`, height: `${cellH}%`, transform: `rotate(${it.rotation}deg)` }}
-                onPointerDown={(e) => beginDrag(e, it)}
-                onClick={() => manage ? setSelectedId(it.id) : null}
+                className="absolute z-20 pointer-events-none"
+                style={{ 
+                  left: `${npc.x * cellW}px`, 
+                  top: `${npc.y * cellH}px`, 
+                  width: `${cellW}px`, 
+                  height: `${cellH}px`,
+                }}
               >
-                <img src={it.img} alt={it.label || 'Garden item'} className="w-full h-full object-contain" />
-              </div>
-            ))}
-
-            {/* floating item menu */}
-            {manage && selectedId && (() => {
-              const it = garden.placed.find(p => p.id === selectedId);
-              if (!it) return null;
-              return (
-                <div className="garden-toolbar absolute z-10" style={{ left: `${(it.x + 0.5) * cellW}%`, top: `${(it.y + 0.5) * cellH}%`, transform: 'translate(-50%, -100%)' }}>
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-card border shadow-sm">
-                    <button className="px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs flex items-center gap-1" onClick={() => setSelectedId(null)}><Check size={14}/> Done</button>
-                    <button className="px-2 py-1 rounded-md border text-xs flex items-center gap-1" onClick={() => onRotate(it.id)}><RotateCw size={14}/> Rotate</button>
-                    <button className="px-2 py-1 rounded-md border text-destructive text-xs flex items-center gap-1" onClick={() => onRemove(it.id)}><Trash2 size={14}/> Remove</button>
-                  </div>
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-6 h-6 bg-primary rounded-sm border" />
                 </div>
-              );
-            })()}
+              </div>
+
+              {/* items */}
+              {garden.placed.map((it) => (
+                <div
+                  key={it.id}
+                  id={`garden-item-${it.id}`}
+                  className={`garden-item absolute ${manage ? 'cursor-grab touch-none' : ''}`}
+                  style={{ left: `${it.x * cellW}px`, top: `${it.y * cellH}px`, width: `${cellW}px`, height: `${cellH}px`, transform: `rotate(${it.rotation}deg)` }}
+                  onPointerDown={(e) => beginDrag(e, it)}
+                  onClick={() => manage ? setSelectedId(it.id) : null}
+                >
+                  <img src={it.img} alt={it.label || 'Garden item'} style={{ width: `${cellW}px`, height: `${cellH}px`, imageRendering: 'pixelated', objectFit: 'contain' as const }} />
+                </div>
+              ))}
+
+              {/* floating item menu */}
+              {manage && selectedId && (() => {
+                const it = garden.placed.find(p => p.id === selectedId);
+                if (!it) return null;
+                return (
+                  <div className="garden-toolbar absolute z-10" style={{ left: `${(it.x + 0.5) * cellW}px`, top: `${(it.y + 0.5) * cellH}px`, transform: 'translate(-50%, -100%)' }}>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-card border shadow-sm">
+                      <button className="px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs flex items-center gap-1" onClick={() => setSelectedId(null)}><Check size={14}/> Done</button>
+                      <button className="px-2 py-1 rounded-md border text-xs flex items-center gap-1" onClick={() => onRotate(it.id)}><RotateCw size={14}/> Rotate</button>
+                      <button className="px-2 py-1 rounded-md border text-destructive text-xs flex items-center gap-1" onClick={() => onRemove(it.id)}><Trash2 size={14}/> Remove</button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </section>
 

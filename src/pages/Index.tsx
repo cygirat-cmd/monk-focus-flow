@@ -40,6 +40,7 @@ const Index = () => {
   const [isDark, setIsDark] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [pendingStartBreak, setPendingStartBreak] = useState(false);
+  const [showPomodoro, setShowPomodoro] = useState(false);
 
   useEffect(() => {
     document.title = TITLE;
@@ -329,62 +330,100 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
             <h2 className="text-xl font-semibold">Flow Timer</h2>
             <p className="text-sm text-muted-foreground">The longer the flow, the rarer the gift.</p>
             {!running && (
-              <button
-                onClick={() => { setMode('flow'); setPhase('work'); setElapsedMs(0); start(); }}
-                className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
-              >
-                Start Flow
-              </button>
+              <>
+                <button
+                  onClick={() => { setMode('flow'); setPhase('work'); setElapsedMs(0); start(); }}
+                  className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+                >
+                  Start Flow
+                </button>
+                <p className="text-xs text-muted-foreground text-center">Longer flow brings rarer rewards.</p>
+              </>
             )}
           </article>
 
+          {/* Pomodoro toggle */}
+          <div className="flex justify-center">
+            <button
+              className="text-sm underline text-muted-foreground hover:text-foreground"
+              onClick={() => setShowPomodoro((v) => !v)}
+            >
+              {showPomodoro ? 'Hide Pomodoro Options' : 'Switch to Pomodoro Mode'}
+            </button>
+          </div>
+
           {/* Pomodoro Timer */}
-          <article className="rounded-xl border bg-card p-5 space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold">Pomodoro Timer</h2>
-              <p className="text-sm text-muted-foreground">Choose a session and break. Sessions auto-cycle.</p>
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Focus</div>
-              <div className="grid grid-cols-3 gap-2">
-                {WORK_PRESETS.map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => { setMode('fixed'); setPhase('work'); setMinutes(m); setRemaining(m * 60_000); }}
-                    className={`py-2 rounded-md border transition-colors ${minutes === m && mode === 'fixed' && phase==='work' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
-                    aria-pressed={minutes === m && mode === 'fixed' && phase==='work'}
-                  >
-                    {m}m
-                  </button>
-                ))}
+          {showPomodoro && (
+            <article className="rounded-xl border bg-card p-5 space-y-4">
+              <div>
+                <h2 className="text-xl font-semibold">Pomodoro Timer</h2>
+                <p className="text-sm text-muted-foreground">Choose a session and break. Sessions auto-cycle.</p>
               </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Break</div>
-              <div className="grid grid-cols-2 gap-2">
-                {BREAK_PRESETS.map((b) => (
-                  <button
-                    key={b}
-                    onClick={() => setBreakMinutes(b)}
-                    className={`py-2 rounded-md border transition-colors ${breakMinutes === b ? 'bg-secondary text-secondary-foreground' : 'bg-background'}`}
-                    aria-pressed={breakMinutes === b}
-                  >
-                    {b}m
-                  </button>
-                ))}
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Focus</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {WORK_PRESETS.map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => { setMode('fixed'); setPhase('work'); setMinutes(m); setRemaining(m * 60_000); }}
+                      className={`py-2 rounded-md border transition-colors ${minutes === m && mode === 'fixed' && phase==='work' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+                      aria-pressed={minutes === m && mode === 'fixed' && phase==='work'}
+                    >
+                      {m}m
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-            {!running && (
-              <button
-                onClick={() => { setMode('fixed'); setPhase('work'); setRemaining(minutes * 60_000); start(); }}
-                className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
-              >
-                Start Pomodoro
-              </button>
-            )}
-          </article>
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Break</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {BREAK_PRESETS.map((b) => (
+                    <button
+                      key={b}
+                      onClick={() => setBreakMinutes(b)}
+                      className={`py-2 rounded-md border transition-colors ${breakMinutes === b ? 'bg-secondary text-secondary-foreground' : 'bg-background'}`}
+                      aria-pressed={breakMinutes === b}
+                    >
+                      {b}m
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {!running && (
+                <button
+                  onClick={() => { setMode('fixed'); setPhase('work'); setRemaining(minutes * 60_000); start(); }}
+                  className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+                >
+                  Start Pomodoro
+                </button>
+              )}
+            </article>
+          )}
         </section>
       </main>
+
+      {/* Full-screen timer overlay when running */}
+      {running && (
+        <div className="fixed inset-0 z-50 bg-background text-foreground">
+          <div className="h-full max-w-md mx-auto px-4 flex flex-col items-center justify-center gap-6">
+            {mode === 'flow' ? (
+              <>
+                <div className="text-sm text-muted-foreground">Flowing…</div>
+                <div className="text-6xl font-semibold tabular-nums">{flowDisplay}</div>
+                <button onClick={stop} className="px-6 py-3 rounded-lg bg-accent text-accent-foreground">End Flow</button>
+              </>
+            ) : (
+              <>
+                <div className="w-56 h-56">
+                  <CircularProgress progress={progress} size={224} strokeWidth={8} />
+                </div>
+                <div className="text-5xl font-semibold tabular-nums">{mm}:{ss}</div>
+                <button onClick={stop} className="px-6 py-3 rounded-lg bg-accent text-accent-foreground">End Session</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <WindDownModal 
         open={windOpen} 
         onClose={() => {

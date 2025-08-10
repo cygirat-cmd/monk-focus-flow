@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
-
+import GardenCanvas from '@/components/garden/GardenCanvas';
 interface GardenPlacementModalProps {
   open: boolean;
   onClose: () => void;
@@ -26,6 +26,19 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
       setSelected(null);
       setRotation(0);
     }
+  }, [open]);
+
+  // Live subscribe to progress changes while open
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: any) => {
+      try {
+        const p = loadProgress();
+        setProgress(p);
+      } catch {}
+    };
+    window.addEventListener('monk:progress-updated', handler as any);
+    return () => window.removeEventListener('monk:progress-updated', handler as any);
   }, [open]);
 
   const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: 'gravel_light.png' };
@@ -83,41 +96,16 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
             <div className="rounded-lg border bg-card p-3 text-sm">Garden is full. Manage items to free space.</div>
           )}
 
-          {/* 12x8 grid */}
-          <div className="relative">
-            <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${garden.cols}, minmax(0, 1fr))` }}>
-              {Array.from({ length: garden.cols * garden.rows }).map((_, i) => {
-                const x = i % garden.cols;
-                const y = Math.floor(i / garden.cols);
-                const locked = isTileLocked(x, y);
-                const occupied = isOccupied(x, y);
-                const isSel = selected?.x === x && selected?.y === y;
-                const imgAtCell = garden.placed?.find((it) => it.x === x && it.y === y)?.img;
-                return (
-                  <button
-                    key={i}
-                    className={`relative aspect-square rounded-md border transition-all ${
-                      locked
-                        ? 'bg-muted/40 cursor-not-allowed'
-                        : occupied
-                        ? 'bg-card'
-                        : 'bg-background hover:bg-accent'
-                    } ${isSel ? 'ring-2 ring-primary' : ''}`}
-                    onClick={() => handleCellClick(i)}
-                    disabled={!targetToken || occupied || isFull || locked}
-                    aria-label={`Cell ${x + 1}, ${y + 1}`}
-                  >
-                    {imgAtCell ? (
-                      <img src={imgAtCell} alt="Placed item" className="absolute inset-0 m-auto w-8 h-8 object-contain" />
-                    ) : locked ? (
-                      <div className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground">Temple</div>
-                    ) : targetToken ? (
-                      <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">Empty</div>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Shared Garden renderer at 768x512 for perfect alignment */}
+          <div className="relative mx-auto" style={{ width: 768, height: 512 }}>
+            <GardenCanvas
+              placed={garden.placed}
+              showGrid
+              showLockedOverlay
+              selected={selected}
+              onCellClick={(x, y) => handleCellClick(y * garden.cols + x)}
+              className="select-none"
+            />
           </div>
 
           {/* Rotate / preview */}

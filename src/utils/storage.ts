@@ -178,6 +178,9 @@ export const loadProgress = (): ProgressData => {
 
 export const saveProgress = (progress: ProgressData) => {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+  try {
+    window.dispatchEvent(new CustomEvent('monk:progress-updated', { detail: { progress } }));
+  } catch {}
 };
 
 export const saveSettings = (settings: Settings) => {
