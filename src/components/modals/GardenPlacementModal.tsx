@@ -75,17 +75,22 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
   };
 
   const confirmPlacement = () => {
-    if (!targetToken || !selected) return;
-    const res = placeGardenItem(targetToken, selected.x, selected.y);
-    if (!(res as any).ok) {
-      toast((res as any).reason === 'occupied' ? 'That spot is taken' : 'Could not place item');
-      return;
+    try {
+      if (!targetToken || !selected) return;
+      const res = placeGardenItem(targetToken, selected.x, selected.y);
+      if (!(res as any).ok) {
+        toast((res as any).reason === 'occupied' ? 'That spot is taken' : 'Could not place item');
+        return;
+      }
+      setProgress(loadProgress());
+      try { navigator.vibrate?.(10); } catch {}
+      toast('Placed in your garden');
+      onPlaced?.();
+      onClose();
+    } catch (err) {
+      console.error('Garden placement failed:', err);
+      toast('Something went wrong placing the item');
     }
-    setProgress(loadProgress());
-    try { navigator.vibrate?.(10); } catch {}
-    toast('Placed in your garden');
-    onPlaced?.();
-    onClose();
   };
 
   return (
