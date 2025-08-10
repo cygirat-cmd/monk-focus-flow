@@ -1,10 +1,13 @@
 import { loadProgress, saveProgress, GardenStep } from './storageClient';
+import { isTileLocked } from './gardenMap';
 
 export const placeGardenItem = (token: GardenStep, x: number, y: number, rotation: 0|90|180|270 = 0) => {
   const p = loadProgress();
   const garden = p.garden!;
   // Check bounds
   if (x < 0 || y < 0 || x >= garden.cols || y >= garden.rows) return { ok: false, reason: 'out_of_bounds' } as const;
+  // Locked tiles (temple)
+  if (isTileLocked(x, y)) return { ok: false, reason: 'locked' } as const;
   // Check occupancy
   if (garden.placed.some(it => it.x === x && it.y === y)) return { ok: false, reason: 'occupied' } as const;
 
@@ -28,6 +31,7 @@ export const placeGardenItem = (token: GardenStep, x: number, y: number, rotatio
 export const moveGardenItem = (id: string, x: number, y: number) => {
   const p = loadProgress();
   const garden = p.garden!;
+  if (isTileLocked(x, y)) return { ok: false, reason: 'locked' } as const;
   if (garden.placed.some(it => it.id !== id && it.x === x && it.y === y)) return { ok: false, reason: 'occupied' } as const;
   const item = garden.placed.find(it => it.id === id);
   if (!item) return { ok: false, reason: 'not_found' } as const;

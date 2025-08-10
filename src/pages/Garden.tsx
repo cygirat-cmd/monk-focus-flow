@@ -5,6 +5,7 @@ import { placeGardenItem, moveGardenItem, rotateGardenItem, removeGardenItem } f
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import GardenPlacementModal from '@/components/modals/GardenPlacementModal';
 import { RotateCw, Trash2, Check, Sprout } from 'lucide-react';
+import { isTileLocked } from '@/utils/gardenMap';
 
 export default function Garden() {
   const [progress, setProgress] = useState(loadProgress());
@@ -110,8 +111,8 @@ export default function Garden() {
     return url ? { backgroundImage: `url(${url})` } : {};
   }, [garden.bg]);
   
-  // Check for temple area (center 5-7, 3-5)
-  const isTempleArea = (x: number, y: number) => x >= 5 && x <= 7 && y >= 3 && y <= 5;
+  // Locked temple area helper
+  const isTempleArea = (x: number, y: number) => isTileLocked(x, y);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">

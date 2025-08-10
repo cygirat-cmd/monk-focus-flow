@@ -13,15 +13,15 @@ import { validateSession, addFocusPoints, updateStreak } from '@/utils/progressi
 import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
 
 // SEO
-const TITLE = 'Monk: ADHD Pomodoro Timer';
-const DESC = 'ADHD-friendly Pomodoro + Flowtime with zen UI.';
+const TITLE = 'Monk Flow Timer • Zen Pomodoro';
+const DESC = 'Flow Timer and Pomodoro with a minimalist zen UI. Longer flow = rarer gifts.';
 
 const presets = [15, 25, 45] as const;
 
 type Mode = 'fixed' | 'flow';
 
 const Index = () => {
-  const [mode, setMode] = useState<Mode>('fixed');
+  const [mode, setMode] = useState<Mode>('flow');
   const [minutes, setMinutes] = useState<number>(loadSettings().defaultMinutes);
   const [remaining, setRemaining] = useState<number>(minutes * 60_000);
   const [running, setRunning] = useState(false);

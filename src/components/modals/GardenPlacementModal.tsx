@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { loadProgress, saveProgress, GardenStep } from '@/utils/storageClient';
 import { placeGardenItem } from '@/utils/gardenHelpers';
+import { isTileLocked } from '@/utils/gardenMap';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,10 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
     if (!targetToken) return;
     const x = i % garden.cols;
     const y = Math.floor(i / garden.cols);
+    if (isTileLocked(x, y)) {
+      toast.error('Temple area is sacred — items cannot be placed here');
+      return;
+    }
     if (isOccupied(x, y)) {
       toast.error('That spot is taken');
       return;
@@ -84,6 +89,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
               {Array.from({ length: garden.cols * garden.rows }).map((_, i) => {
                 const x = i % garden.cols;
                 const y = Math.floor(i / garden.cols);
+                const locked = isTileLocked(x, y);
                 const occupied = isOccupied(x, y);
                 const isSel = selected?.x === x && selected?.y === y;
                 const imgAtCell = garden.placed?.find((it) => it.x === x && it.y === y)?.img;
@@ -91,14 +97,20 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
                   <button
                     key={i}
                     className={`relative aspect-square rounded-md border transition-all ${
-                      occupied ? 'bg-card' : 'bg-background hover:bg-accent'
+                      locked
+                        ? 'bg-muted/40 cursor-not-allowed'
+                        : occupied
+                        ? 'bg-card'
+                        : 'bg-background hover:bg-accent'
                     } ${isSel ? 'ring-2 ring-primary' : ''}`}
                     onClick={() => handleCellClick(i)}
-                    disabled={!targetToken || occupied || isFull}
+                    disabled={!targetToken || occupied || isFull || locked}
                     aria-label={`Cell ${x + 1}, ${y + 1}`}
                   >
                     {imgAtCell ? (
                       <img src={imgAtCell} alt="Placed item" className="absolute inset-0 m-auto w-8 h-8 object-contain" />
+                    ) : locked ? (
+                      <div className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground">Temple</div>
                     ) : targetToken ? (
                       <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">Empty</div>
                     ) : null}
