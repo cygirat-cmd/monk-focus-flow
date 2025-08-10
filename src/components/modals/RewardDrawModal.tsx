@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { RewardItem, drawReward, Rarity } from '@/utils/rewards';
 import GardenPlacementModal from './GardenPlacementModal';
 import { Sparkles } from 'lucide-react';
-import { playRare } from '@/utils/audio';
+
 
 interface RewardDrawModalProps {
   open: boolean;
@@ -41,9 +41,7 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
       const item = drawReward(seconds);
       setFinalItem(item);
       setSpinning(false);
-      if (item && (item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary')) {
-        playRare();
-      }
+      // rare reveal sound skipped for now
       onResult(item);
     }, 2000);
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); window.clearTimeout(t); };

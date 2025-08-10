@@ -54,15 +54,15 @@ export default function WindDownModal({
       if (!ShopifyBuy || !targetElement) return;
 
       const client = ShopifyBuy.buildClient({
-        domain: 'zenmodoro.com',
-        storefrontAccessToken: '657052401989'
+        domain: 'zenmodoro.myshopify.com',
+        storefrontAccessToken: '7fc2675aef49f4108fbea719cfcd10d6'
       });
 
       ShopifyBuy.UI.onReady(client).then((ui: any) => {
         const mountNode = document.getElementById('winddown-recs');
         if (!mountNode) return;
         ui.createComponent('collection', {
-          id: '657052401989',
+          id: '657052270917',
           node: mountNode,
           options: {
             product: {

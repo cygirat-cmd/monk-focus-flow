@@ -12,9 +12,9 @@ import { Play, Square } from 'lucide-react';
 // import { useTheme } from 'next-themes';
 import { validateSession, addFocusPoints, updateStreak } from '@/utils/progression';
 import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
-import { moveNPC } from '@/utils/zenData';
+import { randomEmptyGardenTile } from '@/utils/gardenHelpers';
 import { grantReward, RewardItem } from '@/utils/rewards';
-import { playEnd } from '@/utils/audio';
+
 
 // SEO
 const TITLE = 'Monk Flow Timer • Zen Pomodoro';
@@ -172,25 +172,29 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     progress.counters.itemsReceivedToday = 0;
     progress.counters.itemsDate = today;
   }
-  playEnd();
 
-  const minutes = payload.seconds / 60;
-  if (minutes >= 10) {
+  const minutesWorked = payload.seconds / 60;
+  let openedReward = false;
+  if (minutesWorked >= 10) {
     if ((progress.counters.itemsReceivedToday || 0) < 1) {
       setRewardSeconds(payload.seconds);
       setRewardOpen(true);
+      openedReward = true;
     } else {
       // prompt to watch ad
       setRewardSeconds(payload.seconds);
       setRewardPromptOpen(true);
+      openedReward = true;
     }
   }
 
 
   // Move NPC after each session to a valid empty tile
-  const t = moveNPC(progress.npc.x, progress.npc.y);
-  progress.npc.x = t.x;
-  progress.npc.y = t.y;
+  const t = randomEmptyGardenTile();
+  if (t) {
+    progress.npc.x = t.x;
+    progress.npc.y = t.y;
+  }
   
   // 30% chance to show NPC message for 30 seconds
   if (Math.random() < 0.3) {
@@ -236,7 +240,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   setNewGardenStep(newStep);
   setNewRelic(newRelicUnlocked);
   setWindDownMode('SessionComplete');
-  setWindOpen(true);
+  if (!openedReward) setWindOpen(true);
 };
 
   const switchMode = (next: Mode, nextMinutes?: number) => {
@@ -450,7 +454,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
         <RewardDrawModal
           open={rewardOpen}
           seconds={rewardSeconds}
-          onClose={() => setRewardOpen(false)}
+          onClose={() => { setRewardOpen(false); setWindOpen(true); }}
           onResult={(item) => {
             if (item) {
               const p = loadProgress();
