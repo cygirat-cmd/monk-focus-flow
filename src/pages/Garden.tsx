@@ -139,7 +139,7 @@ export default function Garden() {
   const isTempleArea = (x: number, y: number) => isTileLocked(x, y);
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/1337a8ad-5f94-4e78-bf0f-78894287492d.png")' }}>
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="flex items-center justify-between mb-3">
           <div>
@@ -157,8 +157,8 @@ export default function Garden() {
         <section className="garden-wrap">
           <div 
             ref={wrapperRef}
-            className="relative rounded-xl overflow-hidden border bg-muted/30 flex items-center justify-center"
-            style={{ padding: 8, height: 512 * scale + 16 }}
+            className="relative overflow-hidden flex items-center justify-center"
+            style={{ height: 512 * scale }}
             onPointerMove={onDragMove} onPointerUp={endDrag}
           >
             {/* Pixel-perfect canvas at 768x512 scaled to fit */}
@@ -185,7 +185,7 @@ export default function Garden() {
                 if (!it) return null;
                 return (
                   <div className="garden-toolbar absolute z-10" style={{ left: `${(it.x + 0.5) * cellW}px`, top: `${(it.y + 0.5) * cellH}px`, transform: 'translate(-50%, -100%)' }}>
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-card border shadow-sm">
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-background/70 backdrop-blur border border-border/40 shadow-sm">
                       <button className="px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs flex items-center gap-1" onClick={() => setSelectedId(null)}><Check size={14}/> Done</button>
                       <button className="px-2 py-1 rounded-md border text-destructive text-xs flex items-center gap-1" onClick={() => onRemove(it.id)}><Trash2 size={14}/> Remove</button>
                     </div>
@@ -198,7 +198,7 @@ export default function Garden() {
 
         {/* Placement hint */}
         {progress.pendingTokens && progress.pendingTokens.length > 0 && (
-          <div className="mt-4 p-3 rounded-lg border bg-card text-sm flex items-center justify-between">
+          <div className="mt-4 p-3 rounded-lg border border-border/40 bg-background/60 backdrop-blur text-sm flex items-center justify-between">
             <div className="flex items-center gap-2"><img src={progress.pendingTokens[0].img} alt={progress.pendingTokens[0].label} className="w-8 h-8 object-contain"/><span>{progress.pendingTokens[0].label}</span></div>
             <button className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm" onClick={() => openPlaceFor(progress.pendingTokens[0])}>Place</button>
           </div>

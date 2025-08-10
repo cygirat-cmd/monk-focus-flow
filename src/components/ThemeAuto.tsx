@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 export default function ThemeAuto() {
   useEffect(() => {
-    const mode = (localStorage.getItem('monk.ui.theme') || 'auto') as 'light' | 'dark' | 'auto';
+    let mode = (localStorage.getItem('monk.ui.theme') || 'auto') as 'light' | 'dark' | 'auto';
     const apply = (dark: boolean) => {
       const el = document.documentElement;
       el.classList.toggle('dark', dark);
@@ -18,6 +18,15 @@ export default function ThemeAuto() {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const dark = prefersDark || night;
       apply(dark);
+    };
+
+    // Expose an imperative setter for instant theme switching
+    (window as any).__monkSetTheme = (next: 'light' | 'dark' | 'auto') => {
+      try {
+        mode = next;
+        localStorage.setItem('monk.ui.theme', next);
+        if (next === 'auto') compute(); else apply(next === 'dark');
+      } catch {}
     };
 
     compute();

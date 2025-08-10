@@ -26,7 +26,7 @@ export default function TreasureHall() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/e6ebf658-53f4-420a-876c-3dd068819ff8.png")' }}>
       <header className="flex items-center gap-3 p-4 border-b border-border">
         <Link to="/zen-path" className="p-2 hover:bg-accent rounded-lg transition-colors">
           <ArrowLeft size={20} />
@@ -50,8 +50,8 @@ export default function TreasureHall() {
                 key={relic.id}
                 className={`relative aspect-square rounded-lg border-2 p-4 transition-all ${
                   isUnlocked 
-                    ? 'border-primary bg-card shadow-md' 
-                    : 'border-dashed border-border bg-card/50'
+                    ? 'border-primary bg-background/60 backdrop-blur shadow-md' 
+                    : 'border-dashed border-border bg-background/40 backdrop-blur'
                 }`}
               >
                 <div className="flex flex-col items-center justify-center h-full">

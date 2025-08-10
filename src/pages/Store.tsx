@@ -34,7 +34,7 @@ export default function Store() {
   }, [ready]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/1fc15fd7-f361-44b2-8c64-4dc3673c5e9f.png")' }}>
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-4">
           <h1 className="text-xl font-semibold">Focus Store</h1>
@@ -43,7 +43,7 @@ export default function Store() {
 
         <div className="grid grid-cols-2 gap-3" ref={containerRef}>
           {Array.from({ length: 6 }).map((_, i) => (
-            <button key={i} className="rounded-lg border bg-card aspect-square p-3 text-left" onClick={() => analytics.track({ type: 'product_click', productId: `p${i}` })}>
+            <button key={i} className="rounded-lg border border-border/40 bg-background/60 backdrop-blur aspect-square p-3 text-left" onClick={() => analytics.track({ type: 'product_click', productId: `p${i}` })}>
               <div className="w-full h-24 rounded-md bg-background mb-2" />
               <div className="h-3 w-2/3 bg-muted rounded mb-1" />
               <div className="h-3 w-1/3 bg-muted rounded" />

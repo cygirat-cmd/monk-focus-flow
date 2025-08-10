@@ -134,7 +134,6 @@ export function GardenCanvas({
             top: it.y * TILE_PX,
             width: TILE_PX,
             height: TILE_PX,
-            transform: `rotate(${it.rotation}deg)`,
           }}
           onPointerDown={(e) => onItemPointerDown?.(e, it)}
         >

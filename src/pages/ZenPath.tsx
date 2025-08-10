@@ -17,7 +17,7 @@ export default function ZenPath() {
   }, []);
 
   return (
-    <div className="path-screen bg-background text-foreground pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/d7c23296-6bc2-446f-9110-0f4a9c974ded.png")' }}>
       <header className="flex items-center gap-3 p-4 border-b border-border">
         <Link to="/" className="p-2 hover:bg-accent rounded-lg transition-colors">
           <ArrowLeft size={20} />
@@ -92,7 +92,7 @@ export default function ZenPath() {
           </Link>
         </div>
 
-        <div className="mt-6 p-4 rounded-lg bg-card border">
+        <div className="mt-6 p-4 rounded-lg bg-background/60 backdrop-blur border border-border/40">
           <h3 className="font-medium mb-2">Progress</h3>
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex justify-between">

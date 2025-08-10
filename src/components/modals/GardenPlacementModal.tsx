@@ -96,7 +96,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative w-full max-w-[560px] rounded-lg border bg-background p-4 shadow-lg">
+      <div className="relative w-full max-w-[560px] rounded-lg border border-border/40 bg-background/70 backdrop-blur p-4 shadow-lg">
         <div className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold">Place on Garden Map</h2>
@@ -108,7 +108,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
           )}
 
           {isFull && (
-            <div className="rounded-lg border bg-card p-3 text-sm">Garden is full. Manage items to free space.</div>
+            <div className="rounded-lg border border-border/40 bg-background/60 backdrop-blur p-3 text-sm">Garden is full. Manage items to free space.</div>
           )}
 
           {/* Shared Garden renderer at 768x512 for perfect alignment, scaled to fit */}

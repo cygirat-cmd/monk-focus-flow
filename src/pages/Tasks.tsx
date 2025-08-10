@@ -42,7 +42,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/b2b7cc3b-adba-4a2a-8b4c-777fc4a39055.png")' }}>
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-4">
           <h1 className="text-xl font-semibold">Tasks</h1>
@@ -54,14 +54,14 @@ export default function Tasks() {
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
             placeholder="Add a task"
-            className="flex-1 px-3 py-2 rounded-md border bg-card"
+            className="flex-1 px-3 py-2 rounded-md border border-border/50 bg-background/60 backdrop-blur"
           />
           <button onClick={addTask} className="px-3 py-2 rounded-md bg-primary text-primary-foreground">Add</button>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
           {columns.map((c) => (
-            <section key={c.key} className="rounded-md border p-2 bg-card min-h-[320px]" onDragOver={(e) => e.preventDefault()} onDrop={() => onDrop(c.key)}>
+            <section key={c.key} className="rounded-md border border-border/40 p-2 bg-background/60 backdrop-blur min-h-[320px]" onDragOver={(e) => e.preventDefault()} onDrop={() => onDrop(c.key)}>
               <h2 className="text-sm font-semibold mb-2">{c.label}</h2>
               <div className="flex flex-col gap-2">
                 {state[c.key].map((t) => (
