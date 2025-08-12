@@ -211,8 +211,8 @@ export default function Garden() {
 
       {/* Withered overlay */}
       {withered && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center p-4">
-          <div className="max-w-sm w-full rounded-xl glass-panel p-4 text-center border-dashed">
+        <div className="absolute inset-0 z-40 flex items-center justify-center p-4 pointer-events-none">
+          <div className="max-w-sm w-full rounded-xl glass-panel p-4 text-center border-dashed pointer-events-auto">
             <h3 className="font-semibold mb-1">Your garden has withered</h3>
             <p className="text-sm text-muted-foreground mb-3">Complete 3 focus sessions to revive it.</p>
             <div className="text-xs text-muted-foreground">Progress: {progress.reviveProgress || 0} / 3</div>
