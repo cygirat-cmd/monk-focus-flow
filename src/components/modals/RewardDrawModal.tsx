@@ -20,7 +20,27 @@ const silhouettes = [
   '/assets/relics/fan.png',
   '/assets/relics/koan_scroll.png',
   '/assets/relics/hand_bell.png',
-];\n\n// Seasonal eligibility (for reveal highlighting only)\nconst seasonalIds: Record<string, 'spring'|'summer'|'autumn'|'winter'> = {\n  'cherry-blossom-tree': 'spring', 'spring-waterfall': 'spring', 'lucky-carp': 'spring', 'eternal-bloom-sakura': 'spring',\n  'lotus-pond': 'summer', 'bamboo-pavilion': 'summer', 'lazy-panda-hammock': 'summer', 'sun-spirit-fountain': 'summer',\n  'maple-tree': 'autumn', 'harvest-rice-stack': 'autumn', 'fox-spirit-shrine': 'autumn', 'golden-leaf-whirlpool': 'autumn',\n  'snow-stone': 'winter', 'ice-bridge': 'winter', 'snowman-monk': 'winter', 'northern-light-lantern': 'winter',\n};
+];
+
+// Seasonal eligibility (for reveal highlighting only)
+const seasonalIds: Record<string, 'spring'|'summer'|'autumn'|'winter'> = {
+  'cherry-blossom-tree': 'spring',
+  'spring-waterfall': 'spring',
+  'lucky-carp': 'spring',
+  'eternal-bloom-sakura': 'spring',
+  'lotus-pond': 'summer',
+  'bamboo-pavilion': 'summer',
+  'lazy-panda-hammock': 'summer',
+  'sun-spirit-fountain': 'summer',
+  'maple-tree': 'autumn',
+  'harvest-rice-stack': 'autumn',
+  'fox-spirit-shrine': 'autumn',
+  'golden-leaf-whirlpool': 'autumn',
+  'snow-stone': 'winter',
+  'ice-bridge': 'winter',
+  'snowman-monk': 'winter',
+  'northern-light-lantern': 'winter',
+};
 
 export default function RewardDrawModal({ open, seconds, onClose, onResult }: RewardDrawModalProps) {
   const [spinning, setSpinning] = useState(true);
