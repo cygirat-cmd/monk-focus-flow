@@ -169,7 +169,11 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
 
   // Daily reward system: max 1 reward per day, with rewarded-ad bypass
   const today = new Date().toDateString();
-  if (progress.counters.itemsDate !== today) {
+  const twentyFourHours = 24 * 60 * 60 * 1000;
+  if (
+    progress.counters.itemsDate !== today ||
+    Date.now() - (progress.counters.lastRewardAt || 0) >= twentyFourHours
+  ) {
     progress.counters.itemsReceivedToday = 0;
     progress.counters.itemsDate = today;
   }
