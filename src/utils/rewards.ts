@@ -1,4 +1,4 @@
-import { GardenStep, Relic, ProgressData } from './storageClient';
+import { GardenStep, Relic, ProgressData, loadProgress } from './storageClient';
 
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
@@ -64,18 +64,6 @@ const LEGENDARY_NON_RELIC: RewardItem[] = [
   { kind: 'garden', id: 'phoenix-perch', img: P, label: 'Phoenix Perch', rarity: 'legendary' },
 ];
 
-const LEGENDARY_RELICS: RewardItem[] = [
-  { kind: 'relic', id: 'tea-bowl', img: '/assets/relics/tea_bowl.png', title: 'Ancient Tea Bowl', unlockedAt: '', rarity: 'legendary' },
-  { kind: 'relic', id: 'fan', img: '/assets/relics/fan.png', title: 'Zen Fan', unlockedAt: '', rarity: 'legendary' },
-  { kind: 'relic', id: 'koan-scroll', img: '/assets/relics/koan_scroll.png', title: 'Koan Scroll', unlockedAt: '', rarity: 'legendary' },
-  { kind: 'relic', id: 'hand-bell', img: '/assets/relics/hand_bell.png', title: 'Hand Bell', unlockedAt: '', rarity: 'legendary' },
-  { kind: 'relic', id: 'wooden-fish-drum', img: '/placeholder.svg', title: "Monk’s Wooden Fish Drum", unlockedAt: '', rarity: 'legendary' },
-  { kind: 'relic', id: 'jade-beads', img: '/placeholder.svg', title: 'Jade Meditation Beads', unlockedAt: '', rarity: 'legendary' },
-  { kind: 'relic', id: 'celestial-compass', img: '/placeholder.svg', title: 'Celestial Compass', unlockedAt: '', rarity: 'legendary' },
-  { kind: 'relic', id: 'crane-feather-amulet', img: '/placeholder.svg', title: 'Crane Feather Amulet', unlockedAt: '', rarity: 'legendary' },
-  { kind: 'relic', id: 'timekeepers-sandglass', img: '/placeholder.svg', title: "Timekeeper’s Sandglass", unlockedAt: '', rarity: 'legendary' },
-  { kind: 'relic', id: 'zenmodoro-shukan', img: '/placeholder.svg', title: 'Zenmodoro Shukan', unlockedAt: '', rarity: 'legendary' },
-];
 
 export function getAllowedRarity(seconds: number): Array<{ rarity: Rarity; weight: number }> {
   const minutes = seconds / 60;
@@ -97,29 +85,61 @@ function weightedPick<T extends { weight?: number }>(arr: Array<T & { weight: nu
 }
 
 export function drawReward(seconds: number): RewardItem | null {
-  const rarityDist = getAllowedRarity(seconds);
-  if (rarityDist.length === 0) return null;
-  const pickR = weightedPick(rarityDist).rarity;
-  let pool: RewardItem[] = [];
-  if (pickR === 'common') pool = COMMON;
-  else if (pickR === 'rare') pool = RARE;
-  else if (pickR === 'epic') pool = EPIC;
-  else {
-    // Lower weight for relics within legendary rarity
-    const pickRelic = Math.random() < 0.25; // 25% relics, 75% non-relic legendaries
-    pool = pickRelic ? LEGENDARY_RELICS : LEGENDARY_NON_RELIC;
-  }
-  // Seasonal gating
+  const baseDist = getAllowedRarity(seconds);
+  if (baseDist.length === 0) return null;
+
+  // Determine current season
   const month = new Date().getMonth();
-  const season = month >= 2 && month <= 4 ? 'spring' : month >= 5 && month <= 7 ? 'summer' : month >= 8 && month <= 10 ? 'autumn' : 'winter';
+  const season: 'spring' | 'summer' | 'autumn' | 'winter' =
+    month >= 2 && month <= 4 ? 'spring' : month >= 5 && month <= 7 ? 'summer' : month >= 8 && month <= 10 ? 'autumn' : 'winter';
+
+  // Seasonal eligibility per item id
   const seasonalIds: Record<string, 'spring'|'summer'|'autumn'|'winter'> = {
     'cherry-blossom-tree': 'spring', 'spring-waterfall': 'spring', 'lucky-carp': 'spring', 'eternal-bloom-sakura': 'spring',
     'lotus-pond': 'summer', 'bamboo-pavilion': 'summer', 'lazy-panda-hammock': 'summer', 'sun-spirit-fountain': 'summer',
     'maple-tree': 'autumn', 'harvest-rice-stack': 'autumn', 'fox-spirit-shrine': 'autumn', 'golden-leaf-whirlpool': 'autumn',
     'snow-stone': 'winter', 'ice-bridge': 'winter', 'snowman-monk': 'winter', 'northern-light-lantern': 'winter',
   };
-  const filtered = pool.filter(p => !seasonalIds[p.id] || seasonalIds[p.id] === season);
-  const pick = filtered[Math.floor(Math.random() * filtered.length)];
+
+  // Build rarity pools with seasonal filtering (garden items only)
+  const byRarity: Record<Rarity, RewardItem[]> = {
+    common: COMMON.filter(p => !seasonalIds[p.id] || seasonalIds[p.id] === season),
+    rare: RARE.filter(p => !seasonalIds[p.id] || seasonalIds[p.id] === season),
+    epic: EPIC.filter(p => !seasonalIds[p.id] || seasonalIds[p.id] === season),
+    legendary: LEGENDARY_NON_RELIC.filter(p => !seasonalIds[p.id] || seasonalIds[p.id] === season),
+  };
+
+  // Compute rarity weight multipliers from placed items (bonuses)
+  const progress = loadProgress();
+  const placedIds = progress.garden?.placed?.map(it => it.tokenId) || [];
+  const rarityMultipliers: Record<Rarity, number> = { common: 1, rare: 1, epic: 1, legendary: 1 };
+  // Example bonuses: flow-crystal gives +10% rare drops. Extend as needed.
+  const RARITY_BONUS_BY_TOKEN: Record<string, Partial<Record<Rarity, number>>> = {
+    'flow-crystal': { rare: 1.10 },
+  };
+  for (const tid of placedIds) {
+    const bonus = RARITY_BONUS_BY_TOKEN[tid];
+    if (!bonus) continue;
+    for (const r of Object.keys(bonus) as Rarity[]) {
+      rarityMultipliers[r] *= bonus[r] as number;
+    }
+  }
+
+  // Apply bonuses and exclude empty rarities, then normalize to 100
+  const weighted: Array<{ rarity: Rarity; weight: number }> = [];
+  for (const { rarity, weight } of baseDist) {
+    const pool = byRarity[rarity];
+    if (!pool.length) continue; // seasonally ineligible
+    const adjusted = weight * (rarityMultipliers[rarity] || 1);
+    if (adjusted > 0) weighted.push({ rarity, weight: adjusted });
+  }
+  if (!weighted.length) return null;
+  const sum = weighted.reduce((s, w) => s + w.weight, 0);
+  const normalized = weighted.map(w => ({ rarity: w.rarity, weight: (w.weight / sum) * 100 }));
+
+  const chosenRarity = weightedPick(normalized).rarity;
+  const pool = byRarity[chosenRarity];
+  const pick = pool[Math.floor(Math.random() * pool.length)];
   return { ...pick };
 }
 
