@@ -19,6 +19,7 @@ export default function Garden() {
   const dragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const [scale, setScale] = useState(1);
   const [containerH, setContainerH] = useState<number>(0);
+  const [npcDir, setNpcDir] = useState<'left' | 'right'>('right');
 
   useEffect(() => {
     document.title = 'Garden – Monk';
@@ -54,11 +55,54 @@ export default function Garden() {
   }, []);
 
   const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: '/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png' };
-  const cellW = 64; // TILE_PX
-  const cellH = 64; // TILE_PX
-  
-  // NPC state
-  const npc: { x: number; y: number; message?: string } = (progress as any).npc || { x: 6, y: 4 };
+const cellW = 64; // TILE_PX
+const cellH = 64; // TILE_PX
+
+// NPC state
+const npc: { x: number; y: number; message?: string; dir?: 'left' | 'right' } = {
+  ...(progress as any).npc || { x: 6, y: 4 },
+  dir: npcDir,
+};
+
+  // Move NPC around the garden in real time
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const walkableIds = new Set(['stone-1', 'stone-2', 'snow-stone']);
+    const step = () => {
+      const prog = loadProgress();
+      const g = prog.garden || { cols: 12, rows: 8, placed: [] };
+      const pos = prog.npc || { x: 6, y: 4 };
+      const dirs = [
+        { dx: 1, dy: 0, dir: 'right' as const },
+        { dx: -1, dy: 0, dir: 'left' as const },
+        { dx: 0, dy: 1, dir: 'down' as const },
+        { dx: 0, dy: -1, dir: 'up' as const },
+      ];
+      const isWalkable = (x: number, y: number) => {
+        if (x < 0 || y < 0 || x >= g.cols || y >= g.rows) return false;
+        if (isTileLocked(x, y)) return false;
+        const item = g.placed.find((it) => {
+          const w = it.w || 1;
+          const h = it.h || 1;
+          return x >= it.x && x < it.x + w && y >= it.y && y < it.y + h;
+        });
+        if (!item) return true;
+        return walkableIds.has(item.id);
+      };
+      const options = dirs.filter((d) => isWalkable(pos.x + d.dx, pos.y + d.dy));
+      if (options.length) {
+        const choice = options[Math.floor(Math.random() * options.length)];
+        pos.x += choice.dx;
+        pos.y += choice.dy;
+        prog.npc = pos;
+        saveProgress(prog);
+        setProgress(prog);
+        if (choice.dir === 'left' || choice.dir === 'right') setNpcDir(choice.dir);
+      }
+    };
+    const interval = setInterval(step, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const onRotate = (id: string) => {
     rotateGardenItem(id, 90);

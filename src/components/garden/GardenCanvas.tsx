@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX, isTileLocked, defaultGardenBg } from '@/utils/gardenMap';
 import type { GardenPlacedItem } from '@/utils/storageClient';
+import monkGif from '@/assets/monk';
 
 export type GardenCanvasMode = 'view' | 'place';
 
@@ -15,7 +16,7 @@ interface GardenCanvasProps {
   previewItem?: { img: string; label?: string; w: number; h: number } | null;
   onCellClick?: (x: number, y: number) => void;
   onItemPointerDown?: (e: React.PointerEvent, item: GardenPlacedItem) => void;
-  npc?: { x: number; y: number; message?: string } | null;
+  npc?: { x: number; y: number; message?: string; dir?: 'left' | 'right' } | null;
   className?: string;
 }
 
@@ -186,19 +187,24 @@ export function GardenCanvas({
         </div>
       )}
 
-      {/* NPC (Cat) */}
+      {/* NPC */}
       {npc && (
         <div
           className="absolute z-20 pointer-events-none"
           style={{ left: npc.x * TILE_PX, top: npc.y * TILE_PX, width: TILE_PX, height: TILE_PX }}
         >
           <img
-            src="/lovable-uploads/cbffb95e-4299-4f2f-8bb8-8738acdacad8.png"
-            alt={npc.message || 'Garden cat'}
+            src={monkGif}
+            alt={npc.message || 'Garden monk'}
             width={TILE_PX}
             height={TILE_PX}
             className="pixelated"
-            style={{ width: TILE_PX, height: TILE_PX, objectFit: 'contain' }}
+            style={{
+              width: TILE_PX,
+              height: TILE_PX,
+              objectFit: 'contain',
+              transform: npc.dir === 'left' ? 'scaleX(-1)' : undefined,
+            }}
           />
         </div>
       )}
