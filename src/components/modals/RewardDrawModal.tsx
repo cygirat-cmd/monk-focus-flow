@@ -20,7 +20,7 @@ const silhouettes = [
   '/assets/relics/fan.png',
   '/assets/relics/koan_scroll.png',
   '/assets/relics/hand_bell.png',
-];
+];\n\n// Seasonal eligibility (for reveal highlighting only)\nconst seasonalIds: Record<string, 'spring'|'summer'|'autumn'|'winter'> = {\n  'cherry-blossom-tree': 'spring', 'spring-waterfall': 'spring', 'lucky-carp': 'spring', 'eternal-bloom-sakura': 'spring',\n  'lotus-pond': 'summer', 'bamboo-pavilion': 'summer', 'lazy-panda-hammock': 'summer', 'sun-spirit-fountain': 'summer',\n  'maple-tree': 'autumn', 'harvest-rice-stack': 'autumn', 'fox-spirit-shrine': 'autumn', 'golden-leaf-whirlpool': 'autumn',\n  'snow-stone': 'winter', 'ice-bridge': 'winter', 'snowman-monk': 'winter', 'northern-light-lantern': 'winter',\n};
 
 export default function RewardDrawModal({ open, seconds, onClose, onResult }: RewardDrawModalProps) {
   const [spinning, setSpinning] = useState(true);
@@ -51,7 +51,7 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
 
   if (!open) return null;
 
-  const glow = finalItem && (finalItem.rarity === 'rare' || finalItem.rarity === 'epic' || finalItem.rarity === 'legendary');
+  const glow = finalItem && finalItem.rarity === 'legendary';
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur">
@@ -62,11 +62,13 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
         <div className="rounded-xl border bg-card p-6 flex flex-col items-center gap-4">
           <div className={`w-40 h-40 rounded-lg border flex items-center justify-center ${glow ? 'shadow-[0_0_24px_hsl(var(--primary)/0.5)]' : ''}`}>
             {spinning && (
-              <img src={silhouettes[idx]} alt="mystery" className="w-28 h-28 opacity-60 animate-spin" />
+              <img src={silhouettes[idx]} alt="mystery" className="w-28 h-28 opacity-60 animate-spin blur-sm" />
             )}
-            {!spinning && finalItem && (
-              <img src={finalItem.kind === 'garden' ? finalItem.img : finalItem.img} alt={finalItem.kind === 'garden' ? finalItem.label : finalItem.title} className="w-32 h-32 object-contain" />
-            )}
+              {!spinning && finalItem && (
+                <div className={`${glow ? 'legendary-ring p-1' : ''}`}>
+                  <img src={finalItem.kind === 'garden' ? finalItem.img : finalItem.img} alt={finalItem.kind === 'garden' ? finalItem.label : finalItem.title} className="w-32 h-32 object-contain" />
+                </div>
+              )}
             {!spinning && !finalItem && (
               <div className="text-sm text-muted-foreground">No reward for short sessions.</div>
             )}
@@ -77,6 +79,15 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
               <div className="font-medium">
                 {finalItem.kind === 'garden' ? finalItem.label : finalItem.title}
               </div>
+              {finalItem.description && (
+                <div className="text-xs text-muted-foreground mt-1">{finalItem.description}</div>
+              )}
+              {finalItem.bonus && (
+                <div className="text-xs mt-1">Bonus: <span className="font-medium">{finalItem.bonus}</span></div>
+              )}
+              {finalItem.kind === 'garden' && seasonalIds[finalItem.id] && (
+                <div className="text-xs mt-1">Seasonal: <span className="font-medium capitalize">{seasonalIds[finalItem.id]}</span></div>
+              )}
             </div>
           )}
         </div>

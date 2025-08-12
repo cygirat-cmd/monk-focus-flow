@@ -142,7 +142,7 @@ export default function Garden() {
   const withered = (progress.decayStage ?? 0) === 2;
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/1337a8ad-5f94-4e78-bf0f-78894287492d.png")' }}>
+    <div className="min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: 'url("/lovable-uploads/b2b7cc3b-adba-4a2a-8b4c-777fc4a39055.png")' }}>
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="flex items-center justify-between mb-3">
           <div>

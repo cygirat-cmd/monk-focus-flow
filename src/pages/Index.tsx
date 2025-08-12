@@ -348,7 +348,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     : '/lovable-uploads/20a958db-a342-42f8-a711-30e17af81a0e.png';
 
   return (
-    <div className={`min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed ${showPomodoro ? 'overflow-hidden' : ''}`} style={{ backgroundImage: 'url("/lovable-uploads/b2b7cc3b-adba-4a2a-8b4c-777fc4a39055.png")' }}>
+    <div className={`min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed ${showPomodoro ? 'overflow-hidden' : ''}`} style={{ backgroundImage: 'url("/lovable-uploads/1337a8ad-5f94-4e78-bf0f-78894287492d.png")' }}>
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-6 flex justify-center">
           <div className="app-header__brand text-center">

@@ -146,6 +146,7 @@ export default function DevPanel() {
           <button className="px-2 py-1 rounded-md bg-accent" onClick={resetDaily}>Reset Daily</button>
           <button className="px-2 py-1 rounded-md bg-accent" onClick={advanceDay}>Advance Day +1</button>
           <button className="px-2 py-1 rounded-md bg-destructive text-destructive-foreground" onClick={hardReset}>HARD RESET</button>
+          <button className="px-2 py-1 rounded-md bg-destructive text-destructive-foreground" onClick={() => { const prog = loadProgress(); (prog as any).decayStage = 2; localStorage.setItem('monk.progress', JSON.stringify(prog)); setP(prog); }}>Wither Garden</button>
         </div>
       </div>
     </div>

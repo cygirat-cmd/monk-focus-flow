@@ -20,7 +20,7 @@ const COMMON: RewardItem[] = [
   { kind: 'garden', id: 'wooden-bench', img: P, label: 'Wooden Bench', rarity: 'common' },
   { kind: 'garden', id: 'gravel-patch', img: P, label: 'Gravel Patch', rarity: 'common' },
   { kind: 'garden', id: 'small-pond', img: P, label: 'Small Pond', rarity: 'common' },
-  { kind: 'garden', id: 'wooden-bridge', img: P, label: 'Wooden Bridge', rarity: 'common' },
+  // removed: wooden-bridge item per design
   { kind: 'garden', id: 'bamboo-fence', img: P, label: 'Bamboo Fence', rarity: 'common' },
   { kind: 'garden', id: 'moss-rock', img: P, label: 'Moss Rock Cluster', rarity: 'common' },
   { kind: 'garden', id: 'torii-gate', img: P, label: 'Garden Gate (Torii)', rarity: 'common' },

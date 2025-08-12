@@ -199,6 +199,13 @@ body.dark .shopify-buy__product__price {
   .path-card { flex-basis: 88px; height: 88px; }
 }
 
+/* Custom animations */
+@keyframes legendary-glow {
+  0% { box-shadow: 0 0 0 hsl(var(--legendary) / 0); }
+  50% { box-shadow: 0 0 28px hsl(var(--legendary) / 0.45), 0 0 64px hsl(var(--legendary) / 0.25); }
+  100% { box-shadow: 0 0 0 hsl(var(--legendary) / 0); }
+}
+
 @layer utilities {
   .pixelated {
     image-rendering: pixelated;
@@ -222,5 +229,16 @@ body.dark .shopify-buy__product__price {
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
   }
+  .garden-shadow {
+    filter: drop-shadow(0 16px 28px hsl(var(--ring) / 0.25)) drop-shadow(0 4px 8px hsl(var(--ring) / 0.2));
+  }
+  .legendary-ring {
+    border-radius: 12px;
+    animation: legendary-glow 2.2s ease-in-out infinite;
+  }
+}
+
+@layer base {
+  :root { --legendary: 45 95% 50%; }
 }
 

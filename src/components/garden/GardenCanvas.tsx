@@ -54,7 +54,7 @@ export function GardenCanvas({
         alt="Zen garden map background"
         width={w}
         height={h}
-        className="pixelated"
+        className="pixelated garden-shadow"
         style={{
           width: w,
           height: h,
