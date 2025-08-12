@@ -48,6 +48,7 @@ export default function ZenPath() {
           {Array.from({ length: progress.pathLength }).map((_, index) => {
             const step = progress.currentPath[index];
             const isEmpty = !step;
+            const isLegendary = (step as any)?.rarity === 'legendary';
             
             return (
               <div
@@ -60,10 +61,10 @@ export default function ZenPath() {
               >
                   {step ? (
                     <>
-                      <img 
-                        src={step.img} 
+                      <img
+                        src={step.img}
                         alt={step.label}
-                        className="w-12 h-12 object-contain mb-2"
+                        className={`w-12 h-12 object-contain mb-2 ${isLegendary ? 'legendary-ring p-1' : ''}`}
                         onError={(e) => {
                           // Fallback for missing images
                           e.currentTarget.style.display = 'none';

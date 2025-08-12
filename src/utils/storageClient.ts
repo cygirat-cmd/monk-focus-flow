@@ -38,6 +38,8 @@ export type GardenPlacedItem = {
   y: number; // 0-based row
   rotation: 0 | 90 | 180 | 270;
   placedAt: string;
+  w?: number;
+  h?: number;
 };
 
 export type GardenState = {

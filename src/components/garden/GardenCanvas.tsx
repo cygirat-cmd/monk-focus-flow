@@ -46,7 +46,7 @@ export function GardenCanvas({
 
   return (
     <div
-      className={`relative overflow-hidden ${className}`}
+      className={`relative overflow-hidden garden-shadow ${className}`}
       style={{ width: w, height: h }}
     >
       <img
@@ -54,7 +54,7 @@ export function GardenCanvas({
         alt="Zen garden map background"
         width={w}
         height={h}
-        className="pixelated garden-shadow"
+        className="pixelated"
         style={{
           width: w,
           height: h,
@@ -131,12 +131,23 @@ export function GardenCanvas({
           style={{
             left: it.x * TILE_PX,
             top: it.y * TILE_PX,
-            width: TILE_PX,
-            height: TILE_PX,
+            width: (it.w || 1) * TILE_PX,
+            height: (it.h || 1) * TILE_PX,
           }}
           onPointerDown={(e) => onItemPointerDown?.(e, it)}
         >
-          <img src={it.img} alt={it.label || 'Garden item'} width={TILE_PX} height={TILE_PX} style={{ width: TILE_PX, height: TILE_PX, objectFit: 'contain', imageRendering: 'pixelated' as any }} />
+          <img
+            src={it.img}
+            alt={it.label || 'Garden item'}
+            width={(it.w || 1) * TILE_PX}
+            height={(it.h || 1) * TILE_PX}
+            style={{
+              width: (it.w || 1) * TILE_PX,
+              height: (it.h || 1) * TILE_PX,
+              objectFit: 'contain',
+              imageRendering: 'pixelated' as any,
+            }}
+          />
         </div>
       ))}
 

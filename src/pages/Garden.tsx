@@ -109,15 +109,12 @@ export default function Garden() {
     const relY = Math.min(Math.max(e.clientY - stageRect.top, 0), stageRect.height);
     const gx = Math.floor(relX / (cellW * scale));
     const gy = Math.floor(relY / (cellH * scale));
-
-    // Check vacancy
-    const occupied = garden.placed.some(it => it.x === gx && it.y === gy && it.id !== id);
-    if (occupied) {
-      alert('That spot is taken.');
-      setProgress(loadProgress());
-      return;
+    const res = moveGardenItem(id, gx, gy);
+    if (!res.ok) {
+      if (res.reason === 'occupied') alert('That spot is taken.');
+      else if (res.reason === 'locked') alert('You cannot place on temple tiles.');
+      else if (res.reason === 'out_of_bounds') alert('Out of bounds.');
     }
-    moveGardenItem(id, gx, gy);
     setProgress(loadProgress());
   };
 
