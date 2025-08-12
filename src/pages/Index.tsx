@@ -113,8 +113,6 @@ useEffect(() => {
           analytics.track({ type: 'session_stop', completed: true });
           showLocalNotification('Session complete', 'Breathe. Break starts.');
           handleSessionComplete({ mode: 'pomodoro', seconds });
-          setWindDownMode('SessionComplete');
-          setWindOpen(true);
           // Auto-start break immediately
           setPhase('break');
           setTimeout(() => start(), 0);
@@ -169,24 +167,29 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
 
   // Daily reward system: max 1 reward per day, with rewarded-ad bypass
   const today = new Date().toDateString();
-  if (progress.counters.itemsDate !== today) {
+  const twentyFourHours = 24 * 60 * 60 * 1000;
+  const lastRewardAt = progress.counters.lastRewardAt || 0;
+  if (
+    progress.counters.itemsDate !== today ||
+    Date.now() - lastRewardAt > twentyFourHours
+  ) {
     progress.counters.itemsReceivedToday = 0;
     progress.counters.itemsDate = today;
   }
 
   const minutesWorked = payload.seconds / 60;
+  const rewardEligible = minutesWorked >= 10;
+  const dailyLimitReached = (progress.counters.itemsReceivedToday ?? 0) >= 1;
   let openedReward = false;
-  if (minutesWorked >= 10) {
-    if ((progress.counters.itemsReceivedToday || 0) < 1) {
-      setRewardSeconds(payload.seconds);
-      setRewardOpen(true);
-      openedReward = true;
-    } else {
+  if (rewardEligible) {
+    setRewardSeconds(payload.seconds);
+    if (dailyLimitReached) {
       // prompt to watch ad
-      setRewardSeconds(payload.seconds);
       setRewardPromptOpen(true);
-      openedReward = true;
+    } else {
+      setRewardOpen(true);
     }
+    openedReward = true;
   }
 
 
@@ -481,10 +484,17 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
 {rewardPromptOpen && (
   <RewardedAdModal
     open={rewardPromptOpen}
-    onClose={() => setRewardPromptOpen(false)}
+    onClose={() => {
+      setRewardPromptOpen(false);
+      setWindOpen(true);
+    }}
     onFinished={(ok) => {
       setRewardPromptOpen(false);
-      if (ok) setRewardOpen(true);
+      if (ok) {
+        setRewardOpen(true);
+      } else {
+        setWindOpen(true);
+      }
     }}
   />
 )}
