@@ -102,11 +102,19 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
         else toast('Could not place item');
         return;
       }
-      setProgress(loadProgress());
+      const newProg = loadProgress();
+      setProgress(newProg);
       try { navigator.vibrate?.(10); } catch {}
       toast('Placed in your garden');
-      onPlaced?.();
-      onClose();
+      const hasMore = !token && (newProg.pendingToken || (newProg.pendingTokens?.length ?? 0) > 0);
+      if (hasMore) {
+        setSelected(null);
+        setPlacing(false);
+      } else {
+        setPlacing(false);
+        onPlaced?.();
+        onClose();
+      }
     } catch (err) {
       console.error('Garden placement failed:', err);
       toast('Something went wrong placing the item');
