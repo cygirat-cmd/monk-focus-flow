@@ -115,12 +115,13 @@ export const getRandomNPCMessage = (): { message: string; type: 'motivational' |
 };
 
 export const moveNPC = (currentX: number, currentY: number): { x: number; y: number } => {
-  // Move NPC to a random position, avoiding center temple area (5-7, 3-5)
+  // Move NPC to a random position, avoiding the center temple area (5-7, 3-5)
+  // and the NPC's current location.
   let x, y;
   do {
     x = Math.floor(Math.random() * 12);
     y = Math.floor(Math.random() * 8);
-  } while (x >= 5 && x <= 7 && y >= 3 && y <= 5);
-  
+  } while ((x >= 5 && x <= 7 && y >= 3 && y <= 5) || (x === currentX && y === currentY));
+
   return { x, y };
 };
