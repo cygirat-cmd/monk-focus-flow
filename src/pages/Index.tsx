@@ -168,27 +168,28 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   // Daily reward system: max 1 reward per day, with rewarded-ad bypass
   const today = new Date().toDateString();
   const twentyFourHours = 24 * 60 * 60 * 1000;
+  const lastRewardAt = progress.counters.lastRewardAt || 0;
   if (
     progress.counters.itemsDate !== today ||
-    Date.now() - (progress.counters.lastRewardAt || 0) >= twentyFourHours
+    Date.now() - lastRewardAt > twentyFourHours
   ) {
     progress.counters.itemsReceivedToday = 0;
     progress.counters.itemsDate = today;
   }
 
   const minutesWorked = payload.seconds / 60;
+  const rewardEligible = minutesWorked >= 10;
+  const dailyLimitReached = (progress.counters.itemsReceivedToday ?? 0) >= 1;
   let openedReward = false;
-  if (minutesWorked >= 10) {
-    if ((progress.counters.itemsReceivedToday || 0) < 1) {
-      setRewardSeconds(payload.seconds);
-      setRewardOpen(true);
-      openedReward = true;
-    } else {
+  if (rewardEligible) {
+    setRewardSeconds(payload.seconds);
+    if (dailyLimitReached) {
       // prompt to watch ad
-      setRewardSeconds(payload.seconds);
       setRewardPromptOpen(true);
-      openedReward = true;
+    } else {
+      setRewardOpen(true);
     }
+    openedReward = true;
   }
 
 
