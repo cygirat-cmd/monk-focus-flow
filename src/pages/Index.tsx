@@ -71,16 +71,6 @@ const Index = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Push notifications for decay stages (on open)
-  useEffect(() => {
-    const p = loadProgress();
-    if ((p.decayStage ?? 0) === 1) {
-      showLocalNotification('Your Zen Garden is getting thirsty…', 'Time to focus!');
-    }
-    if ((p.decayStage ?? 0) === 2) {
-      showLocalNotification('Your garden has withered — revive it by focusing!', 'Complete 3 sessions to revive it.');
-    }
-  }, []);
   useEffect(() => {
     if (running) return;
     if (mode === 'fixed') {
