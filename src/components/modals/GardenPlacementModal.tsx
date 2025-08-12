@@ -58,6 +58,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
 
   const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: 'gravel_light.png' };
   const targetToken: GardenStep | undefined = token || progress.pendingToken || (progress.pendingTokens?.find(t => !!t) || undefined);
+  const previewItem = targetToken ? { img: targetToken.img, label: targetToken.label, ...getItemFootprint(targetToken.id) } : null;
 
   const totalOccupied = garden.placed.reduce((s, it) => s + (it.w || 1) * (it.h || 1), 0);
   const isFull = totalOccupied >= garden.cols * garden.rows;
@@ -139,6 +140,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
                 showGrid
                 showLockedOverlay
                 selected={selected}
+                previewItem={previewItem}
                 onCellClick={handleCellClick}
                 className="select-none"
                 npc={null}
