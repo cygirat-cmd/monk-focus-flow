@@ -1,3 +1,5 @@
+import { isTileLocked } from './gardenMap';
+
 export type Task = { id: string; title: string; notes?: string };
 export type ColumnKey = 'now' | 'next' | 'later';
 export type TasksState = Record<ColumnKey, Task[]>;
@@ -210,6 +212,8 @@ export const placeGardenItem = (token: GardenStep, x: number, y: number, rotatio
   const garden = p.garden!;
   // Check bounds
   if (x < 0 || y < 0 || x >= garden.cols || y >= garden.rows) return { ok: false, reason: 'out_of_bounds' } as const;
+  // Check locked tiles
+  if (isTileLocked(x, y)) return { ok: false, reason: 'locked' } as const;
   // Check occupancy
   if (garden.placed.some(it => it.x === x && it.y === y)) return { ok: false, reason: 'occupied' } as const;
 
