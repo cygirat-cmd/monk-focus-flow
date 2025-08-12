@@ -14,7 +14,7 @@ export const placeGardenItem = (token: GardenStep, x: number, y: number, rotatio
   // Ensure the user actually owns an unplaced instance of this token
   let consumedSource: 'pendingToken' | 'pendingTokens' | 'inventory' | null = null;
   if (p.pendingToken && p.pendingToken.id === token.id) consumedSource = 'pendingToken';
-  else if (p.pendingTokens && p.pendingTokens.find(t => t.id === token.id)) consumedSource = 'pendingTokens';
+  else if (p.pendingTokens && p.pendingTokens.find(t => t.id === token.id && t.img === token.img)) consumedSource = 'pendingTokens';
   else if (p.inventory && p.inventory.find(t => t.id === token.id && t.img === token.img)) consumedSource = 'inventory';
 
   if (!consumedSource) {
@@ -25,12 +25,14 @@ export const placeGardenItem = (token: GardenStep, x: number, y: number, rotatio
   garden.placed.push({ id, type: 'step', tokenId: token.id, img: token.img, label: token.label, x, y, rotation, placedAt: new Date().toISOString() });
 
   // Consume exactly one from the appropriate source
-  if (consumedSource === 'pendingToken') {
+  if (p.pendingToken && p.pendingToken.id === token.id) {
     p.pendingToken = null;
-  } else if (consumedSource === 'pendingTokens' && p.pendingTokens) {
-    const idx = p.pendingTokens.findIndex(t => t.id === token.id);
+  }
+  if ((consumedSource === 'pendingToken' || consumedSource === 'pendingTokens') && p.pendingTokens) {
+    const idx = p.pendingTokens.findIndex(t => t.id === token.id && t.img === token.img);
     if (idx !== -1) p.pendingTokens.splice(idx, 1);
-  } else if (consumedSource === 'inventory' && p.inventory) {
+  }
+  if (consumedSource === 'inventory' && p.inventory) {
     const idx = p.inventory.findIndex(t => t.id === token.id && t.img === token.img);
     if (idx !== -1) p.inventory.splice(idx, 1);
   }
