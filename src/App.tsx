@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 // import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 // import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,7 +21,24 @@ import DevPanel from "./components/dev/DevPanel";
 const queryClient = new QueryClient();
 
 const AppRoot = () => {
-  const [showSplash, setShowSplash] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const preload = async () => {
+      await Promise.all([
+        import("./pages/NotFound"),
+        import("./pages/Tasks"),
+        import("./pages/Store"),
+        import("./pages/FocusClub"),
+        import("./pages/Settings"),
+        import("./pages/ZenPath"),
+        import("./pages/TreasureHall"),
+        import("./pages/Garden"),
+      ]);
+      setLoading(false);
+    };
+    preload();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -48,9 +65,7 @@ const AppRoot = () => {
           </React.Suspense>
         </BrowserRouter>
         {/* Splash overlay on initial load */}
-        {showSplash && (
-          <Splash onDone={() => setShowSplash(false)} />
-        )}
+        <Splash loading={loading} />
         <DevPanel />
       </ThemeProvider>
     </QueryClientProvider>

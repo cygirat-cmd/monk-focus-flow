@@ -1,29 +1,26 @@
 import { useEffect, useState } from 'react';
 
-export default function Splash({ onDone }: { onDone?: () => void }) {
-  const [phase, setPhase] = useState<'in' | 'hold' | 'out'>('in');
-  const [shouldShow, setShouldShow] = useState(true);
+export default function Splash({ loading }: { loading: boolean }) {
+  const [phase, setPhase] = useState<'in' | 'out'>('in');
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('hold'), 500);
-    const t2 = setTimeout(() => setPhase('out'), 1000);
-    const t3 = setTimeout(() => {
-      setShouldShow(false);
-      onDone?.();
-    }, 1500);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [onDone]);
+    if (loading) {
+      setPhase('in');
+      setVisible(true);
+      return;
+    }
+    setPhase('out');
+    const t = setTimeout(() => setVisible(false), 500);
+    return () => clearTimeout(t);
+  }, [loading]);
 
-  // Use CSS custom property to detect theme instead of classList
+  // Detect current theme from document class
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
-  
+
   useEffect(() => {
-    const checkTheme = () => {
-      const isDarkTheme = document.documentElement.classList.contains('dark');
-      setIsDark(isDarkTheme);
-    };
+    const checkTheme = () => setIsDark(document.documentElement.classList.contains('dark'));
     checkTheme();
-    // Watch for theme changes
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
@@ -33,15 +30,13 @@ export default function Splash({ onDone }: { onDone?: () => void }) {
     ? '/lovable-uploads/0832e63d-9a3b-4522-9c16-56d6b4cd8fc3.png'
     : '/lovable-uploads/20a958db-a342-42f8-a711-30e17af81a0e.png';
 
-  if (!shouldShow) return null;
+  if (!visible) return null;
 
   return (
     <div
       aria-hidden
       className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-500 ${
-        phase === 'in' ? 'opacity-0 animate-fade-in' : 
-        phase === 'out' ? 'opacity-100 animate-fade-out' : 
-        'opacity-100'
+        phase === 'in' ? 'opacity-0 animate-fade-in' : 'opacity-100 animate-fade-out'
       }`}
       style={{ backgroundColor: isDark ? '#000000' : '#f5f5f0' }}
     >
