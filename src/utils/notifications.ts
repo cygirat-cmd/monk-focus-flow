@@ -24,3 +24,24 @@ export async function showLocalNotification(title: string, body?: string) {
     console.warn('Notification error', e);
   }
 }
+
+const DECAY_NOTIF_KEY = 'monk.lastDecayNotif';
+
+/**
+ * Show garden decay warning at most once per 24 hours.
+ */
+export function maybeShowGardenDecayNotification(stage?: 0 | 1 | 2) {
+  try {
+    const now = Date.now();
+    const last = Number(localStorage.getItem(DECAY_NOTIF_KEY) || 0);
+    const dayMs = 24 * 60 * 60 * 1000;
+    if (now - last < dayMs) return;
+    if (stage === 1) {
+      showLocalNotification('Your Zen Garden is getting thirsty…', 'Time to focus!');
+      localStorage.setItem(DECAY_NOTIF_KEY, String(now));
+    } else if (stage === 2) {
+      showLocalNotification('Your garden has withered — revive it by focusing!', 'Complete 3 sessions to revive it.');
+      localStorage.setItem(DECAY_NOTIF_KEY, String(now));
+    }
+  } catch {}
+}
