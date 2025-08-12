@@ -1,6 +1,8 @@
 import { loadSettings } from '@/utils/storageClient';
 import { showLocalNotification } from '@/utils/notifications';
 
+let reminderTimeout: number | null = null;
+
 export function scheduleDailyReminder() {
   try {
     const s = loadSettings() as any;
@@ -14,7 +16,11 @@ export function scheduleDailyReminder() {
     if (next.getTime() <= now.getTime()) next.setDate(next.getDate() + 1);
 
     const delay = Math.max(0, next.getTime() - now.getTime());
-    window.setTimeout(async () => {
+
+    if (reminderTimeout !== null) {
+      window.clearTimeout(reminderTimeout);
+    }
+    reminderTimeout = window.setTimeout(async () => {
       try {
         await showLocalNotification('Time for your focus session — keep your Zen Garden alive!');
       } catch {}
