@@ -12,12 +12,12 @@ interface RewardDrawModalProps {
 }
 
 const silhouettes = [
-  '/assets/garden/stone_1.png',
-  '/assets/garden/stone_2.png',
-  '/assets/garden/lantern_1.png',
-  '/assets/garden/bonsai_1.png',
-  '/assets/relics/tea_bowl.png',
-  '/assets/relics/fan.png',
+  '/assets/garden/stone_step.png',
+  '/assets/garden/stone_path.png',
+  '/assets/garden/zen_lantern.png',
+  '/assets/garden/bonsai_tree.png',
+  '/assets/relics/Ancient_Tea_Bowl.png',
+  '/assets/relics/Zen_Fan.png',
   '/assets/relics/koan_scroll.png',
   '/assets/relics/hand_bell.png',
 ];
