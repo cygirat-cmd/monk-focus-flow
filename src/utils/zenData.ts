@@ -2,10 +2,10 @@ import { GardenStep, Relic, Season } from './storage';
 
 // Base garden items
 export const GARDEN_POOL: GardenStep[] = [
-  { id: 'stone-1', img: '/assets/garden/stone_1.png', label: 'Stone Step' },
-  { id: 'stone-2', img: '/assets/garden/stone_2.png', label: 'Stone Path' },
-  { id: 'lantern-1', img: '/assets/garden/lantern_1.png', label: 'Zen Lantern' },
-  { id: 'bonsai-1', img: '/assets/garden/bonsai_1.png', label: 'Bonsai Tree' },
+  { id: 'stone-1', img: '/assets/garden/stone_step.png', label: 'Stone Step' },
+  { id: 'stone-2', img: '/assets/garden/stone_path.png', label: 'Stone Path' },
+  { id: 'lantern-1', img: '/assets/garden/zen_lantern.png', label: 'Zen Lantern' },
+  { id: 'bonsai-1', img: '/assets/garden/bonsai_tree.png', label: 'Bonsai Tree' },
 ];
 
 // Seasonal garden items
@@ -16,7 +16,7 @@ export const SEASONAL_GARDEN_POOLS: Record<Season, GardenStep[]> = {
     { id: 'bamboo-shoot', img: '/assets/garden/bamboo_shoot.png', label: 'Bamboo Shoot' },
   ],
   summer: [
-    { id: 'lotus-pond', img: '/lovable-uploads/b82ce638-3ac2-42a1-a65f-8d3e8a479d37.png', label: 'Lotus Pond' },
+    { id: 'lotus-pond', img: '/assets/garden/Lotus_pond.png', label: 'Lotus Pond' },
     { id: 'zen-fan', img: '/assets/garden/zen_fan.png', label: 'Cooling Fan' },
     { id: 'water-basin', img: '/assets/garden/water_basin.png', label: 'Water Basin' },
   ],
@@ -40,8 +40,8 @@ export const BONUS_GARDEN_ITEMS: GardenStep[] = [
 ];
 
 export const RELICS_POOL: Relic[] = [
-  { id: 'tea-bowl', img: '/assets/relics/tea_bowl.png', title: 'Tea Bowl', unlockedAt: '' },
-  { id: 'fan', img: '/assets/relics/fan.png', title: 'Zen Fan', unlockedAt: '' },
+  { id: 'tea-bowl', img: '/assets/relics/Ancient_Tea_Bowl.png', title: 'Tea Bowl', unlockedAt: '' },
+  { id: 'fan', img: '/assets/relics/Zen_Fan.png', title: 'Zen Fan', unlockedAt: '' },
   { id: 'koan-scroll', img: '/assets/relics/koan_scroll.png', title: 'Koan Scroll', unlockedAt: '' },
   { id: 'hand-bell', img: '/assets/relics/hand_bell.png', title: 'Hand Bell', unlockedAt: '' },
 ];

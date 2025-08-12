@@ -13,56 +13,65 @@ const P = '/placeholder.svg';
 
 // Build item pools from the provided table (subset images mapped to placeholders as needed)
 const COMMON: RewardItem[] = [
-  { kind: 'garden', id: 'stone-1', img: '/assets/garden/stone_1.png', label: 'Stone Step', rarity: 'common' },
-  { kind: 'garden', id: 'stone-2', img: '/assets/garden/stone_2.png', label: 'Stone Path', rarity: 'common' },
-  { kind: 'garden', id: 'lantern-1', img: '/assets/garden/lantern_1.png', label: 'Zen Lantern', rarity: 'common' },
-  { kind: 'garden', id: 'bonsai-1', img: '/assets/garden/bonsai_1.png', label: 'Bonsai Tree', rarity: 'common' },
-  { kind: 'garden', id: 'wooden-bench', img: P, label: 'Wooden Bench', rarity: 'common' },
-  { kind: 'garden', id: 'gravel-patch', img: P, label: 'Gravel Patch', rarity: 'common' },
-  { kind: 'garden', id: 'small-pond', img: P, label: 'Small Pond', rarity: 'common' },
+  { kind: 'garden', id: 'stone-1', img: '/assets/garden/stone_step.png', label: 'Stone Step', rarity: 'common' },
+  { kind: 'garden', id: 'stone-2', img: '/assets/garden/stone_path.png', label: 'Stone Path', rarity: 'common' },
+  { kind: 'garden', id: 'lantern-1', img: '/assets/garden/zen_lantern.png', label: 'Zen Lantern', rarity: 'common' },
+  { kind: 'garden', id: 'bonsai-1', img: '/assets/garden/bonsai_tree.png', label: 'Bonsai Tree', rarity: 'common' },
+  { kind: 'garden', id: 'wooden-bench', img: '/assets/garden/wooden_bench.png', label: 'Wooden Bench', rarity: 'common' },
+  { kind: 'garden', id: 'gravel-patch', img: '/assets/garden/Gravel_Patch_Raked_Sand.png', label: 'Gravel Patch', rarity: 'common' },
+  { kind: 'garden', id: 'small-pond', img: '/assets/garden/Small_Pond.png', label: 'Small Pond', rarity: 'common' },
   // removed: wooden-bridge item per design
-  { kind: 'garden', id: 'bamboo-fence', img: P, label: 'Bamboo Fence', rarity: 'common' },
-  { kind: 'garden', id: 'moss-rock', img: P, label: 'Moss Rock Cluster', rarity: 'common' },
+  { kind: 'garden', id: 'bamboo-fence', img: '/assets/garden/Bamboo_Fence.png', label: 'Bamboo Fence', rarity: 'common' },
+  { kind: 'garden', id: 'moss-rock', img: '/assets/garden/Moss_Rock_Cluster.png', label: 'Moss Rock Cluster', rarity: 'common' },
   { kind: 'garden', id: 'torii-gate', img: P, label: 'Garden Gate (Torii)', rarity: 'common' },
-  { kind: 'garden', id: 'low-shrub', img: P, label: 'Low Shrub', rarity: 'common' },
-  { kind: 'garden', id: 'lamp-post', img: P, label: 'Paper Lamp Post', rarity: 'common' },
-  { kind: 'garden', id: 'water-ladle', img: P, label: 'Water Ladle Stand', rarity: 'common' },
+  { kind: 'garden', id: 'low-shrub', img: '/assets/garden/low_shrub.png', label: 'Low Shrub', rarity: 'common' },
+  { kind: 'garden', id: 'lamp-post', img: '/assets/garden/Paper_Lamp_Post.png', label: 'Paper Lamp Post', rarity: 'common' },
+  { kind: 'garden', id: 'water-ladle', img: '/assets/garden/Water_Ladle_Stand_(Tsukubai).png', label: 'Water Ladle Stand', rarity: 'common' },
   { kind: 'garden', id: 'cherry-blossom-tree', img: P, label: 'Cherry Blossom Tree', rarity: 'common' },
-  { kind: 'garden', id: 'lotus-pond', img: '/lovable-uploads/b82ce638-3ac2-42a1-a65f-8d3e8a479d37.png', label: 'Lotus Pond', rarity: 'common' },
+  { kind: 'garden', id: 'lotus-pond', img: '/assets/garden/Lotus_pond.png', label: 'Lotus Pond', rarity: 'common' },
   { kind: 'garden', id: 'maple-tree', img: P, label: 'Maple Tree', rarity: 'common' },
-  { kind: 'garden', id: 'snow-stone', img: P, label: 'Snow Stone', rarity: 'common' },
+  { kind: 'garden', id: 'snow-stone', img: '/assets/garden/snow_stone.png', label: 'Snow Stone', rarity: 'common' },
 ];
 
 const RARE: RewardItem[] = [
-  { kind: 'garden', id: 'spring-waterfall', img: P, label: 'Spring Waterfall', rarity: 'rare' },
+  { kind: 'garden', id: 'spring-waterfall', img: '/assets/garden/spring_waterfall.png', label: 'Spring Waterfall', rarity: 'rare' },
   { kind: 'garden', id: 'bamboo-pavilion', img: P, label: 'Bamboo Pavilion', rarity: 'rare' },
-  { kind: 'garden', id: 'harvest-rice-stack', img: P, label: 'Harvest Rice Stack', rarity: 'rare' },
-  { kind: 'garden', id: 'ice-bridge', img: P, label: 'Ice Bridge', rarity: 'rare' },
-  { kind: 'garden', id: 'meditation-mat', img: P, label: 'Meditation Mat', rarity: 'rare' },
-  { kind: 'garden', id: 'stone-pagoda', img: P, label: 'Stone Pagoda', rarity: 'rare' },
-  { kind: 'garden', id: 'bamboo-water-spout', img: P, label: 'Bamboo Water Spout', rarity: 'rare' },
+  { kind: 'garden', id: 'harvest-rice-stack', img: '/assets/garden/harvest_rice_stack.png', label: 'Harvest Rice Stack', rarity: 'rare' },
+  { kind: 'garden', id: 'ice-bridge', img: '/assets/garden/ice_bridge.png', label: 'Ice Bridge', rarity: 'rare' },
+  { kind: 'garden', id: 'meditation-mat', img: '/assets/garden/meditation_mat.png', label: 'Meditation Mat', rarity: 'rare' },
+  { kind: 'garden', id: 'stone-pagoda', img: '/assets/garden/stone_pagoda_small.png', label: 'Stone Pagoda', rarity: 'rare' },
+  { kind: 'garden', id: 'bamboo-water-spout', img: '/assets/garden/bamboo_water_sprout_shishi_odoshi.png', label: 'Bamboo Water Spout', rarity: 'rare' },
   { kind: 'garden', id: 'zen-arch-gate', img: P, label: 'Zen Arch Gate', rarity: 'rare' },
 ];
 
 const EPIC: RewardItem[] = [
-  { kind: 'garden', id: 'lucky-carp', img: P, label: 'Giant Lucky Carp Statue', rarity: 'epic' },
-  { kind: 'garden', id: 'lazy-panda-hammock', img: P, label: 'Lazy Panda Hammock', rarity: 'epic' },
+  { kind: 'garden', id: 'lucky-carp', img: '/assets/garden/Giant_Lucky_Carp_Statue.png', label: 'Giant Lucky Carp Statue', rarity: 'epic' },
+  { kind: 'garden', id: 'lazy-panda-hammock', img: '/assets/garden/lazy_panda_hammock.gif', label: 'Lazy Panda Hammock', rarity: 'epic' },
   { kind: 'garden', id: 'fox-spirit-shrine', img: P, label: 'Fox Spirit Shrine', rarity: 'epic' },
   { kind: 'garden', id: 'snowman-monk', img: P, label: 'Snowman Monk', rarity: 'epic' },
   { kind: 'garden', id: 'spirit-wind-chimes', img: P, label: 'Spirit Wind Chimes', rarity: 'epic' },
-  { kind: 'garden', id: 'golden-koi-pond', img: P, label: 'Golden Koi Pond', rarity: 'epic' },
-  { kind: 'garden', id: 'mini-mt-fuji', img: P, label: 'Miniature Mount Fuji', rarity: 'epic' },
+  { kind: 'garden', id: 'golden-koi-pond', img: '/assets/garden/Golden_Koi_Pond.gif', label: 'Golden Koi Pond', rarity: 'epic' },
+  { kind: 'garden', id: 'mini-mt-fuji', img: '/assets/garden/Miniature_Mount_Fuji.png', label: 'Miniature Mount Fuji', rarity: 'epic' },
 ];
 
 const LEGENDARY_NON_RELIC: RewardItem[] = [
   { kind: 'garden', id: 'eternal-bloom-sakura', img: P, label: 'Eternal Bloom Sakura', rarity: 'legendary' },
-  { kind: 'garden', id: 'sun-spirit-fountain', img: P, label: 'Sun Spirit Fountain', rarity: 'legendary' },
-  { kind: 'garden', id: 'golden-leaf-whirlpool', img: P, label: 'Golden Leaf Whirlpool', rarity: 'legendary' },
-  { kind: 'garden', id: 'northern-light-lantern', img: P, label: 'Northern Light Lantern', rarity: 'legendary' },
-  { kind: 'garden', id: 'dragon-fountain', img: P, label: 'Dragon Fountain', rarity: 'legendary' },
+  { kind: 'garden', id: 'sun-spirit-fountain', img: '/assets/garden/Sun_spirit_fountain.gif', label: 'Sun Spirit Fountain', rarity: 'legendary' },
+  { kind: 'garden', id: 'golden-leaf-whirlpool', img: '/assets/garden/golden_leaf_whirlpool.png', label: 'Golden Leaf Whirlpool', rarity: 'legendary' },
+  { kind: 'garden', id: 'northern-light-lantern', img: '/assets/garden/Northern_light_lantern.png', label: 'Northern Light Lantern', rarity: 'legendary' },
+  { kind: 'garden', id: 'dragon-fountain', img: '/assets/garden/Dragon_Fountain.gif', label: 'Dragon Fountain', rarity: 'legendary' },
   { kind: 'garden', id: 'eternal-sand-garden', img: P, label: 'Eternal Sand Garden', rarity: 'legendary' },
-  { kind: 'garden', id: 'phoenix-perch', img: P, label: 'Phoenix Perch', rarity: 'legendary' },
+  { kind: 'garden', id: 'phoenix-perch', img: '/assets/garden/Phoenix_Perch.gif', label: 'Phoenix Perch', rarity: 'legendary' },
 ];
+
+export const ALL_GARDEN_ITEMS: GardenStep[] = [
+  ...COMMON,
+  ...RARE,
+  ...EPIC,
+  ...LEGENDARY_NON_RELIC,
+]
+  .filter((it): it is RewardItem & { kind: 'garden' } => it.kind === 'garden')
+  .map(({ id, img, label }) => ({ id, img, label }));
 
 
 export function getAllowedRarity(seconds: number): Array<{ rarity: Rarity; weight: number }> {

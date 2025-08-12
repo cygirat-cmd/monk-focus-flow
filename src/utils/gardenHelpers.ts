@@ -14,6 +14,20 @@ const LARGE_ITEMS = new Set([
   'eternal-sand-garden',
   'phoenix-perch',
   'lazy-panda-hammock',
+  'wooden-bench',
+  'gravel-patch',
+  'small-pond',
+  'bamboo-fence',
+  'moss-rock',
+  'lotus-pond',
+  'spring-waterfall',
+  'ice-bridge',
+  'lucky-carp',
+  'golden-koi-pond',
+  'mini-mt-fuji',
+  'sun-spirit-fountain',
+  'golden-leaf-whirlpool',
+  'northern-light-lantern',
 ]);
 
 export const getItemFootprint = (tokenId: string) =>
@@ -44,8 +58,8 @@ export const placeGardenItem = (token: GardenStep, x: number, y: number, rotatio
   // Ensure the user actually owns an unplaced instance of this token
   let consumedSource: 'pendingToken' | 'pendingTokens' | 'inventory' | null = null;
   if (p.pendingToken && p.pendingToken.id === token.id) consumedSource = 'pendingToken';
-  else if (p.pendingTokens && p.pendingTokens.find(t => t.id === token.id && t.img === token.img)) consumedSource = 'pendingTokens';
-  else if (p.inventory && p.inventory.find(t => t.id === token.id && t.img === token.img)) consumedSource = 'inventory';
+  else if (p.pendingTokens && p.pendingTokens.find(t => t.id === token.id)) consumedSource = 'pendingTokens';
+  else if (p.inventory && p.inventory.find(t => t.id === token.id)) consumedSource = 'inventory';
 
   if (!consumedSource) {
     return { ok: false, reason: 'not_owned' } as const;
@@ -59,11 +73,11 @@ export const placeGardenItem = (token: GardenStep, x: number, y: number, rotatio
     p.pendingToken = null;
   }
   if ((consumedSource === 'pendingToken' || consumedSource === 'pendingTokens') && p.pendingTokens) {
-    const idx = p.pendingTokens.findIndex(t => t.id === token.id && t.img === token.img);
+    const idx = p.pendingTokens.findIndex(t => t.id === token.id);
     if (idx !== -1) p.pendingTokens.splice(idx, 1);
   }
   if (consumedSource === 'inventory' && p.inventory) {
-    const idx = p.inventory.findIndex(t => t.id === token.id && t.img === token.img);
+    const idx = p.inventory.findIndex(t => t.id === token.id);
     if (idx !== -1) p.inventory.splice(idx, 1);
   }
 

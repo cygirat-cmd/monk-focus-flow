@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { loadProgress } from '@/utils/storageClient';
 import { GARDEN_POOL } from '@/utils/zenData';
+import { ALL_GARDEN_ITEMS } from '@/utils/rewards';
 
 // Feature flag
 export const isDevEnabled = () =>
@@ -65,6 +66,20 @@ export default function DevPanel() {
     localStorage.setItem('monk.progress', JSON.stringify(prog));
     setP(prog);
     alert('Garden token queued. Open WindDown or Garden to place.');
+  };
+
+  const unlockAllItems = () => {
+    const prog = loadProgress();
+    const existing = new Set([
+      ...(prog.inventory?.map(i => i.id) || []),
+      ...(prog.garden?.placed?.map(i => i.tokenId) || []),
+      ...(prog.pendingTokens?.map(t => t.id) || []),
+      ...(prog.pendingToken ? [prog.pendingToken.id] : []),
+    ]);
+    const toAdd = ALL_GARDEN_ITEMS.filter(it => !existing.has(it.id));
+    prog.inventory = [...(prog.inventory || []), ...toAdd];
+    localStorage.setItem('monk.progress', JSON.stringify(prog));
+    setP(prog);
   };
 
   const addFP = () => {
@@ -143,6 +158,7 @@ export default function DevPanel() {
           <button className="px-2 py-1 rounded-md bg-secondary" onClick={() => openWindDown(false)}>Open WindDown (invalid)</button>
           <button className="px-2 py-1 rounded-md bg-accent" onClick={addFP}>+10 FP</button>
           <button className="px-2 py-1 rounded-md bg-accent" onClick={giveToken}>Give Garden Token</button>
+          <button className="px-2 py-1 rounded-md bg-accent" onClick={unlockAllItems}>Unlock All Items</button>
           <button className="px-2 py-1 rounded-md bg-accent" onClick={resetDaily}>Reset Daily</button>
           <button className="px-2 py-1 rounded-md bg-accent" onClick={advanceDay}>Advance Day +1</button>
           <button className="px-2 py-1 rounded-md bg-destructive text-destructive-foreground" onClick={hardReset}>HARD RESET</button>
