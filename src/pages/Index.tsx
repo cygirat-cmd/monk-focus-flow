@@ -13,7 +13,6 @@ import { Play, Square } from 'lucide-react';
 // import { useTheme } from 'next-themes';
 import { validateSession, addFocusPoints, updateStreak } from '@/utils/progression';
 import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
-import * as gardenHelpers from '@/utils/gardenHelpers';
 import { grantReward, RewardItem, drawReward } from '@/utils/rewards';
 
 
@@ -191,15 +190,6 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     }
     openedReward = true;
   }
-
-
-  // Move NPC after each session to a valid empty tile
-  const t = gardenHelpers.randomEmptyGardenTile?.() || null;
-  if (t) {
-    progress.npc.x = t.x;
-    progress.npc.y = t.y;
-  }
-  
   // 30% chance to show NPC message for 30 seconds
   if (Math.random() < 0.3) {
     const npcMsg = getRandomNPCMessage();
