@@ -42,6 +42,35 @@ export function GardenCanvas({
 
   const cells = Array.from({ length: GARDEN_COLS * GARDEN_ROWS });
 
+  // Map of which item occupies each cell to allow hiding internal grid lines
+  const occupancy: (string | null)[] = Array(GARDEN_COLS * GARDEN_ROWS).fill(null);
+
+  placed.forEach((it) => {
+    const wIt = it.w || 1;
+    const hIt = it.h || 1;
+    for (let dy = 0; dy < hIt; dy++) {
+      for (let dx = 0; dx < wIt; dx++) {
+        const tx = it.x + dx;
+        const ty = it.y + dy;
+        if (tx >= 0 && ty >= 0 && tx < GARDEN_COLS && ty < GARDEN_ROWS) {
+          occupancy[ty * GARDEN_COLS + tx] = it.id;
+        }
+      }
+    }
+  });
+
+  if (previewItem && selected) {
+    for (let dy = 0; dy < previewItem.h; dy++) {
+      for (let dx = 0; dx < previewItem.w; dx++) {
+        const tx = selected.x + dx;
+        const ty = selected.y + dy;
+        if (tx >= 0 && ty >= 0 && tx < GARDEN_COLS && ty < GARDEN_ROWS) {
+          occupancy[ty * GARDEN_COLS + tx] = 'preview';
+        }
+      }
+    }
+  }
+
   const handleCell = (x: number, y: number) => {
     if (!onCellClick) return;
     onCellClick(x, y);
@@ -86,18 +115,30 @@ export function GardenCanvas({
               x < selected.x + wSel &&
               y >= selected.y &&
               y < selected.y + hSel;
+
+            const id = occupancy[i];
+            const rightId = x < GARDEN_COLS - 1 ? occupancy[i + 1] : null;
+            const bottomId = y < GARDEN_ROWS - 1 ? occupancy[i + GARDEN_COLS] : null;
+
+            const border = '1px dashed hsl(var(--border) / 0.15)';
+            const style: React.CSSProperties = {
+              width: TILE_PX,
+              height: TILE_PX,
+              borderRight: id && id === rightId ? 'none' : border,
+              borderBottom: id && id === bottomId ? 'none' : border,
+              borderTop: y === 0 ? border : undefined,
+              borderLeft: x === 0 ? border : undefined,
+            };
+
             return (
-              <div
-                key={i}
-                className="relative"
-                style={{ width: TILE_PX, height: TILE_PX, outline: '1px dashed hsl(var(--border) / 0.15)' }}
-              >
+              <div key={i} className="relative" style={style}>
                 {showLockedOverlay && locked && (
-                  <div className="absolute inset-0" style={{ backgroundColor: 'hsl(var(--destructive) / 0.15)' }} />
+                  <div
+                    className="absolute inset-0"
+                    style={{ backgroundColor: 'hsl(var(--destructive) / 0.15)' }}
+                  />
                 )}
-                {isSel && (
-                  <div className="absolute inset-0 ring-2 ring-primary" />
-                )}
+                {isSel && <div className="absolute inset-0 ring-2 ring-primary" />}
               </div>
             );
           })}
