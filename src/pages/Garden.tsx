@@ -236,12 +236,20 @@ export default function Garden() {
               </div>
 
               <div className="space-y-3 animate-fade-in">
-                {(!progress.pendingTokens || progress.pendingTokens.length === 0) && (
+                {(!progress.pendingTokens?.length && !progress.inventory?.length) && (
                   <div className="text-sm text-muted-foreground">You have no items to place.</div>
                 )}
-                {progress.pendingTokens && progress.pendingTokens.map((token, i) => (
-                  <div key={`${token.id}-${i}`} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                {progress.pendingTokens?.map((token, i) => (
+                  <div key={`pending-${token.id}-${i}`} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                     <div className="flex items-center gap-2"><img src={token.img} alt={token.label} className="w-8 h-8 object-contain"/><div><div className="text-sm font-medium">{token.label}</div><div className="text-xs text-muted-foreground">Pending</div></div></div>
+                    <div className="flex gap-2">
+                      <button className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm hover-scale" onClick={() => openPlaceFor(token)}>Place</button>
+                    </div>
+                  </div>
+                ))}
+                {progress.inventory?.map((token, i) => (
+                  <div key={`inv-${token.id}-${i}`} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                    <div className="flex items-center gap-2"><img src={token.img} alt={token.label} className="w-8 h-8 object-contain"/><div><div className="text-sm font-medium">{token.label}</div><div className="text-xs text-muted-foreground">Inventory</div></div></div>
                     <div className="flex gap-2">
                       <button className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm hover-scale" onClick={() => openPlaceFor(token)}>Place</button>
                     </div>
