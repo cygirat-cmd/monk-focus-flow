@@ -31,6 +31,7 @@ const AppRoot = () => {
         <Sonner />
         <BrowserRouter>
           <React.Suspense fallback={<div className="p-6 text-center text-muted-foreground">Loading…</div>}>
+            <div className="smooth-transition">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/tasks" element={<Tasks />} />
@@ -43,6 +44,7 @@ const AppRoot = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </div>
           </React.Suspense>
         </BrowserRouter>
         {/* Splash overlay on initial load */}

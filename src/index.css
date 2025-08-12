@@ -159,7 +159,12 @@ body.dark .shopify-buy__product__price {
     @apply h-full;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased transition-colors duration-300;
+  }
+  img,
+  video,
+  canvas {
+    @apply max-w-full h-auto;
   }
 }
 
@@ -220,6 +225,12 @@ body.dark .shopify-buy__product__price {
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid var(--glass-border);
+  }
+  .blur-box {
+    @apply backdrop-blur-md;
+  }
+  .smooth-transition {
+    @apply transition-all duration-300;
   }
   .hero-button {
     background: var(--hero-bg);
