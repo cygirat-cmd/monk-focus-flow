@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadProgress, GardenStep } from '@/utils/storageClient';
-import { placeGardenItem } from '@/utils/gardenHelpers';
+import { placeGardenItem, getItemFootprint } from '@/utils/gardenHelpers';
 import { isTileLocked } from '@/utils/gardenMap';
 import GardenCanvas from '@/components/garden/GardenCanvas';
 import { toast } from '@/components/ui/sonner';
@@ -58,17 +58,29 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
 
   const garden = progress.garden || { cols: 12, rows: 8, placed: [], bg: 'gravel_light.png' };
   const targetToken: GardenStep | undefined = token || progress.pendingToken || (progress.pendingTokens?.find(t => !!t) || undefined);
+  const previewItem = targetToken ? { img: targetToken.img, label: targetToken.label, ...getItemFootprint(targetToken.id) } : null;
 
-  const isFull = (garden.placed?.length || 0) >= garden.cols * garden.rows;
-  const isOccupied = (x: number, y: number) => garden.placed?.some((it) => it.x === x && it.y === y);
+  const totalOccupied = garden.placed.reduce((s, it) => s + (it.w || 1) * (it.h || 1), 0);
+  const isFull = totalOccupied >= garden.cols * garden.rows;
+  const isOccupied = (x: number, y: number, w = 1, h = 1) =>
+    garden.placed?.some(it => {
+      const iw = it.w || 1; const ih = it.h || 1;
+      return x < it.x + iw && x + w > it.x && y < it.y + ih && y + h > it.y;
+    });
 
   const handleCellClick = (x: number, y: number) => {
     if (!targetToken) return;
-    if (isTileLocked(x, y)) {
-      // Ignore clicks on blocked temple tiles
+    const { w, h } = getItemFootprint(targetToken.id);
+    if (x + w > garden.cols || y + h > garden.rows) {
+      toast('Too close to the edge');
       return;
     }
-    if (isOccupied(x, y)) {
+    for (let dx = 0; dx < w; dx++) {
+      for (let dy = 0; dy < h; dy++) {
+        if (isTileLocked(x + dx, y + dy)) return;
+      }
+    }
+    if (isOccupied(x, y, w, h)) {
       toast('That spot is taken');
       return;
     }
@@ -85,6 +97,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
         setPlacing(false);
         if (r.reason === 'occupied') toast('That spot is taken');
         else if (r.reason === 'locked') toast('You cannot place on temple tiles');
+        else if (r.reason === 'out_of_bounds') toast('Too close to the edge');
         else if (r.reason === 'not_owned') toast('This item has already been placed');
         else toast('Could not place item');
         return;
@@ -127,6 +140,7 @@ export default function GardenPlacementModal({ open, onClose, token, onPlaced }:
                 showGrid
                 showLockedOverlay
                 selected={selected}
+                previewItem={previewItem}
                 onCellClick={handleCellClick}
                 className="select-none"
                 npc={null}

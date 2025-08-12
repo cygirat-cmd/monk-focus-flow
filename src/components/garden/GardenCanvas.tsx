@@ -12,6 +12,7 @@ interface GardenCanvasProps {
   widthPx?: number;
   heightPx?: number;
   selected?: { x: number; y: number } | null;
+  previewItem?: { img: string; label?: string; w: number; h: number } | null;
   onCellClick?: (x: number, y: number) => void;
   onItemPointerDown?: (e: React.PointerEvent, item: GardenPlacedItem) => void;
   npc?: { x: number; y: number; message?: string } | null;
@@ -29,6 +30,7 @@ export function GardenCanvas({
   widthPx = WIDTH,
   heightPx = HEIGHT,
   selected = null,
+  previewItem = null,
   onCellClick,
   onItemPointerDown,
   npc,
@@ -46,7 +48,7 @@ export function GardenCanvas({
 
   return (
     <div
-      className={`relative overflow-hidden ${className}`}
+      className={`relative overflow-hidden garden-shadow ${className}`}
       style={{ width: w, height: h }}
     >
       <img
@@ -54,7 +56,7 @@ export function GardenCanvas({
         alt="Zen garden map background"
         width={w}
         height={h}
-        className="pixelated garden-shadow"
+        className="pixelated"
         style={{
           width: w,
           height: h,
@@ -75,7 +77,14 @@ export function GardenCanvas({
             const x = i % GARDEN_COLS;
             const y = Math.floor(i / GARDEN_COLS);
             const locked = isTileLocked(x, y);
-            const isSel = selected?.x === x && selected?.y === y;
+            const wSel = previewItem?.w || 1;
+            const hSel = previewItem?.h || 1;
+            const isSel =
+              selected !== null &&
+              x >= selected.x &&
+              x < selected.x + wSel &&
+              y >= selected.y &&
+              y < selected.y + hSel;
             return (
               <div
                 key={i}
@@ -131,14 +140,51 @@ export function GardenCanvas({
           style={{
             left: it.x * TILE_PX,
             top: it.y * TILE_PX,
-            width: TILE_PX,
-            height: TILE_PX,
+            width: (it.w || 1) * TILE_PX,
+            height: (it.h || 1) * TILE_PX,
           }}
           onPointerDown={(e) => onItemPointerDown?.(e, it)}
         >
-          <img src={it.img} alt={it.label || 'Garden item'} width={TILE_PX} height={TILE_PX} style={{ width: TILE_PX, height: TILE_PX, objectFit: 'contain', imageRendering: 'pixelated' as any }} />
+          <img
+            src={it.img}
+            alt={it.label || 'Garden item'}
+            width={(it.w || 1) * TILE_PX}
+            height={(it.h || 1) * TILE_PX}
+            style={{
+              width: (it.w || 1) * TILE_PX,
+              height: (it.h || 1) * TILE_PX,
+              objectFit: 'contain',
+              imageRendering: 'pixelated' as any,
+            }}
+          />
         </div>
       ))}
+
+      {/* Preview item */}
+      {previewItem && selected && (
+        <div
+          className="absolute pointer-events-none opacity-80"
+          style={{
+            left: selected.x * TILE_PX,
+            top: selected.y * TILE_PX,
+            width: previewItem.w * TILE_PX,
+            height: previewItem.h * TILE_PX,
+          }}
+        >
+          <img
+            src={previewItem.img}
+            alt={previewItem.label || 'Preview item'}
+            width={previewItem.w * TILE_PX}
+            height={previewItem.h * TILE_PX}
+            style={{
+              width: previewItem.w * TILE_PX,
+              height: previewItem.h * TILE_PX,
+              objectFit: 'contain',
+              imageRendering: 'pixelated' as any,
+            }}
+          />
+        </div>
+      )}
 
       {/* NPC (Cat) */}
       {npc && (

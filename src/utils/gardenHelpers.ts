@@ -1,15 +1,45 @@
 import { loadProgress, saveProgress, GardenStep } from './storageClient';
 import { isTileLocked } from './gardenMap';
 
+const LARGE_ITEMS = new Set([
+  'torii-gate',
+  'cherry-blossom-tree',
+  'eternal-bloom-sakura',
+  'bamboo-pavilion',
+  'maple-tree',
+  'zen-arch-gate',
+  'spirit-wind-chimes',
+  'fox-spirit-shrine',
+  'dragon-fountain',
+  'eternal-sand-garden',
+  'phoenix-perch',
+  'lazy-panda-hammock',
+]);
+
+export const getItemFootprint = (tokenId: string) =>
+  LARGE_ITEMS.has(tokenId) ? { w: 2, h: 2 } : { w: 1, h: 1 };
+
 export const placeGardenItem = (token: GardenStep, x: number, y: number, rotation: 0|90|180|270 = 0) => {
   const p = loadProgress();
   const garden = p.garden!;
+  const { w, h } = getItemFootprint(token.id);
   // Check bounds
-  if (x < 0 || y < 0 || x >= garden.cols || y >= garden.rows) return { ok: false, reason: 'out_of_bounds' } as const;
+  if (x < 0 || y < 0 || x + w > garden.cols || y + h > garden.rows) return { ok: false, reason: 'out_of_bounds' } as const;
   // Locked tiles (temple)
-  if (isTileLocked(x, y)) return { ok: false, reason: 'locked' } as const;
+  for (let dx = 0; dx < w; dx++) {
+    for (let dy = 0; dy < h; dy++) {
+      if (isTileLocked(x + dx, y + dy)) return { ok: false, reason: 'locked' } as const;
+    }
+  }
   // Check occupancy
-  if (garden.placed.some(it => it.x === x && it.y === y)) return { ok: false, reason: 'occupied' } as const;
+  for (let dx = 0; dx < w; dx++) {
+    for (let dy = 0; dy < h; dy++) {
+      if (garden.placed.some(it => {
+        const iw = it.w || 1; const ih = it.h || 1;
+        return x + dx < it.x + iw && x + dx >= it.x && y + dy < it.y + ih && y + dy >= it.y;
+      })) return { ok: false, reason: 'occupied' } as const;
+    }
+  }
 
   // Ensure the user actually owns an unplaced instance of this token
   let consumedSource: 'pendingToken' | 'pendingTokens' | 'inventory' | null = null;
@@ -22,7 +52,7 @@ export const placeGardenItem = (token: GardenStep, x: number, y: number, rotatio
   }
 
   const id = `${token.id}-${Date.now()}`;
-  garden.placed.push({ id, type: 'step', tokenId: token.id, img: token.img, label: token.label, x, y, rotation, placedAt: new Date().toISOString() });
+  garden.placed.push({ id, type: 'step', tokenId: token.id, img: token.img, label: token.label, x, y, rotation, placedAt: new Date().toISOString(), w, h });
 
   // Consume exactly one from the appropriate source
   if (p.pendingToken && p.pendingToken.id === token.id) {
@@ -44,10 +74,22 @@ export const placeGardenItem = (token: GardenStep, x: number, y: number, rotatio
 export const moveGardenItem = (id: string, x: number, y: number) => {
   const p = loadProgress();
   const garden = p.garden!;
-  if (isTileLocked(x, y)) return { ok: false, reason: 'locked' } as const;
-  if (garden.placed.some(it => it.id !== id && it.x === x && it.y === y)) return { ok: false, reason: 'occupied' } as const;
   const item = garden.placed.find(it => it.id === id);
   if (!item) return { ok: false, reason: 'not_found' } as const;
+  const w = item.w || 1;
+  const h = item.h || 1;
+  if (x < 0 || y < 0 || x + w > garden.cols || y + h > garden.rows) return { ok: false, reason: 'out_of_bounds' } as const;
+  for (let dx = 0; dx < w; dx++) {
+    for (let dy = 0; dy < h; dy++) {
+      if (isTileLocked(x + dx, y + dy)) return { ok: false, reason: 'locked' } as const;
+    }
+  }
+  const overlap = garden.placed.some(it => {
+    if (it.id === id) return false;
+    const iw = it.w || 1; const ih = it.h || 1;
+    return x < it.x + iw && x + w > it.x && y < it.y + ih && y + h > it.y;
+  });
+  if (overlap) return { ok: false, reason: 'occupied' } as const;
   item.x = x; item.y = y;
   saveProgress(p);
   return { ok: true } as const;
@@ -82,7 +124,15 @@ export const randomEmptyGardenTile = (): { x: number; y: number } | null => {
   const p = loadProgress();
   const g = p.garden;
   if (!g) return null;
-  const occupied = new Set(g.placed.map(it => `${it.x},${it.y}`));
+  const occupied = new Set<string>();
+  g.placed.forEach(it => {
+    const w = it.w || 1; const h = it.h || 1;
+    for (let dx = 0; dx < w; dx++) {
+      for (let dy = 0; dy < h; dy++) {
+        occupied.add(`${it.x + dx},${it.y + dy}`);
+      }
+    }
+  });
   const candidates: { x: number; y: number }[] = [];
   for (let y = 0; y < g.rows; y++) {
     for (let x = 0; x < g.cols; x++) {
