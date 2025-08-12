@@ -113,8 +113,6 @@ useEffect(() => {
           analytics.track({ type: 'session_stop', completed: true });
           showLocalNotification('Session complete', 'Breathe. Break starts.');
           handleSessionComplete({ mode: 'pomodoro', seconds });
-          setWindDownMode('SessionComplete');
-          setWindOpen(true);
           // Auto-start break immediately
           setPhase('break');
           setTimeout(() => start(), 0);
@@ -485,10 +483,17 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
 {rewardPromptOpen && (
   <RewardedAdModal
     open={rewardPromptOpen}
-    onClose={() => setRewardPromptOpen(false)}
+    onClose={() => {
+      setRewardPromptOpen(false);
+      setWindOpen(true);
+    }}
     onFinished={(ok) => {
       setRewardPromptOpen(false);
-      if (ok) setRewardOpen(true);
+      if (ok) {
+        setRewardOpen(true);
+      } else {
+        setWindOpen(true);
+      }
     }}
   />
 )}
