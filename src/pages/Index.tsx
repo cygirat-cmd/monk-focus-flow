@@ -22,10 +22,8 @@ const DESC = 'Flow Timer and Pomodoro with a minimalist zen UI. Longer flow = ra
 
 const WORK_PRESETS = [25, 45, 60] as const;
 const BREAK_PRESETS = [5, 10] as const;
-// Small animated GIF used during active focus sessions.
-// Replaces the previous 1x1 pixel placeholder so the background visibly animates.
-const FOCUS_BG_GIF =
-  'data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfLP///wAAACH5BAEHAAAALAAAAAAQABAAAAVoICSOZGmeaKqubOu+cCzPdF0CoBBYAIRQUwODgGF0cqRAjPR5bdHfNB2Y8QCFAQH38WgRZjhAiRXom7pyJryrEGdnFaAgA7';
+// Animated GIF displayed during active focus sessions.
+const FOCUS_BG_GIF = '/assets/focus_bg.gif';
 
 type Mode = 'fixed' | 'flow';
 
