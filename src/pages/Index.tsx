@@ -22,6 +22,7 @@ const DESC = 'Flow Timer and Pomodoro with a minimalist zen UI. Longer flow = ra
 
 const WORK_PRESETS = [25, 45, 60] as const;
 const BREAK_PRESETS = [5, 10] as const;
+const FOCUS_BG_GIF = 'data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
 
 type Mode = 'fixed' | 'flow';
 
@@ -330,8 +331,15 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     ? '/lovable-uploads/0832e63d-9a3b-4522-9c16-56d6b4cd8fc3.png'
     : '/lovable-uploads/20a958db-a342-42f8-a711-30e17af81a0e.png';
 
+  const backgroundImage = running
+    ? `url("${FOCUS_BG_GIF}")`
+    : 'url("/lovable-uploads/1337a8ad-5f94-4e78-bf0f-78894287492d.png")';
+
   return (
-    <div className={`min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed ${showPomodoro ? 'overflow-hidden' : ''}`} style={{ backgroundImage: 'url("/lovable-uploads/1337a8ad-5f94-4e78-bf0f-78894287492d.png")' }}>
+    <div
+      className={`min-h-screen bg-background text-foreground pb-20 bg-cover bg-center bg-no-repeat bg-fixed ${showPomodoro ? 'overflow-hidden' : ''}`}
+      style={{ backgroundImage }}
+    >
       <main className="mx-auto max-w-md px-4 pt-6">
         <header className="mb-6 flex justify-center">
           <div className="app-header__brand text-center">
