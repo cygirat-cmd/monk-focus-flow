@@ -5,6 +5,7 @@ import { monkGif } from '@/assets/monk';
 import { Camera, Grid, tileToWorld, getVisibleTileRect } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
 import { makeFog, isRevealed, revealRadius } from '@/features/fog/useFog';
+import StepPanel from '@/components/world/StepPanel';
 
 export default function WorldMap() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -95,6 +96,7 @@ export default function WorldMap() {
   }, [camera, progress]);
 
   const monkPos = tileToWorld(journey.tx, journey.ty, grid, camera);
+  const flip = journey.facing === 'left' ? -1 : 1;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden" ref={containerRef}
@@ -116,9 +118,10 @@ export default function WorldMap() {
         height: TILE_PX * camera.zoom,
         left: monkPos.x,
         top: monkPos.y,
-        transform: `translate(-50%, -50%)`
+        transform: `translate(-50%, -50%) scaleX(${flip})`
       }} />
       <canvas ref={fogRef} className="absolute inset-0 pointer-events-none" />
+      <StepPanel />
       <BottomNav />
     </div>
   );

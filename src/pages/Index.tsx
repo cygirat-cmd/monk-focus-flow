@@ -230,8 +230,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     progress.inventory = [...(progress.inventory || []), rebirthStep];
   }
 
-  saveProgress(progress);
-  stepMonk();
+  stepMonk(progress, payload.seconds);
   analytics.track({ type: 'session_complete' });
 
   // Decay revival: if withered, count sessions and revive after 3
@@ -241,8 +240,8 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
       progress.decayStage = 0;
       progress.reviveProgress = 0;
     }
-    saveProgress(progress);
   }
+  saveProgress(progress);
 
   setNewGardenStep(newStep);
   setNewRelic(newRelicUnlocked);

@@ -30,6 +30,7 @@ export type Journey = {
   ty: number;
   pathId: string;
   step: number;
+  facing?: 'left' | 'right';
 };
 
 export type ProgressData = {
@@ -54,6 +55,14 @@ export type ProgressData = {
   journey?: Journey;
   fog?: { cols: number; rows: number; revealed: number[] };
   camera?: { x: number; y: number; zoom: number };
+  stepsToday?: number;
+  lastStepDate?: string;
+  sparks?: number;
+  bonus45Used?: boolean;
+  bonus60Used?: boolean;
+  adStepUsed?: boolean;
+  nextDir?: 'up' | 'down' | 'left' | 'right';
+  sessionHistory?: { date: string; seconds: number; steps: number }[];
 };
 
 const TASKS_KEY = 'monk_tasks_v1';
@@ -115,6 +124,14 @@ export const loadProgress = (): ProgressData => {
       journey: { tx: 0, ty: 0, pathId: 'default', step: 0 },
       fog: { cols: 12, rows: 8, revealed: [] },
       camera: { x: 0, y: 0, zoom: 1 },
+      stepsToday: 0,
+      lastStepDate: nowIso.slice(0,10),
+      sparks: 0,
+      bonus45Used: false,
+      bonus60Used: false,
+      adStepUsed: false,
+      nextDir: 'right',
+      sessionHistory: [],
     };
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
@@ -141,6 +158,14 @@ export const loadProgress = (): ProgressData => {
       journey: parsed.journey ?? defaults.journey,
       fog: parsed.fog ?? defaults.fog,
       camera: parsed.camera ?? defaults.camera,
+      stepsToday: parsed.stepsToday ?? defaults.stepsToday,
+      lastStepDate: parsed.lastStepDate ?? defaults.lastStepDate,
+      sparks: parsed.sparks ?? defaults.sparks,
+      bonus45Used: parsed.bonus45Used ?? defaults.bonus45Used,
+      bonus60Used: parsed.bonus60Used ?? defaults.bonus60Used,
+      adStepUsed: parsed.adStepUsed ?? defaults.adStepUsed,
+      nextDir: parsed.nextDir ?? defaults.nextDir,
+      sessionHistory: parsed.sessionHistory ?? defaults.sessionHistory,
     } as ProgressData;
 
     return migrated;
@@ -166,6 +191,14 @@ export const loadProgress = (): ProgressData => {
       journey: { tx: 0, ty: 0, pathId: 'default', step: 0 },
       fog: { cols: 12, rows: 8, revealed: [] },
       camera: { x: 0, y: 0, zoom: 1 },
+      stepsToday: 0,
+      lastStepDate: new Date().toISOString().slice(0,10),
+      sparks: 0,
+      bonus45Used: false,
+      bonus60Used: false,
+      adStepUsed: false,
+      nextDir: 'right',
+      sessionHistory: [],
     };
   }
 };
