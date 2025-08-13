@@ -30,6 +30,8 @@ const getAdjacentTiles = (tx: number, ty: number): Array<{ tx: number; ty: numbe
   ].filter(pos => isWalkable(pos.tx, pos.ty));
 };
 
+const FOG_BLUR = 8;
+
 export default function PostSessionMovementModal({
   isOpen,
   onClose,
@@ -119,6 +121,7 @@ export default function PostSessionMovementModal({
     ctx.fillStyle = 'rgba(0,0,0,0.8)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     ctx.globalCompositeOperation = 'destination-out';
+    ctx.filter = `blur(${FOG_BLUR}px)`;
 
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
     const tileSize = TILE_PX * camera.zoom;
@@ -130,6 +133,7 @@ export default function PostSessionMovementModal({
       }
     }
 
+    ctx.filter = 'none';
     ctx.globalCompositeOperation = 'source-over';
 
     // Draw highlighted tiles
