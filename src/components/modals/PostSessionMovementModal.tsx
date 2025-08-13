@@ -118,23 +118,26 @@ export default function PostSessionMovementModal({
     ctx.clearRect(0, 0, clientWidth, clientHeight);
 
     // Draw fog
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    ctx.fillRect(0, 0, clientWidth, clientHeight);
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.filter = `blur(${FOG_BLUR}px)`;
-
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
     const tileSize = TILE_PX * camera.zoom;
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = clientWidth;
+    offCanvas.height = clientHeight;
+    const offCtx = offCanvas.getContext('2d');
+    if (!offCtx) return;
+
+    offCtx.fillStyle = 'rgba(0,0,0,0.8)';
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
-        if (!isRevealed(tx, ty, fog)) continue;
+        if (isRevealed(tx, ty, fog)) continue;
         const pos = tileToWorld(tx, ty, grid, camera);
-        ctx.fillRect(pos.x, pos.y, tileSize, tileSize);
+        offCtx.fillRect(pos.x, pos.y, tileSize, tileSize);
       }
     }
 
+    ctx.filter = `blur(${FOG_BLUR}px)`;
+    ctx.drawImage(offCanvas, 0, 0);
     ctx.filter = 'none';
-    ctx.globalCompositeOperation = 'source-over';
 
     // Draw highlighted tiles
     highlightedTiles.forEach(tile => {
