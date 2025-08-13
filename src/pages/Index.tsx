@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-empty */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { CircularProgress } from '@/components/timer/CircularProgress';
 import BottomNav from '@/components/layout/BottomNav';
 import WindDownModal from '@/components/modals/WindDownModal';
@@ -137,7 +137,7 @@ useEffect(() => {
   return () => w.terminate();
 }, [mode, phase, minutes]);
 
-const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: number }) => {
+const handleSessionComplete = useCallback((payload: { mode: 'flow' | 'pomodoro'; seconds: number }) => {
   const progress = loadProgress();
   const v = validateSession(payload, progress as any);
   if (!(v as any).ok) {
@@ -258,9 +258,9 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   if (!openedReward) {
     setWindOpen(true);
   }
-};
+}, [stepMonk]);
 
-  const switchMode = (next: Mode, nextMinutes?: number) => {
+  const switchMode = useCallback((next: Mode, nextMinutes?: number) => {
     if (workerRef.current) {
       try { workerRef.current.postMessage({ type: 'stop' }); } catch {}
     }
@@ -275,9 +275,9 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
       setRemaining(0);
     }
     setMode(next);
-  };
+  }, [minutes]);
 
-  const start = () => {
+  const start = useCallback(() => {
     if (!workerRef.current) return;
     setRunning(true);
     startAtRef.current = performance.now();
@@ -298,9 +298,9 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
       showLocalNotification(phase === 'break' ? 'Break started' : 'Focus started');
       workerRef.current.postMessage({ type: 'start', payload: { durationMs } });
     }
-  };
+  }, [mode, phase, breakMinutes, minutes]);
 
-  const stop = () => {
+  const stop = useCallback(() => {
     if (!workerRef.current) return;
     setRunning(false);
     workerRef.current.postMessage({ type: 'stop' });
@@ -315,7 +315,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
       analytics.track({ type: 'session_stop', completed: false });
       showLocalNotification('Session stopped');
     }
-  };
+  }, [mode, handleSessionComplete]);
 
   const total = mode === 'flow' ? Math.max(remaining, minutes * 60_000) : minutes * 60_000;
   const progress = mode === 'flow' ? 1 - Math.exp(-remaining / 1) : 1 - remaining / total; // flow shows full ring

@@ -6,7 +6,7 @@ interface Props {
   progress: number; // 0..1
 }
 
-export const CircularProgress: React.FC<Props> = ({ size = 220, stroke = 10, progress }) => {
+export const CircularProgress: React.FC<Props> = React.memo(({ size = 220, stroke = 10, progress }) => {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const dash = circumference * progress;
@@ -37,4 +37,4 @@ export const CircularProgress: React.FC<Props> = ({ size = 220, stroke = 10, pro
       />
     </svg>
   );
-};
+});

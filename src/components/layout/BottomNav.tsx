@@ -1,7 +1,8 @@
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, CheckSquare, Store, Settings, TreePine, Map } from 'lucide-react';
 
-const Tab = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => (
+const Tab = React.memo(({ to, icon: Icon, label }: { to: string; icon: React.ComponentType<{ size: number }>; label: string }) => (
   <NavLink
     to={to}
     className={({ isActive }) => `flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-md transition-colors duration-200 ${
@@ -12,9 +13,9 @@ const Tab = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }
     <Icon size={22} />
     <span className="text-xs">{label}</span>
   </NavLink>
-);
+));
 
-export default function BottomNav() {
+export default React.memo(function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="mx-auto max-w-md grid grid-cols-6 gap-1 px-2">
@@ -27,4 +28,4 @@ export default function BottomNav() {
       </div>
     </nav>
   );
-}
+});

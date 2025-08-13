@@ -25,66 +25,16 @@ const AppRoot = () => {
 
   useEffect(() => {
     const preload = async () => {
-      // Preload all images and components
-      const imageUrls = [
-        '/public/assets/Focus_bg.gif',
-        '/assets/garden/Bamboo_Fence.png',
-        '/assets/garden/Bamboo_pavilion.png',
-        '/assets/garden/Cherry_blossom_tree.png',
-        '/assets/garden/Dragon_Fountain.gif',
-        '/assets/garden/Eternal_Bloom_Sakura.png',
-        '/assets/garden/Fox_spirit_shrine.png',
-        '/assets/garden/Garden_Gate_(Torii).png',
-        '/assets/garden/Giant_Lucky_Carp_Statue.png',
-        '/assets/garden/Golden_Koi_Pond.gif',
-        '/assets/garden/Gravel_Patch_Raked_Sand.png',
-        '/assets/garden/Lotus_pond.png',
-        '/assets/garden/Miniature_Mount_Fuji.png',
-        '/assets/garden/Moss_Rock_Cluster.png',
-        '/assets/garden/Northern_light_lantern.png',
-        '/assets/garden/Paper_Lamp_Post.png',
-        '/assets/garden/Phoenix_Perch.gif',
-        '/assets/garden/Small_Pond.png',
-        '/assets/garden/Sun_spirit_fountain.gif',
-        '/assets/garden/Water_Ladle_Stand_(Tsukubai).png',
-        '/assets/garden/bamboo_water_sprout_shishi_odoshi.png',
-        '/assets/garden/bonsai_tree.png',
-        '/assets/garden/eternal_sand_garden.png',
-        '/assets/garden/golden_leaf_whirlpool.png',
-        '/assets/garden/harvest_rice_stack.png',
-        '/assets/garden/ice_bridge.png',
-        '/assets/garden/lazy_panda_hammock.gif',
-        '/assets/garden/low_shrub.png',
-        '/assets/garden/maple_tree.png',
-        '/assets/garden/meditation_mat.png',
-        '/assets/garden/snow_stone.png',
-        '/assets/garden/spirit_wind_chimes.png',
-        '/assets/garden/spring_waterfall.png',
-        '/assets/garden/stone_pagoda_small.png',
-        '/assets/garden/stone_path.png',
-        '/assets/garden/stone_step.png',
-        '/assets/garden/wooden_bench.png',
-        '/assets/garden/zen_arch_gate.png',
-        '/assets/garden/zen_lantern.png',
-        '/assets/relics/Ancient_Tea_Bowl.png',
-        '/assets/relics/Monk\'s_wooden_fish_drum_mokugyo.png',
-        '/assets/relics/Timekeeper\'s_sandglass.png',
-        '/assets/relics/Zen_Fan.png',
-        '/assets/relics/Zenmodoro_Shukan.png',
-        '/assets/relics/celestial_compass.png',
-        '/assets/relics/crane_feather_amulet.png',
-        '/assets/relics/hand_bell.png',
-        '/assets/relics/jade_meditation_beads.png',
-        '/assets/relics/koan_scroll.png',
-        '/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png',
-        '/lovable-uploads/20a958db-a342-42f8-a711-30e17af81a0e.png'
+      // Only preload critical UI images
+      const criticalImages = [
+        '/assets/Focus_bg.gif'
       ];
 
-      const imagePromises = imageUrls.map(url => {
-        return new Promise((resolve, reject) => {
+      const imagePromises = criticalImages.map(url => {
+        return new Promise((resolve) => {
           const img = new Image();
           img.onload = resolve;
-          img.onerror = resolve; // Don't fail the whole preload if one image fails
+          img.onerror = resolve; // Don't fail if image fails
           img.src = url;
         });
       });
@@ -101,8 +51,8 @@ const AppRoot = () => {
         import("./pages/WorldMap"),
       ]);
       
-      // Show splash for at least 2 seconds to ensure all images load
-      setTimeout(() => setLoading(false), 2000);
+      // Reduced splash time for faster initial load
+      setTimeout(() => setLoading(false), 1000);
     };
     preload();
   }, []);
