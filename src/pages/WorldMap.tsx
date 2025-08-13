@@ -4,7 +4,7 @@ import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
 import { Camera, Grid, tileToWorld, getVisibleTileRect } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
-import { makeFog, isRevealed } from '@/features/fog/useFog';
+import { makeFog, isRevealed, revealRadius } from '@/features/fog/useFog';
 
 export default function WorldMap() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -26,6 +26,17 @@ export default function WorldMap() {
     saveProgress(progress);
     setProgress({ ...progress });
   }, [camera]);
+
+  useEffect(() => {
+    if (!progress.fog?.revealed.length) {
+      revealRadius(journey.tx, journey.ty, 3, fog);
+      progress.fog = { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) };
+      progress.journey = journey;
+      saveProgress(progress);
+      setProgress({ ...progress });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const drag = useRef<{x:number;y:number;cx:number;cy:number;id:number|null}>({x:0,y:0,cx:0,cy:0,id:null});
   const onPointerDown = (e: React.PointerEvent) => {
@@ -87,7 +98,7 @@ export default function WorldMap() {
   const monkPos = tileToWorld(journey.tx, journey.ty, grid, camera);
 
   return (
-    <div className="relative w-full h-full overflow-hidden" ref={containerRef}
+    <div className="relative w-screen h-screen overflow-hidden" ref={containerRef}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       onWheel={onWheel} style={{ touchAction: 'none' }}>
       <div
