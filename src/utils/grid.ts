@@ -14,6 +14,15 @@ export function tileToWorld(tx: number, ty: number, grid: Grid, camera: Camera) 
   };
 }
 
+export function tileCenterToWorld(tx: number, ty: number, grid: Grid, camera: Camera) {
+  const tileWidth = grid.tileW * camera.zoom;
+  const tileHeight = grid.tileH * camera.zoom;
+  return {
+    x: tx * tileWidth + tileWidth / 2 + camera.x,
+    y: ty * tileHeight + tileHeight / 2 + camera.y,
+  };
+}
+
 export function getVisibleTileRect(viewportW: number, viewportH: number, grid: Grid, camera: Camera) {
   const left = Math.floor(-camera.x / (grid.tileW * camera.zoom));
   const top = Math.floor(-camera.y / (grid.tileH * camera.zoom));

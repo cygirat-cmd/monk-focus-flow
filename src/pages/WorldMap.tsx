@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
 import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
-import { Camera, Grid, tileToWorld, getVisibleTileRect } from '@/utils/grid';
+import { Camera, Grid, tileToWorld, getVisibleTileRect, tileCenterToWorld } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
 import { makeFog, fromSavedFog, isRevealed, revealRadius, initializeFogAroundMonk } from '@/features/fog/useFog';
 import StepPanel from '@/components/world/StepPanel';
@@ -124,7 +124,7 @@ export default function WorldMap() {
     setShowMovementModal(false);
   };
 
-  const monkPos = tileToWorld(journey.tx, journey.ty, grid, camera);
+  const monkPos = tileCenterToWorld(journey.tx, journey.ty, grid, camera);
   const flip = journey.facing === 'left' ? -1 : 1;
 
   return (

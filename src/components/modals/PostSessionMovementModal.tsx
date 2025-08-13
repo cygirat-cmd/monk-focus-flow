@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Camera, Grid, tileToWorld, worldToTile, getVisibleTileRect } from '@/utils/grid';
+import { Camera, Grid, tileToWorld, worldToTile, getVisibleTileRect, tileCenterToWorld } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
 import { Fog, isRevealed, revealRadius } from '@/features/fog/useFog';
 import { monkGif } from '@/assets/monk';
@@ -51,15 +51,15 @@ export default function PostSessionMovementModal({
   useEffect(() => {
     if (isOpen && availableSteps > 0) {
       // Center camera on monk
-      const monkWorldPos = tileToWorld(currentPosition.tx, currentPosition.ty, grid, { x: 0, y: 0, zoom: camera.zoom });
+        const monkWorldPos = tileCenterToWorld(currentPosition.tx, currentPosition.ty, grid, { x: 0, y: 0, zoom: camera.zoom });
       const containerWidth = containerRef.current?.clientWidth || 800;
       const containerHeight = containerRef.current?.clientHeight || 600;
       
       setCamera({
-        x: containerWidth / 2 - monkWorldPos.x - (TILE_PX * camera.zoom) / 2,
-        y: containerHeight / 2 - monkWorldPos.y - (TILE_PX * camera.zoom) / 2,
-        zoom: camera.zoom
-      });
+          x: containerWidth / 2 - monkWorldPos.x,
+          y: containerHeight / 2 - monkWorldPos.y,
+          zoom: camera.zoom
+        });
 
       // Calculate highlighted tiles based on available steps
       let reachableTiles: Array<{ tx: number; ty: number }> = [];
@@ -178,7 +178,7 @@ export default function PostSessionMovementModal({
     }
   };
 
-  const monkPos = tileToWorld(currentPosition.tx, currentPosition.ty, grid, camera);
+    const monkPos = tileCenterToWorld(currentPosition.tx, currentPosition.ty, grid, camera);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
