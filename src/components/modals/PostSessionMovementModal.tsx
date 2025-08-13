@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Camera, Grid, tileToWorld, worldToTile, getVisibleTileRect, tileCenterToWorld } from '@/utils/grid';
@@ -46,7 +46,7 @@ export default function PostSessionMovementModal({
   const [selectedTile, setSelectedTile] = useState<{ tx: number; ty: number } | null>(null);
   const [movePath, setMovePath] = useState<Array<{ tx: number; ty: number }>>([]);
 
-  const grid: Grid = { tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS };
+  const grid = useMemo<Grid>(() => ({ tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS }), []);
 
   useEffect(() => {
     if (isOpen && availableSteps > 0) {
@@ -66,7 +66,7 @@ export default function PostSessionMovementModal({
       let currentTiles = [currentPosition];
 
       for (let step = 0; step < availableSteps; step++) {
-        let nextTiles: Array<{ tx: number; ty: number }> = [];
+        const nextTiles: Array<{ tx: number; ty: number }> = [];
         currentTiles.forEach(tile => {
           const adjacent = getAdjacentTiles(tile.tx, tile.ty);
           adjacent.forEach(adjTile => {
@@ -83,7 +83,7 @@ export default function PostSessionMovementModal({
 
       setHighlightedTiles(reachableTiles);
     }
-  }, [isOpen, currentPosition, availableSteps, camera.zoom]);
+  }, [isOpen, currentPosition, availableSteps, camera.zoom, grid]);
 
   // Draw fog and highlights
   useEffect(() => {
@@ -151,7 +151,7 @@ export default function PostSessionMovementModal({
       }
       ctx.stroke();
     }
-  }, [camera, fog, highlightedTiles, selectedTile, movePath]);
+  }, [camera, fog, grid, highlightedTiles, selectedTile, movePath]);
 
   const onClick = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
