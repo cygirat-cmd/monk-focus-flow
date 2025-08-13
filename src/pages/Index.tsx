@@ -239,7 +239,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   }
 
   const stepsAwarded = stepMonk(progress, payload.seconds);
-  analytics.track({ type: 'session_complete' });
+  analytics.track({ type: 'session_complete', stepsAwarded });
 
   // Decay revival: if withered, count sessions and revive after 3
   if ((progress.decayStage ?? 0) === 2) {
@@ -254,13 +254,8 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   setNewGardenStep(newStep);
   setNewRelic(newRelicUnlocked);
   setWindDownMode('SessionComplete');
-  
-  // If steps were awarded, navigate to world map for movement selection
-  if (stepsAwarded > 0) {
-    setTimeout(() => {
-      window.location.href = '/world';
-    }, 2000); // Small delay to show session complete first
-  } else if (!openedReward) {
+
+  if (!openedReward) {
     setWindOpen(true);
   }
 };
