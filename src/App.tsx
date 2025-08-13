@@ -64,8 +64,8 @@ const AppRoot = () => {
             </div>
           </React.Suspense>
         </BrowserRouter>
-        {/* Splash overlay on initial load */}
-        <Splash loading={loading} />
+        {/* Splash overlay on initial load - HIDDEN */}
+        {/* <Splash loading={loading} /> */}
         <DevPanel />
       </ThemeProvider>
     </QueryClientProvider>
