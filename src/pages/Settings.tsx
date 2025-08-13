@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
 import { Settings as SettingsType, loadSettings, saveSettings } from '@/utils/storageClient';
-import ThemeSelector from '@/components/ThemeSelector';
+
 
 export default function Settings() {
   const [settings, setSettings] = useState<SettingsType>(loadSettings());
@@ -23,15 +23,6 @@ export default function Settings() {
       <main className="mx-auto max-w-md px-4 pt-6 space-y-6">
         <h1 className="text-xl font-semibold">Settings</h1>
 
-        <section className="rounded-xl border bg-card p-4">
-          <h2 className="font-semibold mb-3">Appearance</h2>
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium mb-3 block">Theme</label>
-              <ThemeSelector settings={settings} onSettingsChange={setSettings} />
-            </div>
-          </div>
-        </section>
 
         <section className="rounded-xl border bg-card p-4">
           <h2 className="font-semibold mb-3">Timer Defaults</h2>

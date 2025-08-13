@@ -87,25 +87,36 @@ export default function WorldMap() {
     const ctx = canvas?.getContext('2d');
     const el = containerRef.current;
     if (!canvas || !ctx || !el) return;
+    
     const { clientWidth, clientHeight } = el;
     canvas.width = clientWidth;
     canvas.height = clientHeight;
-    ctx.clearRect(0,0,clientWidth,clientHeight);
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(0,0,clientWidth,clientHeight);
+    
+    // Fill with dark fog
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    ctx.fillRect(0, 0, clientWidth, clientHeight);
+    
+    // Clear revealed areas
     ctx.globalCompositeOperation = 'destination-out';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
+    
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
         if (!isRevealed(tx, ty, fog)) continue;
+        
         const pos = tileToWorld(tx, ty, grid, camera);
-        ctx.beginPath();
-        ctx.arc(pos.x + TILE_PX * camera.zoom / 2, pos.y + TILE_PX * camera.zoom / 2, TILE_PX * camera.zoom, 0, Math.PI * 2);
-        ctx.fill();
+        const tileSize = TILE_PX * camera.zoom;
+        
+        ctx.fillRect(
+          pos.x, 
+          pos.y, 
+          tileSize, 
+          tileSize
+        );
       }
     }
     ctx.globalCompositeOperation = 'source-over';
-  }, [camera, progress]);
+  }, [camera, fog, progress]);
 
   const handleMoveToTile = (tx: number, ty: number) => {
     const updatedProgress = { ...progress };
