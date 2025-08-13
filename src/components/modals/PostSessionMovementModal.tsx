@@ -30,6 +30,8 @@ const getAdjacentTiles = (tx: number, ty: number): Array<{ tx: number; ty: numbe
   ].filter(pos => isWalkable(pos.tx, pos.ty));
 };
 
+const FOG_BLUR = 8;
+
 export default function PostSessionMovementModal({
   isOpen,
   onClose,
@@ -116,22 +118,26 @@ export default function PostSessionMovementModal({
     ctx.clearRect(0, 0, clientWidth, clientHeight);
 
     // Draw fog
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    ctx.fillRect(0, 0, clientWidth, clientHeight);
-    ctx.globalCompositeOperation = 'destination-out';
-
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
+    const tileSize = TILE_PX * camera.zoom;
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = clientWidth;
+    offCanvas.height = clientHeight;
+    const offCtx = offCanvas.getContext('2d');
+    if (!offCtx) return;
+
+    offCtx.fillStyle = 'rgba(0,0,0,0.8)';
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
-        if (!isRevealed(tx, ty, fog)) continue;
+        if (isRevealed(tx, ty, fog)) continue;
         const pos = tileToWorld(tx, ty, grid, camera);
-        ctx.beginPath();
-        ctx.arc(pos.x + TILE_PX * camera.zoom / 2, pos.y + TILE_PX * camera.zoom / 2, TILE_PX * camera.zoom / 2, 0, Math.PI * 2);
-        ctx.fill();
+        offCtx.fillRect(pos.x, pos.y, tileSize, tileSize);
       }
     }
 
-    ctx.globalCompositeOperation = 'source-over';
+    ctx.filter = `blur(${FOG_BLUR}px)`;
+    ctx.drawImage(offCanvas, 0, 0);
+    ctx.filter = 'none';
 
     // Draw highlighted tiles
     highlightedTiles.forEach(tile => {

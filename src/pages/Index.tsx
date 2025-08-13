@@ -17,6 +17,7 @@ import { Play, Square } from 'lucide-react';
 import { validateSession, addFocusPoints, updateStreak } from '@/utils/progression';
 import { updateTrialProgress, checkForNewTrials } from '@/utils/zenTrials';
 import { grantReward, RewardItem, drawReward } from '@/utils/rewards';
+import { useNavigate } from 'react-router-dom';
 
 
 // SEO
@@ -53,6 +54,7 @@ const Index = () => {
   const [rewardPromptOpen, setRewardPromptOpen] = useState(false);
   const [rewardAdLoading, setRewardAdLoading] = useState(false);
   const stepMonk = useMonkStepOnSession();
+  const navigate = useNavigate();
 
   const pendingSteps = useMemo(() => {
     if (rewardOpen || rewardPromptOpen || windOpen) return 0;
@@ -497,6 +499,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
       setRewardPromptOpen(false);
       if (ok) {
         setRewardOpen(true);
+        navigate('/world');
       } else {
         setWindOpen(true);
       }
