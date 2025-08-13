@@ -230,7 +230,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     progress.inventory = [...(progress.inventory || []), rebirthStep];
   }
 
-  stepMonk(progress, payload.seconds);
+  const stepsAwarded = stepMonk(progress, payload.seconds);
   analytics.track({ type: 'session_complete' });
 
   // Decay revival: if withered, count sessions and revive after 3
@@ -246,7 +246,15 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   setNewGardenStep(newStep);
   setNewRelic(newRelicUnlocked);
   setWindDownMode('SessionComplete');
-  if (!openedReward) setWindOpen(true);
+  
+  // If steps were awarded, navigate to world map for movement selection
+  if (stepsAwarded > 0) {
+    setTimeout(() => {
+      window.location.href = '/world';
+    }, 2000); // Small delay to show session complete first
+  } else if (!openedReward) {
+    setWindOpen(true);
+  }
 };
 
   const switchMode = (next: Mode, nextMinutes?: number) => {

@@ -52,6 +52,8 @@ export type ProgressData = {
   lastOpenedAt?: number;
   decayStage?: 0 | 1 | 2;
   reviveProgress?: number;
+  isWithered?: boolean;
+  garden?: any;
   journey?: Journey;
   fog?: { cols: number; rows: number; revealed: number[] };
   camera?: { x: number; y: number; zoom: number };
@@ -63,6 +65,7 @@ export type ProgressData = {
   adStepUsed?: boolean;
   nextDir?: 'up' | 'down' | 'left' | 'right';
   sessionHistory?: { date: string; seconds: number; steps: number }[];
+  pendingSteps?: number;
 };
 
 const TASKS_KEY = 'monk_tasks_v1';
@@ -132,6 +135,7 @@ export const loadProgress = (): ProgressData => {
       adStepUsed: false,
       nextDir: 'right',
       sessionHistory: [],
+      pendingSteps: 0,
     };
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
@@ -166,6 +170,7 @@ export const loadProgress = (): ProgressData => {
       adStepUsed: parsed.adStepUsed ?? defaults.adStepUsed,
       nextDir: parsed.nextDir ?? defaults.nextDir,
       sessionHistory: parsed.sessionHistory ?? defaults.sessionHistory,
+      pendingSteps: parsed.pendingSteps ?? 0,
     } as ProgressData;
 
     return migrated;
@@ -199,6 +204,7 @@ export const loadProgress = (): ProgressData => {
       adStepUsed: false,
       nextDir: 'right',
       sessionHistory: [],
+      pendingSteps: 0,
     };
   }
 };

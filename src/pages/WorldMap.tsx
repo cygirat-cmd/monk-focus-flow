@@ -4,16 +4,21 @@ import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
 import { Camera, Grid, tileToWorld, getVisibleTileRect } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
-import { makeFog, isRevealed, revealRadius } from '@/features/fog/useFog';
+import { makeFog, isRevealed, revealRadius, initializeFogAroundMonk } from '@/features/fog/useFog';
 import StepPanel from '@/components/world/StepPanel';
+import PostSessionMovementModal from '@/components/modals/PostSessionMovementModal';
+import { useMonkMovement } from '@/hooks/useMonkMovement';
 
 export default function WorldMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const fogRef = useRef<HTMLCanvasElement>(null);
   const [progress, setProgress] = useState(loadProgress());
+  const [showMovementModal, setShowMovementModal] = useState(false);
   const grid: Grid = { tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS };
   const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 1 });
   const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
+  const moveMonk = useMonkMovement();
+  
   const fog = useRef(
     progress.fog
       ? { cols: progress.fog.cols, rows: progress.fog.rows, revealed: Uint8Array.from(progress.fog.revealed) }
@@ -28,8 +33,8 @@ export default function WorldMap() {
   }, [camera]);
 
   useEffect(() => {
-    if (!progress.fog?.revealed.length) {
-      revealRadius(journey.tx, journey.ty, 3, fog);
+    if (!progress.fog?.revealed.length || progress.fog.revealed.every(v => v === 0)) {
+      initializeFogAroundMonk(journey.tx, journey.ty, fog);
       progress.fog = { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) };
       progress.journey = journey;
       saveProgress(progress);
@@ -37,6 +42,13 @@ export default function WorldMap() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Check for pending steps and show movement modal
+  useEffect(() => {
+    if ((progress.pendingSteps || 0) > 0 && !showMovementModal) {
+      setShowMovementModal(true);
+    }
+  }, [progress.pendingSteps, showMovementModal]);
 
   const drag = useRef<{x:number;y:number;cx:number;cy:number;id:number|null}>({x:0,y:0,cx:0,cy:0,id:null});
   const onPointerDown = (e: React.PointerEvent) => {
@@ -95,6 +107,14 @@ export default function WorldMap() {
     ctx.globalCompositeOperation = 'source-over';
   }, [camera, progress]);
 
+  const handleMoveToTile = (tx: number, ty: number) => {
+    const updatedProgress = { ...progress };
+    moveMonk(updatedProgress, tx, ty);
+    saveProgress(updatedProgress);
+    setProgress(updatedProgress);
+    setShowMovementModal(false);
+  };
+
   const monkPos = tileToWorld(journey.tx, journey.ty, grid, camera);
   const flip = journey.facing === 'left' ? -1 : 1;
 
@@ -123,6 +143,16 @@ export default function WorldMap() {
       <canvas ref={fogRef} className="absolute inset-0 pointer-events-none" />
       <StepPanel />
       <BottomNav />
+      
+      <PostSessionMovementModal
+        isOpen={showMovementModal}
+        onClose={() => setShowMovementModal(false)}
+        onMoveToTile={handleMoveToTile}
+        currentPosition={{ tx: journey.tx, ty: journey.ty }}
+        availableSteps={progress.pendingSteps || 0}
+        fog={fog}
+        camera={camera}
+      />
     </div>
   );
 }
