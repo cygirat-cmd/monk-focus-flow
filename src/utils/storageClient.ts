@@ -61,7 +61,7 @@ export type ProgressData = {
   bonus45Used?: boolean;
   bonus60Used?: boolean;
   adStepUsed?: boolean;
-  nextDir?: 'up' | 'down' | 'left' | 'right';
+  pendingSteps?: number;
   sessionHistory?: { date: string; seconds: number; steps: number }[];
 };
 
@@ -130,7 +130,7 @@ export const loadProgress = (): ProgressData => {
       bonus45Used: false,
       bonus60Used: false,
       adStepUsed: false,
-      nextDir: 'right',
+      pendingSteps: 0,
       sessionHistory: [],
     };
     if (!raw) return defaults;
@@ -164,7 +164,7 @@ export const loadProgress = (): ProgressData => {
       bonus45Used: parsed.bonus45Used ?? defaults.bonus45Used,
       bonus60Used: parsed.bonus60Used ?? defaults.bonus60Used,
       adStepUsed: parsed.adStepUsed ?? defaults.adStepUsed,
-      nextDir: parsed.nextDir ?? defaults.nextDir,
+      pendingSteps: parsed.pendingSteps ?? defaults.pendingSteps,
       sessionHistory: parsed.sessionHistory ?? defaults.sessionHistory,
     } as ProgressData;
 
@@ -197,7 +197,7 @@ export const loadProgress = (): ProgressData => {
       bonus45Used: false,
       bonus60Used: false,
       adStepUsed: false,
-      nextDir: 'right',
+      pendingSteps: 0,
       sessionHistory: [],
     };
   }

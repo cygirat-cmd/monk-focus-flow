@@ -7,7 +7,9 @@ import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
 import { makeFog, isRevealed, revealRadius } from '@/features/fog/useFog';
 import StepPanel from '@/components/world/StepPanel';
 
-export default function WorldMap() {
+type Props = { onDone?: () => void };
+
+export default function WorldMap({ onDone }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const fogRef = useRef<HTMLCanvasElement>(null);
   const [progress, setProgress] = useState(loadProgress());
@@ -26,6 +28,14 @@ export default function WorldMap() {
     saveProgress(progress);
     setProgress({ ...progress });
   }, [camera]);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      setProgress({ ...(e.detail?.progress || loadProgress()) });
+    };
+    window.addEventListener('monk:progress-updated', handler as any);
+    return () => window.removeEventListener('monk:progress-updated', handler as any);
+  }, []);
 
   useEffect(() => {
     if (!progress.fog?.revealed.length) {
@@ -79,7 +89,7 @@ export default function WorldMap() {
     canvas.width = clientWidth;
     canvas.height = clientHeight;
     ctx.clearRect(0,0,clientWidth,clientHeight);
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillStyle = '#000';
     ctx.fillRect(0,0,clientWidth,clientHeight);
     ctx.globalCompositeOperation = 'destination-out';
     ctx.fillStyle = '#000';
@@ -98,6 +108,29 @@ export default function WorldMap() {
 
   const monkPos = tileToWorld(journey.tx, journey.ty, grid, camera);
   const flip = journey.facing === 'left' ? -1 : 1;
+
+  const moves = progress.pendingSteps > 0
+    ? [
+        { tx: journey.tx + 1, ty: journey.ty, dir: 'right' as const },
+        { tx: journey.tx - 1, ty: journey.ty, dir: 'left' as const },
+        { tx: journey.tx, ty: journey.ty - 1, dir: 'up' as const },
+        { tx: journey.tx, ty: journey.ty + 1, dir: 'down' as const },
+      ].filter(m => m.tx >= 0 && m.ty >= 0 && m.tx < grid.cols && m.ty < grid.rows)
+    : [];
+
+  const moveTo = (m: { tx: number; ty: number; dir: 'left' | 'right' | 'up' | 'down' }) => {
+    journey.tx = m.tx;
+    journey.ty = m.ty;
+    journey.step += 1;
+    journey.facing = m.dir === 'left' ? 'left' : 'right';
+    revealRadius(journey.tx, journey.ty, 3, fog);
+    progress.journey = journey;
+    progress.fog = { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) };
+    progress.pendingSteps = (progress.pendingSteps || 0) - 1;
+    saveProgress(progress);
+    setProgress({ ...progress });
+    if ((progress.pendingSteps || 0) <= 0) onDone?.();
+  };
 
   return (
     <div className="relative w-screen h-screen overflow-hidden" ref={containerRef}
@@ -121,6 +154,22 @@ export default function WorldMap() {
         top: monkPos.y,
         transform: `translate(-50%, -50%) scaleX(${flip})`
       }} />
+      {moves.map(m => {
+        const pos = tileToWorld(m.tx, m.ty, grid, camera);
+        return (
+          <button key={`${m.tx},${m.ty}`}
+            onClick={() => moveTo(m)}
+            className="absolute bg-yellow-300/50 border-2 border-yellow-500"
+            style={{
+              width: TILE_PX * camera.zoom,
+              height: TILE_PX * camera.zoom,
+              left: pos.x + TILE_PX * camera.zoom / 2,
+              top: pos.y + TILE_PX * camera.zoom / 2,
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+        );
+      })}
       <canvas ref={fogRef} className="absolute inset-0 pointer-events-none" />
       <StepPanel />
       <BottomNav />

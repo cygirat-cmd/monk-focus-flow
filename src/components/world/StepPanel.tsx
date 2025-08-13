@@ -6,12 +6,6 @@ export default function StepPanel() {
   const [progress, setProgress] = useState<ProgressData>(() => loadProgress());
   const stepMonk = useMonkStepOnSession();
 
-  const setDir = (dir: 'up' | 'down' | 'left' | 'right') => {
-    progress.nextDir = dir;
-    saveProgress(progress);
-    setProgress({ ...progress });
-  };
-
   const watchAd = () => {
     stepMonk(progress, 0, { extraStep: true });
     saveProgress(progress);
@@ -39,17 +33,6 @@ export default function StepPanel() {
       <div>Sparks: {progress.sparks ?? 0}/3</div>
       <div>Avg mins today: {avg}</div>
       <div>Revealed tiles: {revealed}</div>
-      <div className="flex space-x-1 mt-1">
-        {(['up', 'down', 'left', 'right'] as const).map(dir => (
-          <button
-            key={dir}
-            onClick={() => setDir(dir)}
-            className={`px-1 py-0.5 border rounded ${progress.nextDir === dir ? 'bg-white text-black' : ''}`}
-          >
-            {dir[0].toUpperCase()}
-          </button>
-        ))}
-      </div>
       <button
         onClick={watchAd}
         disabled={progress.adStepUsed || (progress.stepsToday ?? 0) >= 9}

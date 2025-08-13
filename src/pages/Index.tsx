@@ -4,6 +4,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import WindDownModal from '@/components/modals/WindDownModal';
 import RewardDrawModal from '@/components/modals/RewardDrawModal';
 import RewardedAdModal from '@/components/modals/RewardedAdModal';
+import MoveMapModal from '@/components/modals/MoveMapModal';
 import { useMonkStepOnSession } from '@/hooks/useMonkStepOnSession';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
@@ -48,9 +49,10 @@ const Index = () => {
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [rewardOpen, setRewardOpen] = useState(false);
   const [rewardSeconds, setRewardSeconds] = useState<number>(0);
-  const [rewardPromptOpen, setRewardPromptOpen] = useState(false);
-  const [rewardAdLoading, setRewardAdLoading] = useState(false);
-  const stepMonk = useMonkStepOnSession();
+    const [rewardPromptOpen, setRewardPromptOpen] = useState(false);
+    const [rewardAdLoading, setRewardAdLoading] = useState(false);
+    const [moveOpen, setMoveOpen] = useState(false);
+    const stepMonk = useMonkStepOnSession();
 
   useEffect(() => {
     document.title = TITLE;
@@ -230,7 +232,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     progress.inventory = [...(progress.inventory || []), rebirthStep];
   }
 
-  stepMonk(progress, payload.seconds);
+  const awarded = stepMonk(progress, payload.seconds);
   analytics.track({ type: 'session_complete' });
 
   // Decay revival: if withered, count sessions and revive after 3
@@ -246,6 +248,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   setNewGardenStep(newStep);
   setNewRelic(newRelicUnlocked);
   setWindDownMode('SessionComplete');
+  if (awarded > 0) setMoveOpen(true);
   if (!openedReward) setWindOpen(true);
 };
 
@@ -493,6 +496,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   />
 )}
 
+      <MoveMapModal open={moveOpen} onClose={() => setMoveOpen(false)} />
       <BottomNav />
     </div>
   );

@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 import { ProgressData } from '@/utils/storageClient';
-import { revealRadius, makeFog } from '@/features/fog/useFog';
-import { GARDEN_COLS, GARDEN_ROWS } from '@/utils/gardenMap';
 
 export const useMonkStepOnSession = () => {
   return useCallback(
@@ -18,7 +16,7 @@ export const useMonkStepOnSession = () => {
 
       let steps = 0;
       if (opts?.extraStep) {
-        if (progress.adStepUsed || (progress.stepsToday ?? 0) >= 9) return;
+        if (progress.adStepUsed || (progress.stepsToday ?? 0) >= 9) return 0;
         progress.adStepUsed = true;
         steps = 1;
       } else {
@@ -72,23 +70,9 @@ export const useMonkStepOnSession = () => {
       }
 
       if (awarded > 0) {
-        const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
-        const fog = progress.fog
-          ? { cols: progress.fog.cols, rows: progress.fog.rows, revealed: Uint8Array.from(progress.fog.revealed) }
-          : makeFog(GARDEN_COLS, GARDEN_ROWS);
-        const dir = progress.nextDir || 'right';
-        for (let i = 0; i < awarded; i++) {
-          if (dir === 'right') journey.tx += 1;
-          else if (dir === 'left') journey.tx -= 1;
-          else if (dir === 'up') journey.ty -= 1;
-          else if (dir === 'down') journey.ty += 1;
-          journey.step += 1;
-          revealRadius(journey.tx, journey.ty, 3, fog);
-        }
-        journey.facing = dir === 'left' ? 'left' : 'right';
-        progress.journey = journey;
-        progress.fog = { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) };
+        progress.pendingSteps = (progress.pendingSteps || 0) + awarded;
       }
+      return awarded;
     },
     []
   );
