@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Camera, Grid, tileToWorld, worldToTile, getVisibleTileRect } from '@/utils/grid';
+import { Camera, Grid, tileToWorld, worldToTile, getVisibleTileRect, tileCenterToWorld } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
 import { Fog, isRevealed, revealRadius } from '@/features/fog/useFog';
 import { monkGif } from '@/assets/monk';
@@ -46,27 +46,27 @@ export default function PostSessionMovementModal({
   const [selectedTile, setSelectedTile] = useState<{ tx: number; ty: number } | null>(null);
   const [movePath, setMovePath] = useState<Array<{ tx: number; ty: number }>>([]);
 
-  const grid: Grid = { tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS };
+  const grid = useMemo<Grid>(() => ({ tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS }), []);
 
   useEffect(() => {
     if (isOpen && availableSteps > 0) {
       // Center camera on monk
-      const monkWorldPos = tileToWorld(currentPosition.tx, currentPosition.ty, grid, { x: 0, y: 0, zoom: camera.zoom });
+        const monkWorldPos = tileCenterToWorld(currentPosition.tx, currentPosition.ty, grid, { x: 0, y: 0, zoom: camera.zoom });
       const containerWidth = containerRef.current?.clientWidth || 800;
       const containerHeight = containerRef.current?.clientHeight || 600;
       
       setCamera({
-        x: containerWidth / 2 - monkWorldPos.x - (TILE_PX * camera.zoom) / 2,
-        y: containerHeight / 2 - monkWorldPos.y - (TILE_PX * camera.zoom) / 2,
-        zoom: camera.zoom
-      });
+          x: containerWidth / 2 - monkWorldPos.x,
+          y: containerHeight / 2 - monkWorldPos.y,
+          zoom: camera.zoom
+        });
 
       // Calculate highlighted tiles based on available steps
       let reachableTiles: Array<{ tx: number; ty: number }> = [];
       let currentTiles = [currentPosition];
 
       for (let step = 0; step < availableSteps; step++) {
-        let nextTiles: Array<{ tx: number; ty: number }> = [];
+        const nextTiles: Array<{ tx: number; ty: number }> = [];
         currentTiles.forEach(tile => {
           const adjacent = getAdjacentTiles(tile.tx, tile.ty);
           adjacent.forEach(adjTile => {
@@ -83,7 +83,7 @@ export default function PostSessionMovementModal({
 
       setHighlightedTiles(reachableTiles);
     }
-  }, [isOpen, currentPosition, availableSteps, camera.zoom]);
+  }, [isOpen, currentPosition, availableSteps, camera.zoom, grid]);
 
   // Draw fog and highlights
   useEffect(() => {
@@ -151,7 +151,7 @@ export default function PostSessionMovementModal({
       }
       ctx.stroke();
     }
-  }, [camera, fog, highlightedTiles, selectedTile, movePath]);
+  }, [camera, fog, grid, highlightedTiles, selectedTile, movePath]);
 
   const onClick = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
@@ -178,7 +178,7 @@ export default function PostSessionMovementModal({
     }
   };
 
-  const monkPos = tileToWorld(currentPosition.tx, currentPosition.ty, grid, camera);
+    const monkPos = tileCenterToWorld(currentPosition.tx, currentPosition.ty, grid, camera);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

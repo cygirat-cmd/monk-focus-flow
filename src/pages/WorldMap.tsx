@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
 import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
-import { Camera, Grid, tileToWorld, getVisibleTileRect } from '@/utils/grid';
+import { Camera, Grid, tileToWorld, getVisibleTileRect, tileCenterToWorld } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
 import { makeFog, fromSavedFog, isRevealed, revealRadius, initializeFogAroundMonk } from '@/features/fog/useFog';
 import StepPanel from '@/components/world/StepPanel';
@@ -14,7 +14,7 @@ export default function WorldMap() {
   const fogRef = useRef<HTMLCanvasElement>(null);
   const [progress, setProgress] = useState(loadProgress());
   const [showMovementModal, setShowMovementModal] = useState(false);
-  const grid: Grid = { tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS };
+  const grid = useMemo<Grid>(() => ({ tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS }), []);
   const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 1 });
   const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
   const moveMonk = useMonkMovement();
@@ -24,11 +24,16 @@ export default function WorldMap() {
   ).current;
 
   useEffect(() => {
-    progress.camera = camera;
-    progress.fog = { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) };
-    saveProgress(progress);
-    setProgress({ ...progress });
-  }, [camera]);
+    setProgress(prev => {
+      const updated = {
+        ...prev,
+        camera,
+        fog: { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) },
+      };
+      saveProgress(updated);
+      return updated;
+    });
+  }, [camera, fog]);
 
   useEffect(() => {
     if (!progress.fog?.revealed.length || progress.fog.revealed.every(v => v === 0)) {
@@ -114,7 +119,7 @@ export default function WorldMap() {
       }
     }
     ctx.globalCompositeOperation = 'source-over';
-  }, [camera, fog, progress]);
+  }, [camera, fog, progress, grid]);
 
   const handleMoveToTile = (tx: number, ty: number) => {
     const updatedProgress = { ...progress };
@@ -124,7 +129,7 @@ export default function WorldMap() {
     setShowMovementModal(false);
   };
 
-  const monkPos = tileToWorld(journey.tx, journey.ty, grid, camera);
+  const monkPos = tileCenterToWorld(journey.tx, journey.ty, grid, camera);
   const flip = journey.facing === 'left' ? -1 : 1;
 
   return (

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, no-empty */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CircularProgress } from '@/components/timer/CircularProgress';
 import BottomNav from '@/components/layout/BottomNav';
@@ -5,6 +6,7 @@ import WindDownModal from '@/components/modals/WindDownModal';
 import RewardDrawModal from '@/components/modals/RewardDrawModal';
 import RewardedAdModal from '@/components/modals/RewardedAdModal';
 import { useMonkStepOnSession } from '@/hooks/useMonkStepOnSession';
+import { usePostSessionMovement } from '@/hooks/usePostSessionMovement';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
 import { loadSettings, saveSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/utils/storageClient';
@@ -51,6 +53,13 @@ const Index = () => {
   const [rewardPromptOpen, setRewardPromptOpen] = useState(false);
   const [rewardAdLoading, setRewardAdLoading] = useState(false);
   const stepMonk = useMonkStepOnSession();
+
+  const pendingSteps = useMemo(() => {
+    if (rewardOpen || rewardPromptOpen || windOpen) return 0;
+    return loadProgress().pendingSteps || 0;
+  }, [rewardOpen, rewardPromptOpen, windOpen]);
+
+  usePostSessionMovement(pendingSteps);
 
   useEffect(() => {
     document.title = TITLE;
@@ -145,7 +154,6 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
 
   let newStep: GardenStep | undefined;
   let newRelicUnlocked: Relic | undefined;
-  let quote = '';
 
   // Calculate flow score for flow sessions
   let flowScore = 0;
@@ -231,7 +239,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   }
 
   const stepsAwarded = stepMonk(progress, payload.seconds);
-  analytics.track({ type: 'session_complete' });
+  analytics.track({ type: 'session_complete', stepsAwarded });
 
   // Decay revival: if withered, count sessions and revive after 3
   if ((progress.decayStage ?? 0) === 2) {
@@ -246,13 +254,8 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   setNewGardenStep(newStep);
   setNewRelic(newRelicUnlocked);
   setWindDownMode('SessionComplete');
-  
-  // If steps were awarded, navigate to world map for movement selection
-  if (stepsAwarded > 0) {
-    setTimeout(() => {
-      window.location.href = '/world';
-    }, 2000); // Small delay to show session complete first
-  } else if (!openedReward) {
+
+  if (!openedReward) {
     setWindOpen(true);
   }
 };
