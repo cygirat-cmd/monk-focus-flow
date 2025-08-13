@@ -4,6 +4,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import WindDownModal from '@/components/modals/WindDownModal';
 import RewardDrawModal from '@/components/modals/RewardDrawModal';
 import RewardedAdModal from '@/components/modals/RewardedAdModal';
+import { useMonkStepOnSession } from '@/hooks/useMonkStepOnSession';
 import { analytics } from '@/utils/analytics';
 import { showLocalNotification } from '@/utils/notifications';
 import { loadSettings, saveSettings, loadProgress, saveProgress, GardenStep, Relic } from '@/utils/storageClient';
@@ -49,6 +50,7 @@ const Index = () => {
   const [rewardSeconds, setRewardSeconds] = useState<number>(0);
   const [rewardPromptOpen, setRewardPromptOpen] = useState(false);
   const [rewardAdLoading, setRewardAdLoading] = useState(false);
+  const stepMonk = useMonkStepOnSession();
 
   useEffect(() => {
     document.title = TITLE;
@@ -215,7 +217,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
   const completedTrials = progress.trials.filter(t => t.completed && t.reward);
   completedTrials.forEach(trial => {
     if (trial.reward) {
-      progress.pendingTokens = [...(progress.pendingTokens || []), trial.reward];
+    progress.inventory = [...(progress.inventory || []), trial.reward];
     }
   });
   
@@ -225,10 +227,11 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
     progress.isWithered = false;
     // Grant special rebirth collectible
     const rebirthStep = { id: 'rebirth-lotus', img: '/assets/garden/rebirth_lotus.png', label: 'Rebirth Lotus' };
-    progress.pendingTokens = [...(progress.pendingTokens || []), rebirthStep];
+    progress.inventory = [...(progress.inventory || []), rebirthStep];
   }
 
   saveProgress(progress);
+  stepMonk();
   analytics.track({ type: 'session_complete' });
 
   // Decay revival: if withered, count sessions and revive after 3

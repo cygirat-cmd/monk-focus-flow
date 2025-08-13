@@ -12,7 +12,7 @@ const FocusClub = React.lazy(() => import("./pages/FocusClub"));
 const Settings = React.lazy(() => import("./pages/Settings"));
 const ZenPath = React.lazy(() => import("./pages/ZenPath"));
 const TreasureHall = React.lazy(() => import("./pages/TreasureHall"));
-const Garden = React.lazy(() => import("./pages/Garden"));
+const WorldMap = React.lazy(() => import("./pages/WorldMap"));
 import Splash from "./components/Splash";
 import ThemeAuto from "./components/ThemeAuto";
 import { ThemeProvider } from "next-themes";
@@ -33,7 +33,7 @@ const AppRoot = () => {
         import("./pages/Settings"),
         import("./pages/ZenPath"),
         import("./pages/TreasureHall"),
-        import("./pages/Garden"),
+        import("./pages/WorldMap"),
       ]);
       setLoading(false);
     };
@@ -57,7 +57,7 @@ const AppRoot = () => {
               <Route path="/settings" element={<Settings />} />
               <Route path="/zen-path" element={<ZenPath />} />
               <Route path="/treasure-hall" element={<TreasureHall />} />
-              <Route path="/garden" element={<Garden />} />
+              <Route path="/world" element={<WorldMap />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

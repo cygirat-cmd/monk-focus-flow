@@ -61,7 +61,7 @@ export default function DevPanel() {
   const giveToken = () => {
     const prog = loadProgress();
     const pick = GARDEN_POOL[Math.floor(Math.random() * GARDEN_POOL.length)];
-    (prog as any).pendingTokens = [ ...(prog as any).pendingTokens || [], pick ];
+    (prog as any).inventory = [ ...(prog as any).inventory || [], pick ];
     localStorage.setItem('monk.progress', JSON.stringify(prog));
     setP(prog);
     alert('Garden token queued. Open WindDown or Garden to place.');

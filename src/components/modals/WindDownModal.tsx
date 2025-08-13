@@ -1,7 +1,6 @@
 import { GardenStep, Relic } from '@/utils/storageClient';
 import { X, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import GardenPlacementModal from '@/components/modals/GardenPlacementModal';
 
 type WindDownMode = 'SessionComplete' | 'BreakStart';
 
@@ -23,8 +22,8 @@ export default function WindDownModal({
   zenQuote
 }: WindDownModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [placeOpen, setPlaceOpen] = useState(false);
-  const [placed, setPlaced] = useState(false);
+    const [placed, setPlaced] = useState(false);
+    useEffect(() => { if (newGardenStep) setPlaced(true); }, [newGardenStep]);
 
   // Shopify Storefront API fetch
   type Product = {
@@ -175,18 +174,10 @@ export default function WindDownModal({
           </div>
 
           <div className="flex flex-col gap-3">
-            {isSessionComplete && newGardenStep && !placed && (
-              <button
-                onClick={() => setPlaceOpen(true)}
-                className="w-full py-3 rounded-lg text-center bg-secondary text-secondary-foreground font-medium hover:opacity-90 transition-opacity"
-              >
-                Place on Garden Map
-              </button>
-            )}
             {isSessionComplete && newGardenStep && placed && (
-              <a href="/garden" className="w-full py-3 rounded-lg text-center bg-secondary text-secondary-foreground font-medium hover:opacity-90 transition-opacity">
-                View Garden
-              </a>
+              <div className="w-full py-3 rounded-lg text-center bg-secondary text-secondary-foreground font-medium">
+                Added to collection
+              </div>
             )}
             <div className="flex gap-3">
               <a href="/store" className="flex-1 py-3 rounded-lg text-center bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity">
@@ -198,12 +189,6 @@ export default function WindDownModal({
             </div>
           </div>
         </main>
-        <GardenPlacementModal 
-          open={placeOpen} 
-          onClose={() => setPlaceOpen(false)} 
-          token={newGardenStep}
-          onPlaced={() => { setPlaced(true); }}
-        />
       </div>
     </div>
   );

@@ -145,7 +145,7 @@ export function drawReward(seconds: number): RewardItem | null {
 
 export function grantReward(progress: ProgressData, reward: RewardItem) {
   if (reward.kind === 'garden') {
-    progress.pendingTokens = [...(progress.pendingTokens || []), { id: reward.id, img: reward.img, label: reward.label }];
+    progress.inventory = [...(progress.inventory || []), { id: reward.id, img: reward.img, label: reward.label }];
   } else {
     progress.relics = [...progress.relics, { id: reward.id, img: reward.img, title: reward.title, unlockedAt: new Date().toISOString() }];
   }
