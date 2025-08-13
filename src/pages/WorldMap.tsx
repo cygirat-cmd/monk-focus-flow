@@ -13,12 +13,11 @@ export default function WorldMap() {
   const grid: Grid = { tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS };
   const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 1 });
   const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
-  const fog = useRef(() => {
-    if (progress.fog) {
-      return { cols: progress.fog.cols, rows: progress.fog.rows, revealed: Uint8Array.from(progress.fog.revealed) };
-    }
-    return makeFog(grid.cols, grid.rows);
-  })().current;
+  const fog = useRef(
+    progress.fog
+      ? { cols: progress.fog.cols, rows: progress.fog.rows, revealed: Uint8Array.from(progress.fog.revealed) }
+      : makeFog(grid.cols, grid.rows)
+  ).current;
 
   useEffect(() => {
     progress.camera = camera;
