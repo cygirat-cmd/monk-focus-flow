@@ -60,6 +60,14 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Running tests
+
+To run the test suite, execute:
+
+```sh
+npm test
+```
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/d82a5056-89a2-4314-aabc-c78679ed3c21) and click on Share -> Publish.
