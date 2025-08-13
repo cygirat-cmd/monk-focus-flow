@@ -29,16 +29,14 @@ export default function StepPanel() {
           60
       )
     : 0;
-  const revealed = progress.fog
-    ? progress.fog.revealed.filter(r => r === 1).length
-    : 0;
+  const monkCoords = progress.journey ? `(${progress.journey.tx}, ${progress.journey.ty})` : '(0, 15)';
 
   return (
     <div className="absolute top-2 left-2 bg-black/50 text-white p-2 rounded space-y-1 text-xs">
       <div>Steps today: {progress.stepsToday ?? 0}/9</div>
       <div>Sparks: {progress.sparks ?? 0}/3</div>
       <div>Avg mins today: {avg}</div>
-      <div>Revealed tiles: {revealed}</div>
+      <div>Monk coordinates: {monkCoords}</div>
       <div className="flex space-x-1 mt-1">
         {(['up', 'down', 'left', 'right'] as const).map(dir => (
           <button

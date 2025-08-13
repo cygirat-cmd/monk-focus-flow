@@ -115,23 +115,31 @@ export default function PostSessionMovementModal({
     canvas.height = clientHeight;
     ctx.clearRect(0, 0, clientWidth, clientHeight);
 
-    // Draw fog
+    // Apply blur effect to darkened tiles first
+    ctx.filter = 'blur(8px)';
     ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    ctx.fillRect(0, 0, clientWidth, clientHeight);
-    ctx.globalCompositeOperation = 'destination-out';
-
+    
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
+    
+    // Draw fog on unrevealed tiles with blur
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
-        if (!isRevealed(tx, ty, fog)) continue;
+        if (isRevealed(tx, ty, fog)) continue;
+        
         const pos = tileToWorld(tx, ty, grid, camera);
-        ctx.beginPath();
-        ctx.arc(pos.x + TILE_PX * camera.zoom / 2, pos.y + TILE_PX * camera.zoom / 2, TILE_PX * camera.zoom / 2, 0, Math.PI * 2);
-        ctx.fill();
+        const tileSize = TILE_PX * camera.zoom;
+        
+        ctx.fillRect(
+          pos.x, 
+          pos.y, 
+          tileSize, 
+          tileSize
+        );
       }
     }
-
-    ctx.globalCompositeOperation = 'source-over';
+    
+    // Reset filter for revealed areas
+    ctx.filter = 'none';
 
     // Draw highlighted tiles
     highlightedTiles.forEach(tile => {

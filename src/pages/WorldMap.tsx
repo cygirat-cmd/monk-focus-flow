@@ -15,8 +15,8 @@ export default function WorldMap() {
   const [progress, setProgress] = useState(loadProgress());
   const [showMovementModal, setShowMovementModal] = useState(false);
   const grid = useMemo<Grid>(() => ({ tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS }), []);
-  const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 1 });
-  const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
+  const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 0.8 });
+  const journey = progress.journey || { tx: 0, ty: 15, pathId: 'default', step: 0 };
   const moveMonk = useMonkMovement();
   
   const fog = useRef(
@@ -70,14 +70,13 @@ export default function WorldMap() {
   };
 
   const onWheel = (e: React.WheelEvent) => {
-    if (!e.ctrlKey) return;
     e.preventDefault();
     const rect = containerRef.current!.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
     const scale = Math.exp(-e.deltaY * 0.001);
     setCamera(c => {
-      const zoom = Math.min(2.5, Math.max(0.6, c.zoom * scale));
+      const zoom = Math.min(2.5, Math.max(0.4, c.zoom * scale));
       const wx = (px - c.x) / c.zoom;
       const wy = (py - c.y) / c.zoom;
       return { x: px - wx * zoom, y: py - wy * zoom, zoom };
@@ -95,17 +94,16 @@ export default function WorldMap() {
     canvas.width = clientWidth;
     canvas.height = clientHeight;
     
-    // Fill with dark fog
+    // Apply blur effect to darkened tiles first
+    ctx.filter = 'blur(8px)';
     ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    ctx.fillRect(0, 0, clientWidth, clientHeight);
     
-    // Clear revealed areas
-    ctx.globalCompositeOperation = 'destination-out';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
     
+    // Draw fog on unrevealed tiles with blur
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
-        if (!isRevealed(tx, ty, fog)) continue;
+        if (isRevealed(tx, ty, fog)) continue;
         
         const pos = tileToWorld(tx, ty, grid, camera);
         const tileSize = TILE_PX * camera.zoom;
@@ -118,7 +116,9 @@ export default function WorldMap() {
         );
       }
     }
-    ctx.globalCompositeOperation = 'source-over';
+    
+    // Reset filter for revealed areas
+    ctx.filter = 'none';
   }, [camera, fog, progress, grid]);
 
   const handleMoveToTile = (tx: number, ty: number, steps: number) => {
@@ -143,6 +143,10 @@ export default function WorldMap() {
           height: grid.rows * TILE_PX,
           backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
           backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          minWidth: '100vw',
+          minHeight: '100vh',
           transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
           transformOrigin: '0 0'
         }}

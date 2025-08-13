@@ -74,6 +74,14 @@ export default function DevPanel() {
     setP(prog);
   };
 
+  const executeOneStep = () => {
+    const prog = loadProgress();
+    (prog as any).pendingSteps = ((prog as any).pendingSteps || 0) + 1;
+    localStorage.setItem('monk.progress', JSON.stringify(prog));
+    setP(prog);
+    alert('Added 1 step. Check WorldMap to move monk.');
+  };
+
   const resetDaily = () => {
     const prog = loadProgress();
     (prog as any).counters = { ...(prog as any).counters, placementsToday: 0 };
@@ -143,6 +151,7 @@ export default function DevPanel() {
           <button className="px-2 py-1 rounded-md bg-secondary" onClick={() => openWindDown(false)}>Open WindDown (invalid)</button>
           <button className="px-2 py-1 rounded-md bg-accent" onClick={addFP}>+10 FP</button>
           <button className="px-2 py-1 rounded-md bg-accent" onClick={giveToken}>Give Garden Token</button>
+          <button className="px-2 py-1 rounded-md bg-accent" onClick={executeOneStep}>Execute One Step</button>
           <button className="px-2 py-1 rounded-md bg-accent" onClick={resetDaily}>Reset Daily</button>
           <button className="px-2 py-1 rounded-md bg-accent" onClick={advanceDay}>Advance Day +1</button>
           <button className="px-2 py-1 rounded-md bg-destructive text-destructive-foreground" onClick={hardReset}>HARD RESET</button>

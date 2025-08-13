@@ -1,12 +1,11 @@
-export const GARDEN_COLS = 12;
-export const GARDEN_ROWS = 8;
+export const GARDEN_COLS = 32;
+export const GARDEN_ROWS = 32;
 export const TILE_PX = 64; // visual reference
 
-// Locked temple area: specific blocked tiles
+// Locked temple area: specific blocked tiles (scaled for 32x32 grid)
 export const isTileLocked = (x: number, y: number): boolean => {
   return (
-    (x === 5 && (y === 1 || y === 2 || y === 3)) ||
-    (x === 6 && (y === 1 || y === 2 || y === 3))
+    (x >= 13 && x <= 16 && y >= 3 && y <= 5)
   );
 };
 
