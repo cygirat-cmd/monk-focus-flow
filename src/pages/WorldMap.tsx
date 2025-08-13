@@ -82,6 +82,7 @@ export default function WorldMap() {
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0,0,clientWidth,clientHeight);
     ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = '#000';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
