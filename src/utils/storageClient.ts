@@ -125,7 +125,7 @@ export const loadProgress = (): ProgressData => {
       decayStage: 0,
       reviveProgress: 0,
       journey: { tx: 0, ty: 0, pathId: 'default', step: 0 },
-      fog: { cols: 12, rows: 8, revealed: [] },
+      fog: { cols: 12, rows: 8, revealed: Array(12 * 8).fill(0) },
       camera: { x: 0, y: 0, zoom: 1 },
       stepsToday: 0,
       lastStepDate: nowIso.slice(0,10),
@@ -173,6 +173,10 @@ export const loadProgress = (): ProgressData => {
       pendingSteps: parsed.pendingSteps ?? 0,
     } as ProgressData;
 
+    if (!migrated.fog.revealed.length) {
+      migrated.fog.revealed = Array(migrated.fog.cols * migrated.fog.rows).fill(0);
+    }
+
     return migrated;
   } catch {
     return {
@@ -194,7 +198,7 @@ export const loadProgress = (): ProgressData => {
       decayStage: 0,
       reviveProgress: 0,
       journey: { tx: 0, ty: 0, pathId: 'default', step: 0 },
-      fog: { cols: 12, rows: 8, revealed: [] },
+      fog: { cols: 12, rows: 8, revealed: Array(12 * 8).fill(0) },
       camera: { x: 0, y: 0, zoom: 1 },
       stepsToday: 0,
       lastStepDate: new Date().toISOString().slice(0,10),

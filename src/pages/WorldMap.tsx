@@ -4,7 +4,7 @@ import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
 import { Camera, Grid, tileToWorld, getVisibleTileRect } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
-import { makeFog, isRevealed, revealRadius, initializeFogAroundMonk } from '@/features/fog/useFog';
+import { makeFog, fromSavedFog, isRevealed, revealRadius, initializeFogAroundMonk } from '@/features/fog/useFog';
 import StepPanel from '@/components/world/StepPanel';
 import PostSessionMovementModal from '@/components/modals/PostSessionMovementModal';
 import { useMonkMovement } from '@/hooks/useMonkMovement';
@@ -20,9 +20,7 @@ export default function WorldMap() {
   const moveMonk = useMonkMovement();
   
   const fog = useRef(
-    progress.fog
-      ? { cols: progress.fog.cols, rows: progress.fog.rows, revealed: Uint8Array.from(progress.fog.revealed) }
-      : makeFog(grid.cols, grid.rows)
+    progress.fog ? fromSavedFog(progress.fog) : makeFog(grid.cols, grid.rows)
   ).current;
 
   useEffect(() => {

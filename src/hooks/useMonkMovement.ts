@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { ProgressData } from '@/utils/storageClient';
-import { revealRadius, makeFog } from '@/features/fog/useFog';
+import { revealRadius, makeFog, fromSavedFog } from '@/features/fog/useFog';
 import { GARDEN_COLS, GARDEN_ROWS } from '@/utils/gardenMap';
 
 export const useMonkMovement = () => {
@@ -8,7 +8,7 @@ export const useMonkMovement = () => {
     (progress: ProgressData, targetTx: number, targetTy: number) => {
       const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
       const fog = progress.fog
-        ? { cols: progress.fog.cols, rows: progress.fog.rows, revealed: Uint8Array.from(progress.fog.revealed) }
+        ? fromSavedFog(progress.fog)
         : makeFog(GARDEN_COLS, GARDEN_ROWS);
 
       // Calculate movement direction for sprite facing
