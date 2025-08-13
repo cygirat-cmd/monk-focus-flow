@@ -421,8 +421,7 @@ const handleSessionComplete = (payload: { mode: 'flow' | 'pomodoro'; seconds: nu
       {/* Full-screen timer overlay when running */}
       {running && (
         <div
-          className="fixed inset-0 z-50 text-foreground bg-background bg-cover bg-center bg-no-repeat bg-fixed"
-          style={{ backgroundImage: 'url("/lovable-uploads/focus_bg.png")' }}
+          className="fixed inset-0 z-50 text-foreground bg-background bg-cover bg-center bg-no-repeat bg-fixed bg-[url('/lovable-uploads/focus_bg.png')]"
         >
           <div className="h-full max-w-md mx-auto px-4 flex flex-col items-center justify-center gap-6">
             {mode === 'flow' ? (
