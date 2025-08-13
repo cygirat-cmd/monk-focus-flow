@@ -4,7 +4,7 @@ import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
 import { Camera, Grid, tileToWorld, getVisibleTileRect, tileCenterToWorld } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
-import { makeFog, fromSavedFog, isRevealed, revealRadius, initializeFogAroundMonk } from '@/features/fog/useFog';
+import { makeFog, fromSavedFog, isRevealed, initializeFogAroundMonk } from '@/features/fog/useFog';
 import StepPanel from '@/components/world/StepPanel';
 import PostSessionMovementModal from '@/components/modals/PostSessionMovementModal';
 import { useMonkMovement } from '@/hooks/useMonkMovement';
@@ -121,9 +121,9 @@ export default function WorldMap() {
     ctx.globalCompositeOperation = 'source-over';
   }, [camera, fog, progress, grid]);
 
-  const handleMoveToTile = (tx: number, ty: number) => {
+  const handleMoveToTile = (tx: number, ty: number, steps: number) => {
     const updatedProgress = { ...progress };
-    moveMonk(updatedProgress, tx, ty);
+    moveMonk(updatedProgress, fog, tx, ty, steps);
     saveProgress(updatedProgress);
     setProgress(updatedProgress);
     setShowMovementModal(false);

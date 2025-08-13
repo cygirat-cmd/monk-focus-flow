@@ -9,16 +9,16 @@ vi.mock('@/utils/storageClient', () => ({
   loadProgress: () => ({
     journey: { tx: 0, ty: 0, pathId: 'default', step: 0 },
     fog: { cols: 4, rows: 4, revealed: Array(16).fill(0) },
-    pendingSteps: 1,
+    pendingSteps: 2,
     camera: { x: 0, y: 0, zoom: 1 }
   }),
   saveProgress: vi.fn()
 }));
 
 vi.mock('@/components/modals/PostSessionMovementModal', () => ({
-  default: ({ isOpen, onMoveToTile }: { isOpen: boolean; onMoveToTile: (tx: number, ty: number) => void }) => {
+  default: ({ isOpen, onMoveToTile }: { isOpen: boolean; onMoveToTile: (tx: number, ty: number, steps: number) => void }) => {
     if (isOpen) {
-      onMoveToTile(1, 1);
+      onMoveToTile(1, 1, 2);
     }
     return null;
   }
@@ -41,6 +41,7 @@ describe('WorldMap integration', () => {
     expect(updated.journey.tx).toBe(1);
     expect(updated.journey.ty).toBe(1);
     expect(updated.pendingSteps).toBe(0);
+    expect(updated.journey.step).toBe(2);
     expect(updated.fog.revealed[1 + 1 * updated.fog.cols]).toBe(1);
   });
 });
