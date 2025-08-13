@@ -7,15 +7,16 @@ export default function StepPanel() {
   const stepMonk = useMonkStepOnSession();
 
   const setDir = (dir: 'up' | 'down' | 'left' | 'right') => {
-    progress.nextDir = dir;
-    saveProgress(progress);
-    setProgress({ ...progress });
+    const updatedProgress = { ...progress, nextDir: dir };
+    saveProgress(updatedProgress);
+    setProgress(updatedProgress);
   };
 
   const watchAd = () => {
-    stepMonk(progress, 0, { extraStep: true });
-    saveProgress(progress);
-    setProgress({ ...progress });
+    const updatedProgress = { ...progress };
+    stepMonk(updatedProgress, 0, { extraStep: true });
+    saveProgress(updatedProgress);
+    setProgress(updatedProgress);
   };
 
   const today = new Date().toDateString();

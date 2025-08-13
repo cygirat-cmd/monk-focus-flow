@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
 import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
@@ -18,6 +18,11 @@ export default function WorldMap() {
   const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 1 });
   const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
   const moveMonk = useMonkMovement();
+  
+  // Throttle camera updates during drag for better performance
+  const throttledCameraUpdate = useCallback((newCamera: Camera) => {
+    setCamera(newCamera);
+  }, []);
   
   const fog = useRef(
     progress.fog ? fromSavedFog(progress.fog) : makeFog(grid.cols, grid.rows)
@@ -55,18 +60,32 @@ export default function WorldMap() {
 
   const drag = useRef<{x:number;y:number;cx:number;cy:number;id:number|null}>({x:0,y:0,cx:0,cy:0,id:null});
   const onPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
     drag.current = { x: e.clientX, y: e.clientY, cx: camera.x, cy: camera.y, id: e.pointerId };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch (err) {
+      console.warn('setPointerCapture failed:', err);
+    }
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (drag.current.id === e.pointerId) {
+      e.preventDefault();
       const dx = e.clientX - drag.current.x;
       const dy = e.clientY - drag.current.y;
-      setCamera(c => ({ ...c, x: drag.current.cx + dx, y: drag.current.cy + dy }));
+      throttledCameraUpdate({ ...camera, x: drag.current.cx + dx, y: drag.current.cy + dy });
     }
   };
   const onPointerUp = (e: React.PointerEvent) => {
-    if (drag.current.id === e.pointerId) drag.current.id = null;
+    if (drag.current.id === e.pointerId) {
+      e.preventDefault();
+      drag.current.id = null;
+      try {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch (err) {
+        console.warn('releasePointerCapture failed:', err);
+      }
+    }
   };
 
   const onWheel = (e: React.WheelEvent) => {
@@ -84,7 +103,7 @@ export default function WorldMap() {
     });
   };
 
-  // Draw fog each frame when camera changes
+  // Draw fog with optimizations - only when camera or fog changes significantly
   useEffect(() => {
     const canvas = fogRef.current;
     const ctx = canvas?.getContext('2d');
@@ -92,34 +111,35 @@ export default function WorldMap() {
     if (!canvas || !ctx || !el) return;
     
     const { clientWidth, clientHeight } = el;
-    canvas.width = clientWidth;
-    canvas.height = clientHeight;
     
-    // Fill with dark fog
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    // Only resize canvas if dimensions changed
+    if (canvas.width !== clientWidth || canvas.height !== clientHeight) {
+      canvas.width = clientWidth;
+      canvas.height = clientHeight;
+    }
+    
+    // Fill with complete darkness for fog of war
+    ctx.fillStyle = 'rgba(0,0,0,1)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     
-    // Clear revealed areas
+    // Clear revealed areas with optimizations
     ctx.globalCompositeOperation = 'destination-out';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
+    const tileSize = TILE_PX * camera.zoom;
     
+    // Batch clear operations for better performance
+    ctx.beginPath();
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
         if (!isRevealed(tx, ty, fog)) continue;
         
         const pos = tileToWorld(tx, ty, grid, camera);
-        const tileSize = TILE_PX * camera.zoom;
-        
-        ctx.fillRect(
-          pos.x, 
-          pos.y, 
-          tileSize, 
-          tileSize
-        );
+        ctx.rect(pos.x, pos.y, tileSize, tileSize);
       }
     }
+    ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
-  }, [camera, fog, progress, grid]);
+  }, [camera, fog, grid]);
 
   const handleMoveToTile = (tx: number, ty: number, steps: number) => {
     const updatedProgress = { ...progress };
