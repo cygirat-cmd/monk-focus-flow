@@ -15,8 +15,8 @@ export default function WorldMap() {
   const [progress, setProgress] = useState(loadProgress());
   const [showMovementModal, setShowMovementModal] = useState(false);
   const grid = useMemo<Grid>(() => ({ tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS }), []);
-  const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 1 });
-  const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
+  const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 0.8 });
+  const journey = progress.journey || { tx: 0, ty: 15, pathId: 'default', step: 0 };
   const moveMonk = useMonkMovement();
   
   const fog = useRef(
@@ -99,7 +99,7 @@ export default function WorldMap() {
     ctx.fillStyle = 'rgba(0,0,0,0.8)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     
-    // Clear revealed areas
+    // Clear revealed areas with circular blur
     ctx.globalCompositeOperation = 'destination-out';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
     
@@ -110,12 +110,15 @@ export default function WorldMap() {
         const pos = tileToWorld(tx, ty, grid, camera);
         const tileSize = TILE_PX * camera.zoom;
         
-        ctx.fillRect(
-          pos.x, 
-          pos.y, 
-          tileSize, 
-          tileSize
+        ctx.beginPath();
+        ctx.arc(
+          pos.x + tileSize / 2, 
+          pos.y + tileSize / 2, 
+          tileSize / 2, 
+          0, 
+          Math.PI * 2
         );
+        ctx.fill();
       }
     }
     ctx.globalCompositeOperation = 'source-over';
@@ -133,16 +136,20 @@ export default function WorldMap() {
   const flip = journey.facing === 'left' ? -1 : 1;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden" ref={containerRef}
+    <div className="relative w-screen h-screen overflow-hidden bg-gray-900" ref={containerRef}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       onWheel={onWheel} style={{ touchAction: 'none' }}>
       <div
-        className="absolute top-0 left-0"
+        className="absolute inset-0"
         style={{
           width: grid.cols * TILE_PX,
           height: grid.rows * TILE_PX,
           backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
           backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          minWidth: '100vw',
+          minHeight: '100vh',
           transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
           transformOrigin: '0 0'
         }}

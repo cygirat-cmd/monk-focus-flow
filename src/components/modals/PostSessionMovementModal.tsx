@@ -214,12 +214,16 @@ export default function PostSessionMovementModal({
             onClick={onClick}
           >
             <div
-              className="absolute top-0 left-0"
+              className="absolute inset-0"
               style={{
                 width: grid.cols * TILE_PX,
                 height: grid.rows * TILE_PX,
                 backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
                 backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                minWidth: '100%',
+                minHeight: '100%',
                 transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
                 transformOrigin: '0 0'
               }}
