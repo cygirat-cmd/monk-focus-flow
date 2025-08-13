@@ -15,8 +15,8 @@ export default function WorldMap() {
   const [progress, setProgress] = useState(loadProgress());
   const [showMovementModal, setShowMovementModal] = useState(false);
   const grid = useMemo<Grid>(() => ({ tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS }), []);
-  const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 1 });
-  const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
+  const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 0.8 });
+  const journey = progress.journey || { tx: 0, ty: 15, pathId: 'default', step: 0 };
   const moveMonk = useMonkMovement();
   
   const fog = useRef(
@@ -62,7 +62,22 @@ export default function WorldMap() {
     if (drag.current.id === e.pointerId) {
       const dx = e.clientX - drag.current.x;
       const dy = e.clientY - drag.current.y;
-      setCamera(c => ({ ...c, x: drag.current.cx + dx, y: drag.current.cy + dy }));
+      setCamera(c => {
+        const rect = containerRef.current!.getBoundingClientRect();
+        let newX = drag.current.cx + dx;
+        let newY = drag.current.cy + dy;
+        
+        // Apply bounds to keep camera within map
+        const mapWidth = grid.cols * TILE_PX * c.zoom;
+        const mapHeight = grid.rows * TILE_PX * c.zoom;
+        const maxX = Math.max(0, rect.width - mapWidth);
+        const maxY = Math.max(0, rect.height - mapHeight);
+        
+        newX = Math.min(0, Math.max(maxX, newX));
+        newY = Math.min(0, Math.max(maxY, newY));
+        
+        return { ...c, x: newX, y: newY };
+      });
     }
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -70,17 +85,30 @@ export default function WorldMap() {
   };
 
   const onWheel = (e: React.WheelEvent) => {
-    if (!e.ctrlKey) return;
     e.preventDefault();
     const rect = containerRef.current!.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
     const scale = Math.exp(-e.deltaY * 0.001);
     setCamera(c => {
-      const zoom = Math.min(2.5, Math.max(0.6, c.zoom * scale));
+      const zoom = Math.min(1.5, Math.max(0.5, c.zoom * scale));
       const wx = (px - c.x) / c.zoom;
       const wy = (py - c.y) / c.zoom;
-      return { x: px - wx * zoom, y: py - wy * zoom, zoom };
+      
+      // Calculate new camera position
+      let newX = px - wx * zoom;
+      let newY = py - wy * zoom;
+      
+      // Apply bounds to keep camera within map
+      const mapWidth = grid.cols * TILE_PX * zoom;
+      const mapHeight = grid.rows * TILE_PX * zoom;
+      const maxX = Math.max(0, rect.width - mapWidth);
+      const maxY = Math.max(0, rect.height - mapHeight);
+      
+      newX = Math.min(0, Math.max(maxX, newX));
+      newY = Math.min(0, Math.max(maxY, newY));
+      
+      return { x: newX, y: newY, zoom };
     });
   };
 
@@ -95,21 +123,24 @@ export default function WorldMap() {
     canvas.width = clientWidth;
     canvas.height = clientHeight;
     
-    // Fill with dark fog
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    ctx.fillRect(0, 0, clientWidth, clientHeight);
+    // Clear canvas first
+    ctx.clearRect(0, 0, clientWidth, clientHeight);
     
-    // Clear revealed areas
-    ctx.globalCompositeOperation = 'destination-out';
+    // Only render unrevealed tiles with blur effect
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
+    
+    // Apply blur filter for unrevealed tiles
+    ctx.filter = 'blur(8px)';
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
     
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
-        if (!isRevealed(tx, ty, fog)) continue;
+        if (isRevealed(tx, ty, fog)) continue; // Skip revealed tiles
         
         const pos = tileToWorld(tx, ty, grid, camera);
         const tileSize = TILE_PX * camera.zoom;
         
+        // Draw darkened square for unrevealed tile
         ctx.fillRect(
           pos.x, 
           pos.y, 
@@ -118,7 +149,9 @@ export default function WorldMap() {
         );
       }
     }
-    ctx.globalCompositeOperation = 'source-over';
+    
+    // Reset filter
+    ctx.filter = 'none';
   }, [camera, fog, progress, grid]);
 
   const handleMoveToTile = (tx: number, ty: number, steps: number) => {
@@ -133,7 +166,7 @@ export default function WorldMap() {
   const flip = journey.facing === 'left' ? -1 : 1;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden" ref={containerRef}
+    <div className="relative w-screen h-screen overflow-hidden bg-gray-800" ref={containerRef}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       onWheel={onWheel} style={{ touchAction: 'none' }}>
       <div
@@ -141,8 +174,11 @@ export default function WorldMap() {
         style={{
           width: grid.cols * TILE_PX,
           height: grid.rows * TILE_PX,
+          minWidth: '100vw',
+          minHeight: '100vh',
           backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
           backgroundSize: 'cover',
+          backgroundPosition: 'center',
           transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
           transformOrigin: '0 0'
         }}
