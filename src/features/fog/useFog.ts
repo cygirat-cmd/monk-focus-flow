@@ -3,6 +3,14 @@ export type Fog = { cols: number; rows: number; revealed: Uint8Array };
 export const makeFog = (cols: number, rows: number): Fog =>
   ({ cols, rows, revealed: new Uint8Array(cols * rows) });
 
+export const fromSavedFog = (data: { cols: number; rows: number; revealed: number[] }): Fog => {
+  const f = makeFog(data.cols, data.rows);
+  data.revealed?.forEach((v, i) => {
+    if (i < f.revealed.length) f.revealed[i] = v;
+  });
+  return f;
+};
+
 const idx = (x: number, y: number, f: Fog) => y * f.cols + x;
 
 export const isRevealed = (x: number, y: number, f: Fog) => 
