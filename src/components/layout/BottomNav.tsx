@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, CheckSquare, Store, Settings, TreePine, Sprout } from 'lucide-react';
+import { Home, CheckSquare, Store, Settings, TreePine, Map } from 'lucide-react';
 
 const Tab = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => (
   <NavLink
@@ -20,9 +20,9 @@ export default function BottomNav() {
       <div className="mx-auto max-w-md grid grid-cols-6 gap-1 px-2">
         <Tab to="/" icon={Home} label="Timer" />
         <Tab to="/tasks" icon={CheckSquare} label="Tasks" />
-        <Tab to="/zen-path" icon={TreePine} label="Path" />
-        <Tab to="/garden" icon={Sprout} label="Garden" />
-        <Tab to="/store" icon={Store} label="Store" />
+          <Tab to="/zen-path" icon={TreePine} label="Path" />
+          <Tab to="/world" icon={Map} label="Map" />
+          <Tab to="/store" icon={Store} label="Store" />
         <Tab to="/settings" icon={Settings} label="Settings" />
       </div>
     </nav>

@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RewardItem, drawReward, Rarity } from '@/utils/rewards';
-import GardenPlacementModal from './GardenPlacementModal';
 import { Sparkles } from 'lucide-react';
 
 
@@ -46,15 +45,12 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
   const [spinning, setSpinning] = useState(true);
   const [finalItem, setFinalItem] = useState<RewardItem | null>(null);
   const [idx, setIdx] = useState(0);
-  const [placeOpen, setPlaceOpen] = useState(false);
-  const [placedThisReward, setPlacedThisReward] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setSpinning(true);
     setFinalItem(null);
-    setPlacedThisReward(false);
     setIdx(0);
     if (timerRef.current) window.clearInterval(timerRef.current);
     timerRef.current = window.setInterval(() => setIdx((i) => (i + 1) % silhouettes.length), 120);
@@ -77,7 +73,7 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur">
       <div className="max-w-md mx-auto px-4 pt-12 pb-24">
         <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2"><Sparkles className="text-primary" size={18}/> Reward Draw</h2>
-        <p className="text-muted-foreground mb-6">Completing focus grants items for your Zen Garden.</p>
+          <p className="text-muted-foreground mb-6">Completing focus grants collectibles for your journey.</p>
 
         <div className="rounded-xl border bg-card p-6 flex flex-col items-center gap-4">
           <div className={`w-40 h-40 rounded-lg border flex items-center justify-center ${glow ? 'shadow-[0_0_24px_hsl(var(--primary)/0.5)]' : ''}`}>
@@ -113,16 +109,9 @@ export default function RewardDrawModal({ open, seconds, onClose, onResult }: Re
         </div>
 
         <div className="mt-6 flex gap-3">
-          {!spinning && finalItem && finalItem.kind === 'garden' && (
-            <button className="flex-1 py-3 rounded-lg bg-secondary text-secondary-foreground font-medium disabled:opacity-50" disabled={placedThisReward} onClick={() => setPlaceOpen(true)}>{placedThisReward ? 'Placed' : 'Place in Garden'}</button>
-          )}
-          <button className="flex-1 py-3 rounded-lg bg-accent text-accent-foreground font-medium" onClick={onClose}>Continue</button>
+            <button className="flex-1 py-3 rounded-lg bg-accent text-accent-foreground font-medium" onClick={onClose}>Continue</button>
+          </div>
         </div>
       </div>
-
-      {finalItem && finalItem.kind === 'garden' && (
-        <GardenPlacementModal open={placeOpen} onClose={() => setPlaceOpen(false)} token={{ id: finalItem.id, img: finalItem.img, label: finalItem.label }} onPlaced={() => setPlacedThisReward(true)} />
-      )}
-    </div>
-  );
-}
+    );
+  }

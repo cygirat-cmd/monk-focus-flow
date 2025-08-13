@@ -25,28 +25,12 @@ export type Relic = {
   unlockedAt: string;
 };
 
-export type GardenGrid = (GardenStep | null)[];
-
-// New garden types
-export type GardenPlacedItem = {
-  id: string; // unique instance id
-  type: 'step';
-  tokenId: string; // original token id
-  img: string;
-  label?: string;
-  x: number; // 0-based column
-  y: number; // 0-based row
-  rotation: 0 | 90 | 180 | 270;
-  placedAt: string;
-  w?: number;
-  h?: number;
-};
-
-export type GardenState = {
-  cols: number;
-  rows: number;
-  placed: GardenPlacedItem[];
-  bg: string; // background image path or token
+export type Journey = {
+  tx: number;
+  ty: number;
+  pathId: string;
+  step: number;
+  facing?: 'left' | 'right';
 };
 
 export type ProgressData = {
@@ -54,32 +38,31 @@ export type ProgressData = {
   pathLength: number;
   currentPath: GardenStep[];
   relics: Relic[];
-  // Legacy
-  gardenGrid: GardenGrid; // 6x4 grid (24 cells)
-  pendingTokens: GardenStep[]; // items awaiting placement (legacy queue)
-  // New Garden system
-  garden?: GardenState;
-  pendingToken?: GardenStep | null;
-  inventory?: GardenStep[]; // removed items stored here
+  inventory?: GardenStep[];
   focusPoints: number;
-  // Flow stats
   flowScore?: number;
   bestFlowSession?: { seconds: number; flowScore: number; timestamp: string } | null;
-  // Rules & counters
   rules: { minSecondsPomodoro: number; minSecondsFlow: number; dailyMaxPlacements: number; cooldownSeconds: number };
   counters: { placementsToday: number; lastSessionEndedAt: number; consecutiveDays?: number; itemsReceivedToday?: number; itemsDate?: string; lastRewardAt?: number };
   streak: { days: number; lastDate: string };
-  // NPC & season
   npc?: { x: number; y: number; message?: string; messageExpiry?: number };
   season?: 'spring' | 'summer' | 'autumn' | 'winter';
-  // Trials & flags
   trials?: any[];
-  // Decay system
-  lastActive?: string; // last session completed timestamp
-  lastOpenedAt?: number; // last time app opened
-  decayStage?: 0 | 1 | 2; // 0 normal, 1 thirsty, 2 withered
-  isWithered?: boolean; // legacy flag
-  reviveProgress?: number; // sessions after wither
+  lastActive?: string;
+  lastOpenedAt?: number;
+  decayStage?: 0 | 1 | 2;
+  reviveProgress?: number;
+  journey?: Journey;
+  fog?: { cols: number; rows: number; revealed: number[] };
+  camera?: { x: number; y: number; zoom: number };
+  stepsToday?: number;
+  lastStepDate?: string;
+  sparks?: number;
+  bonus45Used?: boolean;
+  bonus60Used?: boolean;
+  adStepUsed?: boolean;
+  nextDir?: 'up' | 'down' | 'left' | 'right';
+  sessionHistory?: { date: string; seconds: number; steps: number }[];
 };
 
 const TASKS_KEY = 'monk_tasks_v1';
@@ -125,10 +108,6 @@ export const loadProgress = (): ProgressData => {
       pathLength: 8,
       currentPath: [],
       relics: [],
-      gardenGrid: Array(24).fill(null),
-      pendingTokens: [],
-      garden: { cols: 12, rows: 8, placed: [], bg: '/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png' },
-      pendingToken: null,
       inventory: [],
       focusPoints: 0,
       flowScore: 0,
@@ -142,6 +121,17 @@ export const loadProgress = (): ProgressData => {
       lastOpenedAt: Date.now(),
       decayStage: 0,
       reviveProgress: 0,
+      journey: { tx: 0, ty: 0, pathId: 'default', step: 0 },
+      fog: { cols: 12, rows: 8, revealed: [] },
+      camera: { x: 0, y: 0, zoom: 1 },
+      stepsToday: 0,
+      lastStepDate: nowIso.slice(0,10),
+      sparks: 0,
+      bonus45Used: false,
+      bonus60Used: false,
+      adStepUsed: false,
+      nextDir: 'right',
+      sessionHistory: [],
     };
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
@@ -156,11 +146,7 @@ export const loadProgress = (): ProgressData => {
     const migrated: ProgressData = {
       ...defaults,
       ...parsed,
-      gardenGrid: parsed.gardenGrid ?? defaults.gardenGrid,
-      pendingTokens: parsed.pendingTokens ?? defaults.pendingTokens,
-      garden: parsed.garden ?? defaults.garden,
-      pendingToken: parsed.pendingToken ?? (parsed.pendingTokens?.length ? parsed.pendingTokens[0] : null),
-      inventory: parsed.inventory ?? [],
+      inventory: parsed.inventory ?? defaults.inventory,
       flowScore: parsed.flowScore ?? defaults.flowScore,
       bestFlowSession: parsed.bestFlowSession ?? defaults.bestFlowSession,
       counters: { ...defaults.counters, ...(parsed.counters || {}) },
@@ -168,7 +154,18 @@ export const loadProgress = (): ProgressData => {
       lastActive: parsed.lastActive || defaults.lastActive,
       lastOpenedAt: parsed.lastOpenedAt || defaults.lastOpenedAt,
       decayStage: parsed.decayStage ?? decayStage,
-      reviveProgress: parsed.reviveProgress ?? 0,
+      reviveProgress: parsed.reviveProgress ?? defaults.reviveProgress,
+      journey: parsed.journey ?? defaults.journey,
+      fog: parsed.fog ?? defaults.fog,
+      camera: parsed.camera ?? defaults.camera,
+      stepsToday: parsed.stepsToday ?? defaults.stepsToday,
+      lastStepDate: parsed.lastStepDate ?? defaults.lastStepDate,
+      sparks: parsed.sparks ?? defaults.sparks,
+      bonus45Used: parsed.bonus45Used ?? defaults.bonus45Used,
+      bonus60Used: parsed.bonus60Used ?? defaults.bonus60Used,
+      adStepUsed: parsed.adStepUsed ?? defaults.adStepUsed,
+      nextDir: parsed.nextDir ?? defaults.nextDir,
+      sessionHistory: parsed.sessionHistory ?? defaults.sessionHistory,
     } as ProgressData;
 
     return migrated;
@@ -178,10 +175,6 @@ export const loadProgress = (): ProgressData => {
       pathLength: 8,
       currentPath: [],
       relics: [],
-      gardenGrid: Array(24).fill(null),
-      pendingTokens: [],
-      garden: { cols: 12, rows: 8, placed: [], bg: '/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png' },
-      pendingToken: null,
       inventory: [],
       focusPoints: 0,
       flowScore: 0,
@@ -195,6 +188,17 @@ export const loadProgress = (): ProgressData => {
       lastOpenedAt: Date.now(),
       decayStage: 0,
       reviveProgress: 0,
+      journey: { tx: 0, ty: 0, pathId: 'default', step: 0 },
+      fog: { cols: 12, rows: 8, revealed: [] },
+      camera: { x: 0, y: 0, zoom: 1 },
+      stepsToday: 0,
+      lastStepDate: new Date().toISOString().slice(0,10),
+      sparks: 0,
+      bonus45Used: false,
+      bonus60Used: false,
+      adStepUsed: false,
+      nextDir: 'right',
+      sessionHistory: [],
     };
   }
 };

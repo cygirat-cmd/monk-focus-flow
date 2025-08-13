@@ -2,7 +2,6 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { loadProgress, saveProgress } from '@/utils/storageClient'
-import { maybeShowGardenDecayNotification } from '@/utils/notifications'
 import { scheduleDailyReminder } from '@/utils/reminders'
 
 const root = createRoot(document.getElementById("root")!);
@@ -10,10 +9,9 @@ root.render(<App />);
 
 // Decay check on open: notify based on previous stage once per day, then mark opened
 try {
-  const p = loadProgress();
-  maybeShowGardenDecayNotification(p.decayStage ?? 0);
-  p.lastOpenedAt = Date.now();
-  saveProgress(p);
+    const p = loadProgress();
+    p.lastOpenedAt = Date.now();
+    saveProgress(p);
 } catch {}
 
 // Register service worker for PWA
