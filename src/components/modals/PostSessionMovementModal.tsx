@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Camera, Grid, tileToWorld, worldToTile, getVisibleTileRect, tileCenterToWorld } from '@/utils/grid';
+import { Camera, Grid, tileToWorld, getVisibleTileRect, tileCenterToWorld } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
-import { Fog, isRevealed, revealRadius } from '@/features/fog/useFog';
+import { Fog, isRevealed } from '@/features/fog/useFog';
 import { monkGif } from '@/assets/monk';
 
 interface PostSessionMovementModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onMoveToTile: (tx: number, ty: number) => void;
+  onMoveToTile: (tx: number, ty: number, steps: number) => void;
   currentPosition: { tx: number; ty: number };
   availableSteps: number;
   fog: Fog;
@@ -84,6 +84,24 @@ export default function PostSessionMovementModal({
       setHighlightedTiles(reachableTiles);
     }
   }, [isOpen, currentPosition, availableSteps, camera.zoom, grid]);
+
+  const computePath = (
+    start: { tx: number; ty: number },
+    end: { tx: number; ty: number }
+  ) => {
+    const path = [{ ...start }];
+    let tx = start.tx;
+    let ty = start.ty;
+    while (tx !== end.tx) {
+      tx += Math.sign(end.tx - tx);
+      path.push({ tx, ty });
+    }
+    while (ty !== end.ty) {
+      ty += Math.sign(end.ty - ty);
+      path.push({ tx, ty });
+    }
+    return path;
+  };
 
   // Draw fog and highlights
   useEffect(() => {
@@ -165,14 +183,13 @@ export default function PostSessionMovementModal({
     const isHighlighted = highlightedTiles.some(t => t.tx === tilePos.tx && t.ty === tilePos.ty);
     if (isHighlighted) {
       setSelectedTile(tilePos);
-      // Calculate simple path (for now, just show direct path)
-      setMovePath([currentPosition, tilePos]);
+      setMovePath(computePath(currentPosition, tilePos));
     }
   };
 
   const handleConfirm = () => {
     if (selectedTile) {
-      onMoveToTile(selectedTile.tx, selectedTile.ty);
+      onMoveToTile(selectedTile.tx, selectedTile.ty, movePath.length - 1);
       setSelectedTile(null);
       setMovePath([]);
     }
