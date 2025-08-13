@@ -70,7 +70,6 @@ export default function WorldMap() {
   };
 
   const onWheel = (e: React.WheelEvent) => {
-    if (!e.ctrlKey) return;
     e.preventDefault();
     const rect = containerRef.current!.getBoundingClientRect();
     const px = e.clientX - rect.left;
@@ -154,7 +153,7 @@ export default function WorldMap() {
         top: monkPos.y,
         transform: `translate(-50%, -50%) scaleX(${flip})`
       }} />
-      <canvas ref={fogRef} className="absolute inset-0 pointer-events-none" />
+      <canvas ref={fogRef} className="absolute inset-0 pointer-events-none" style={{ filter: 'blur(2px)' }} />
       <StepPanel />
       <BottomNav />
       

@@ -125,9 +125,8 @@ export default function PostSessionMovementModal({
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
         if (!isRevealed(tx, ty, fog)) continue;
         const pos = tileToWorld(tx, ty, grid, camera);
-        ctx.beginPath();
-        ctx.arc(pos.x + TILE_PX * camera.zoom / 2, pos.y + TILE_PX * camera.zoom / 2, TILE_PX * camera.zoom / 2, 0, Math.PI * 2);
-        ctx.fill();
+        const tileSize = TILE_PX * camera.zoom;
+        ctx.fillRect(pos.x, pos.y, tileSize, tileSize);
       }
     }
 
@@ -238,7 +237,7 @@ export default function PostSessionMovementModal({
               }}
             />
             
-            <canvas ref={fogRef} className="absolute inset-0 pointer-events-none" />
+            <canvas ref={fogRef} className="absolute inset-0 pointer-events-none" style={{ filter: 'blur(2px)' }} />
           </div>
           
           <div className="p-4 border-t flex justify-between">

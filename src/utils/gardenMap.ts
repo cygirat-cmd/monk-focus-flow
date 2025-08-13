@@ -1,6 +1,6 @@
 export const GARDEN_COLS = 12;
 export const GARDEN_ROWS = 8;
-export const TILE_PX = 64; // visual reference
+export const TILE_PX = 32; // visual reference
 
 // Locked temple area: specific blocked tiles
 export const isTileLocked = (x: number, y: number): boolean => {
