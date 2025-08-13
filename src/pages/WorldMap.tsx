@@ -62,7 +62,31 @@ export default function WorldMap() {
     if (drag.current.id === e.pointerId) {
       const dx = e.clientX - drag.current.x;
       const dy = e.clientY - drag.current.y;
-      setCamera(c => ({ ...c, x: drag.current.cx + dx, y: drag.current.cy + dy }));
+      setCamera(c => {
+        const newX = drag.current.cx + dx;
+        const newY = drag.current.cy + dy;
+        
+        // Get container dimensions
+        const container = containerRef.current;
+        if (!container) return { ...c, x: newX, y: newY };
+        
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        const mapWidth = grid.cols * TILE_PX * c.zoom;
+        const mapHeight = grid.rows * TILE_PX * c.zoom;
+        
+        // Calculate bounds - prevent camera from going outside map
+        const minX = Math.min(0, containerWidth - mapWidth);
+        const maxX = 0;
+        const minY = Math.min(0, containerHeight - mapHeight);
+        const maxY = 0;
+        
+        return {
+          ...c,
+          x: Math.max(minX, Math.min(maxX, newX)),
+          y: Math.max(minY, Math.min(maxY, newY))
+        };
+      });
     }
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -70,17 +94,38 @@ export default function WorldMap() {
   };
 
   const onWheel = (e: React.WheelEvent) => {
-    if (!e.ctrlKey) return;
     e.preventDefault();
     const rect = containerRef.current!.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
     const scale = Math.exp(-e.deltaY * 0.001);
     setCamera(c => {
-      const zoom = Math.min(2.5, Math.max(0.6, c.zoom * scale));
+      const zoom = Math.min(1.5, Math.max(0.5, c.zoom * scale));
       const wx = (px - c.x) / c.zoom;
       const wy = (py - c.y) / c.zoom;
-      return { x: px - wx * zoom, y: py - wy * zoom, zoom };
+      
+      const newX = px - wx * zoom;
+      const newY = py - wy * zoom;
+      
+      // Apply bounds after zoom
+      const container = containerRef.current;
+      if (!container) return { x: newX, y: newY, zoom };
+      
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      const mapWidth = grid.cols * TILE_PX * zoom;
+      const mapHeight = grid.rows * TILE_PX * zoom;
+      
+      const minX = Math.min(0, containerWidth - mapWidth);
+      const maxX = 0;
+      const minY = Math.min(0, containerHeight - mapHeight);
+      const maxY = 0;
+      
+      return {
+        x: Math.max(minX, Math.min(maxX, newX)),
+        y: Math.max(minY, Math.min(maxY, newY)),
+        zoom
+      };
     });
   };
 
@@ -95,21 +140,18 @@ export default function WorldMap() {
     canvas.width = clientWidth;
     canvas.height = clientHeight;
     
-    // Fill with dark fog
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    ctx.fillRect(0, 0, clientWidth, clientHeight);
-    
-    // Clear revealed areas
-    ctx.globalCompositeOperation = 'destination-out';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
     
+    // Draw blurred tiles for unrevealed areas
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
-        if (!isRevealed(tx, ty, fog)) continue;
+        if (isRevealed(tx, ty, fog)) continue;
         
         const pos = tileToWorld(tx, ty, grid, camera);
         const tileSize = TILE_PX * camera.zoom;
         
+        ctx.filter = 'blur(8px)';
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.fillRect(
           pos.x, 
           pos.y, 
@@ -118,7 +160,7 @@ export default function WorldMap() {
         );
       }
     }
-    ctx.globalCompositeOperation = 'source-over';
+    ctx.filter = 'none';
   }, [camera, fog, progress, grid]);
 
   const handleMoveToTile = (tx: number, ty: number, steps: number) => {
