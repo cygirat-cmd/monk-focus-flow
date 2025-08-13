@@ -1,4 +1,7 @@
-import { GardenStep, Relic, Season } from './storage';
+import { GardenStep, Relic } from './storageClient';
+
+// Season type definition
+type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
 // Base garden items
 export const GARDEN_POOL: GardenStep[] = [

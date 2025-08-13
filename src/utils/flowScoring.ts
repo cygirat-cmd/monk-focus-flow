@@ -1,4 +1,9 @@
-import { FlowSession } from './storage';
+// FlowSession type definition
+type FlowSession = {
+  seconds: number;
+  flowScore: number;
+  timestamp: string;
+};
 
 export const calculateFlowScore = (seconds: number): number => {
   // Flow score based on session length with exponential curve
