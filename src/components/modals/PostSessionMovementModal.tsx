@@ -121,13 +121,12 @@ export default function PostSessionMovementModal({
     ctx.globalCompositeOperation = 'destination-out';
 
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
+    const tileSize = TILE_PX * camera.zoom;
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
         if (!isRevealed(tx, ty, fog)) continue;
         const pos = tileToWorld(tx, ty, grid, camera);
-        ctx.beginPath();
-        ctx.arc(pos.x + TILE_PX * camera.zoom / 2, pos.y + TILE_PX * camera.zoom / 2, TILE_PX * camera.zoom / 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillRect(pos.x, pos.y, tileSize, tileSize);
       }
     }
 
