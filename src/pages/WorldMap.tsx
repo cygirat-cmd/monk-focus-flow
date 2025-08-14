@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
 import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
@@ -54,12 +54,14 @@ export default function WorldMap() {
   }, [progress.pendingSteps, showMovementModal]);
 
   const drag = useRef<{x:number;y:number;cx:number;cy:number;id:number|null}>({x:0,y:0,cx:0,cy:0,id:null});
-  const onPointerDown = (e: React.PointerEvent) => {
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
     drag.current = { x: e.clientX, y: e.clientY, cx: camera.x, cy: camera.y, id: e.pointerId };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (drag.current.id === e.pointerId) {
+    if (e.target instanceof HTMLElement) {
+      e.target.setPointerCapture(e.pointerId);
+    }
+  }, [camera.x, camera.y]);
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (drag.current.id === e.pointerId && containerRef.current) {
       const dx = e.clientX - drag.current.x;
       const dy = e.clientY - drag.current.y;
       setCamera(c => {
@@ -77,19 +79,25 @@ export default function WorldMap() {
         return { ...c, x: boundedX, y: boundedY };
       });
     }
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (drag.current.id === e.pointerId) drag.current.id = null;
-  };
+  }, [grid]);
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
+    if (drag.current.id === e.pointerId) {
+      drag.current.id = null;
+    }
+  }, []);
 
-  const onWheel = (e: React.WheelEvent) => {
+  const onWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const rect = containerRef.current!.getBoundingClientRect();
+    if (!containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
     const scale = Math.exp(-e.deltaY * 0.001);
+    
     setCamera(c => {
-      const zoom = Math.min(2.5, Math.max(0.3, c.zoom * scale));
+      // Restrict zoom to only allow zooming in (min zoom 1.0 to prevent seeing beyond map)
+      const zoom = Math.min(2.5, Math.max(1.0, c.zoom * scale));
       const wx = (px - c.x) / c.zoom;
       const wy = (py - c.y) / c.zoom;
       
@@ -100,14 +108,16 @@ export default function WorldMap() {
       // Apply bounds to prevent camera from going outside map
       const mapWidth = grid.cols * TILE_PX * zoom;
       const mapHeight = grid.rows * TILE_PX * zoom;
-      const { clientWidth, clientHeight } = containerRef.current!;
+      
+      if (!containerRef.current) return c;
+      const { clientWidth, clientHeight } = containerRef.current;
       
       const boundedX = Math.min(0, Math.max(clientWidth - mapWidth, newX));
       const boundedY = Math.min(0, Math.max(clientHeight - mapHeight, newY));
       
       return { x: boundedX, y: boundedY, zoom };
     });
-  };
+  }, [grid]);
 
   // Draw fog each frame when camera changes
   useEffect(() => {
@@ -120,17 +130,17 @@ export default function WorldMap() {
     canvas.width = clientWidth;
     canvas.height = clientHeight;
     
-    // Fill with dark fog with blur effect
-    ctx.fillStyle = 'rgba(0,0,0,0.9)';
+    // Fill with dark fog using CSS variables for theming
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     
-    // Apply blur to the fog
-    ctx.filter = 'blur(2px)';
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    // Apply subtle blur to the fog
+    ctx.filter = 'blur(1px)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     ctx.filter = 'none';
     
-    // Clear revealed areas as rectangles (optimized rendering)
+    // Clear revealed areas - but DO NOT darken revealed tiles
     ctx.globalCompositeOperation = 'destination-out';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
     
@@ -143,7 +153,7 @@ export default function WorldMap() {
         
         const pos = tileToWorld(tx, ty, grid, camera);
         
-        // Use lower resolution for very small tiles to improve performance
+        // Completely clear revealed areas (no darkening)
         if (tileSize < 8) {
           ctx.fillRect(
             Math.floor(pos.x), 
@@ -164,29 +174,41 @@ export default function WorldMap() {
     ctx.globalCompositeOperation = 'source-over';
   }, [camera, fog, progress, grid]);
 
-  const handleMoveToTile = (tx: number, ty: number, steps: number) => {
+  const handleMoveToTile = useCallback((tx: number, ty: number, steps: number) => {
     const updatedProgress = { ...progress };
     moveMonk(updatedProgress, fog, tx, ty, steps);
     saveProgress(updatedProgress);
     setProgress(updatedProgress);
     setShowMovementModal(false);
-  };
+    
+    // Dispatch custom event for other components
+    window.dispatchEvent(new Event('progressUpdated'));
+  }, [progress, moveMonk, fog]);
 
   const monkPos = tileCenterToWorld(journey.tx, journey.ty, grid, camera);
   const flip = journey.facing === 'left' ? -1 : 1;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black" ref={containerRef}
+    <div className="relative w-screen h-screen overflow-hidden bg-background" ref={containerRef}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       onWheel={onWheel} style={{ touchAction: 'pan-x pan-y' }}>
+      {/* Grid background covering entire map */}
       <div
         className="absolute top-0 left-0"
         style={{
           width: grid.cols * TILE_PX,
           height: grid.rows * TILE_PX,
-          backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
-          backgroundSize: 'cover',
-          backgroundRepeat: 'no-repeat',
+          background: [
+            `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
+            `linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px)`,
+            `linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)`
+          ].join(','),
+          backgroundSize: [
+            'cover',
+            `${TILE_PX}px ${TILE_PX}px`,
+            `${TILE_PX}px ${TILE_PX}px`
+          ].join(','),
+          backgroundRepeat: 'no-repeat, repeat, repeat',
           transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
           transformOrigin: '0 0'
         }}

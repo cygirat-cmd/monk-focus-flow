@@ -22,12 +22,36 @@ const reveal = (x: number, y: number, f: Fog) => {
   }
 };
 
+// Cache for expensive radius calculations
+const radiusCache = new Map<string, Array<{x: number, y: number}>();
+
+function getRadiusPositions(r: number): Array<{x: number, y: number}> {
+  const key = `radius_${r}`;
+  if (radiusCache.has(key)) {
+    return radiusCache.get(key)!;
+  }
+  
+  const positions: Array<{x: number, y: number}> = [];
+  for (let y = -r; y <= r; y++) {
+    for (let x = -r; x <= r; x++) {
+      if (x * x + y * y <= r * r) {
+        positions.push({ x, y });
+      }
+    }
+  }
+  
+  radiusCache.set(key, positions);
+  return positions;
+}
+
 export function revealRadius(cx: number, cy: number, r: number, f: Fog) {
-  for (let y = cy - r; y <= cy + r; y++) {
-    for (let x = cx - r; x <= cx + r; x++) {
-      if (x < 0 || y < 0 || x >= f.cols || y >= f.rows) continue;
-      const dx = x - cx, dy = y - cy; 
-      if (dx * dx + dy * dy <= r * r) reveal(x, y, f);
+  const positions = getRadiusPositions(r);
+  
+  for (const {x, y} of positions) {
+    const tx = cx + x;
+    const ty = cy + y;
+    if (tx >= 0 && ty >= 0 && tx < f.cols && ty < f.rows) {
+      reveal(tx, ty, f);
     }
   }
 }
@@ -35,6 +59,6 @@ export function revealRadius(cx: number, cy: number, r: number, f: Fog) {
 export function initializeFogAroundMonk(monkTx: number, monkTy: number, f: Fog) {
   // Start with completely black fog
   f.revealed.fill(0);
-  // Only reveal around monk's initial position
-  revealRadius(monkTx, monkTy, 3, f);
+  // Only reveal around monk's initial position with larger radius for better UX
+  revealRadius(monkTx, monkTy, 4, f);
 }
