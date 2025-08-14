@@ -220,15 +220,16 @@ export default function PostSessionMovementModal({
     ctx.clearRect(0, 0, clientWidth, clientHeight);
 
     // Draw fog with blur
-    ctx.fillStyle = 'rgba(0,0,0,0.9)';
+    ctx.fillStyle = 'rgba(0,0,0,0.95)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     
     // Apply blur to the fog
-    ctx.filter = 'blur(2px)';
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.filter = 'blur(3px)';
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     ctx.filter = 'none';
     
+    // Completely clear revealed areas (no darkening)
     ctx.globalCompositeOperation = 'destination-out';
 
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
@@ -358,8 +359,11 @@ export default function PostSessionMovementModal({
               style={{
                 width: grid.cols * TILE_PX,
                 height: grid.rows * TILE_PX,
-                backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
-                backgroundSize: 'cover',
+                backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png'), 
+                                 repeating-linear-gradient(0deg, transparent, transparent ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX}px),
+                                 repeating-linear-gradient(90deg, transparent, transparent ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX}px)`,
+                backgroundSize: 'cover, 64px 64px, 64px 64px',
+                backgroundRepeat: 'no-repeat, repeat, repeat',
                 transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
                 transformOrigin: '0 0'
               }}

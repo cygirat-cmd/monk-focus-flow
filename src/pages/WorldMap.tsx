@@ -124,16 +124,16 @@ export default function WorldMap() {
     canvas.height = clientHeight;
     
     // Fill with dark fog with blur effect
-    ctx.fillStyle = 'rgba(0,0,0,0.9)';
+    ctx.fillStyle = 'rgba(0,0,0,0.95)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     
     // Apply blur to the fog
-    ctx.filter = 'blur(2px)';
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.filter = 'blur(3px)';
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     ctx.filter = 'none';
     
-    // Clear revealed areas as rectangles (optimized rendering)
+    // Completely clear revealed areas (no darkening)
     ctx.globalCompositeOperation = 'destination-out';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
     
@@ -193,14 +193,17 @@ export default function WorldMap() {
     <div className="relative w-screen h-screen overflow-hidden bg-black" ref={containerRef}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       onWheel={onWheel} style={{ touchAction: 'pan-x pan-y' }}>
+      {/* Background with grid overlay */}
       <div
         className="absolute top-0 left-0"
         style={{
           width: grid.cols * TILE_PX,
           height: grid.rows * TILE_PX,
-          backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
-          backgroundSize: 'cover',
-          backgroundRepeat: 'no-repeat',
+          backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png'), 
+                           repeating-linear-gradient(0deg, transparent, transparent ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX}px),
+                           repeating-linear-gradient(90deg, transparent, transparent ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX}px)`,
+          backgroundSize: 'cover, 64px 64px, 64px 64px',
+          backgroundRepeat: 'no-repeat, repeat, repeat',
           transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
           transformOrigin: '0 0'
         }}
