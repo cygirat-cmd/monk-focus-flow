@@ -114,84 +114,92 @@ export default function WorldMap() {
 
   // Memoized fog rendering with enhanced culling and fixed darkening
   const renderFog = useCallback(() => {
-    const canvas = fogRef.current;
-    const ctx = canvas?.getContext('2d');
-    const el = containerRef.current;
-    if (!canvas || !ctx || !el) return;
-    
-    const { clientWidth, clientHeight } = el;
-    canvas.width = clientWidth;
-    canvas.height = clientHeight;
-    
-    // Get enhanced culling rect with LOD
-    const cullInfo = getVisibleTileRectWithLOD(clientWidth, clientHeight, grid, camera);
-    const tileSize = TILE_PX * camera.zoom;
-    
-    // Performance optimization: skip rendering tiles that are too small to see
-    if (tileSize < 1) {
-      return;
-    }
-    
-    // Only render fog on unrevealed areas - don't darken revealed areas
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-    
-    // Use different rendering strategies based on LOD
-    if (cullInfo.lod === 'low') {
-      // For very zoomed out view, render fog in larger blocks for performance
-      const step = cullInfo.step || 2;
-      for (let ty = cullInfo.y0; ty <= cullInfo.y1; ty += step) {
-        for (let tx = cullInfo.x0; tx <= cullInfo.x1; tx += step) {
-          // Check if any tile in this block is unrevealed
-          let hasUnrevealedTile = false;
-          for (let sy = 0; sy < step && ty + sy <= cullInfo.y1; sy++) {
-            for (let sx = 0; sx < step && tx + sx <= cullInfo.x1; sx++) {
-              if (!isRevealed(tx + sx, ty + sy, fog)) {
-                hasUnrevealedTile = true;
-                break;
-              }
-            }
-            if (hasUnrevealedTile) break;
-          }
-          
-          if (hasUnrevealedTile) {
-            const pos = tileToWorld(tx, ty, grid, camera);
-            ctx.fillRect(
-              Math.floor(pos.x), 
-              Math.floor(pos.y), 
-              Math.ceil(tileSize * step), 
-              Math.ceil(tileSize * step)
-            );
-          }
-        }
+    try {
+      const canvas = fogRef.current;
+      const ctx = canvas?.getContext('2d');
+      const el = containerRef.current;
+      if (!canvas || !ctx || !el) return;
+      
+      const { clientWidth, clientHeight } = el;
+      
+      // Only resize canvas if dimensions changed to prevent thrashing
+      if (canvas.width !== clientWidth || canvas.height !== clientHeight) {
+        canvas.width = clientWidth;
+        canvas.height = clientHeight;
       }
-    } else {
-      // For normal/high LOD, render individual tiles
-      for (let ty = cullInfo.y0; ty <= cullInfo.y1; ty++) {
-        for (let tx = cullInfo.x0; tx <= cullInfo.x1; tx++) {
-          // Only render fog on unrevealed tiles
-          if (!isRevealed(tx, ty, fog)) {
-            const pos = tileToWorld(tx, ty, grid, camera);
+      
+      // Get enhanced culling rect with LOD
+      const cullInfo = getVisibleTileRectWithLOD(clientWidth, clientHeight, grid, camera);
+      const tileSize = TILE_PX * camera.zoom;
+      
+      // Performance optimization: skip rendering tiles that are too small to see
+      if (tileSize < 1) {
+        return;
+      }
+      
+      // Only render fog on unrevealed areas - don't darken revealed areas
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+      
+      // Use different rendering strategies based on LOD
+      if (cullInfo.lod === 'low') {
+        // For very zoomed out view, render fog in larger blocks for performance
+        const step = cullInfo.step || 2;
+        for (let ty = cullInfo.y0; ty <= cullInfo.y1; ty += step) {
+          for (let tx = cullInfo.x0; tx <= cullInfo.x1; tx += step) {
+            // Check if any tile in this block is unrevealed
+            let hasUnrevealedTile = false;
+            for (let sy = 0; sy < step && ty + sy <= cullInfo.y1; sy++) {
+              for (let sx = 0; sx < step && tx + sx <= cullInfo.x1; sx++) {
+                if (!isRevealed(tx + sx, ty + sy, fog)) {
+                  hasUnrevealedTile = true;
+                  break;
+                }
+              }
+              if (hasUnrevealedTile) break;
+            }
             
-            if (tileSize < 4) {
-              // Batch small tiles for performance
+            if (hasUnrevealedTile) {
+              const pos = tileToWorld(tx, ty, grid, camera);
               ctx.fillRect(
                 Math.floor(pos.x), 
                 Math.floor(pos.y), 
-                Math.ceil(tileSize), 
-                Math.ceil(tileSize)
-              );
-            } else {
-              // Normal tile rendering
-              ctx.fillRect(
-                pos.x, 
-                pos.y, 
-                tileSize, 
-                tileSize
+                Math.ceil(tileSize * step), 
+                Math.ceil(tileSize * step)
               );
             }
           }
         }
+      } else {
+        // For normal/high LOD, render individual tiles
+        for (let ty = cullInfo.y0; ty <= cullInfo.y1; ty++) {
+          for (let tx = cullInfo.x0; tx <= cullInfo.x1; tx++) {
+            // Only render fog on unrevealed tiles
+            if (!isRevealed(tx, ty, fog)) {
+              const pos = tileToWorld(tx, ty, grid, camera);
+              
+              if (tileSize < 4) {
+                // Batch small tiles for performance
+                ctx.fillRect(
+                  Math.floor(pos.x), 
+                  Math.floor(pos.y), 
+                  Math.ceil(tileSize), 
+                  Math.ceil(tileSize)
+                );
+              } else {
+                // Normal tile rendering
+                ctx.fillRect(
+                  pos.x, 
+                  pos.y, 
+                  tileSize, 
+                  tileSize
+                );
+              }
+            }
+          }
+        }
       }
+    } catch (error) {
+      console.error('Canvas rendering failed:', error);
     }
   }, [camera, fog, grid]);
 
