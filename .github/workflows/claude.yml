@@ -29,9 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - uses: anthropics/claude-code-action@beta
-        with:
-        target_branch: 'main'  # Forces all changes to main
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@beta
@@ -63,4 +61,3 @@ jobs:
           # Optional: Custom environment variables for Claude
           # claude_env: |
           #   NODE_ENV: test
-
