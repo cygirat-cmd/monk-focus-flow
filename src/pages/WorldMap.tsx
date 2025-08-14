@@ -62,7 +62,20 @@ export default function WorldMap() {
     if (drag.current.id === e.pointerId) {
       const dx = e.clientX - drag.current.x;
       const dy = e.clientY - drag.current.y;
-      setCamera(c => ({ ...c, x: drag.current.cx + dx, y: drag.current.cy + dy }));
+      setCamera(c => {
+        const newX = drag.current.cx + dx;
+        const newY = drag.current.cy + dy;
+        
+        // Apply bounds to prevent camera from going outside map
+        const mapWidth = grid.cols * TILE_PX * c.zoom;
+        const mapHeight = grid.rows * TILE_PX * c.zoom;
+        const { clientWidth, clientHeight } = containerRef.current!;
+        
+        const boundedX = Math.min(0, Math.max(clientWidth - mapWidth, newX));
+        const boundedY = Math.min(0, Math.max(clientHeight - mapHeight, newY));
+        
+        return { ...c, x: boundedX, y: boundedY };
+      });
     }
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -70,17 +83,29 @@ export default function WorldMap() {
   };
 
   const onWheel = (e: React.WheelEvent) => {
-    if (!e.ctrlKey) return;
     e.preventDefault();
     const rect = containerRef.current!.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
     const scale = Math.exp(-e.deltaY * 0.001);
     setCamera(c => {
-      const zoom = Math.min(2.5, Math.max(0.6, c.zoom * scale));
+      const zoom = Math.min(2.5, Math.max(0.3, c.zoom * scale));
       const wx = (px - c.x) / c.zoom;
       const wy = (py - c.y) / c.zoom;
-      return { x: px - wx * zoom, y: py - wy * zoom, zoom };
+      
+      // Calculate new camera position
+      const newX = px - wx * zoom;
+      const newY = py - wy * zoom;
+      
+      // Apply bounds to prevent camera from going outside map
+      const mapWidth = grid.cols * TILE_PX * zoom;
+      const mapHeight = grid.rows * TILE_PX * zoom;
+      const { clientWidth, clientHeight } = containerRef.current!;
+      
+      const boundedX = Math.min(0, Math.max(clientWidth - mapWidth, newX));
+      const boundedY = Math.min(0, Math.max(clientHeight - mapHeight, newY));
+      
+      return { x: boundedX, y: boundedY, zoom };
     });
   };
 
@@ -95,27 +120,45 @@ export default function WorldMap() {
     canvas.width = clientWidth;
     canvas.height = clientHeight;
     
-    // Fill with dark fog
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    // Fill with dark fog with blur effect
+    ctx.fillStyle = 'rgba(0,0,0,0.9)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     
-    // Clear revealed areas
+    // Apply blur to the fog
+    ctx.filter = 'blur(2px)';
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, 0, clientWidth, clientHeight);
+    ctx.filter = 'none';
+    
+    // Clear revealed areas as rectangles (optimized rendering)
     ctx.globalCompositeOperation = 'destination-out';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
+    
+    // Optimize for small tile sizes - batch adjacent revealed tiles
+    const tileSize = TILE_PX * camera.zoom;
     
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
         if (!isRevealed(tx, ty, fog)) continue;
         
         const pos = tileToWorld(tx, ty, grid, camera);
-        const tileSize = TILE_PX * camera.zoom;
         
-        ctx.fillRect(
-          pos.x, 
-          pos.y, 
-          tileSize, 
-          tileSize
-        );
+        // Use lower resolution for very small tiles to improve performance
+        if (tileSize < 8) {
+          ctx.fillRect(
+            Math.floor(pos.x), 
+            Math.floor(pos.y), 
+            Math.ceil(tileSize), 
+            Math.ceil(tileSize)
+          );
+        } else {
+          ctx.fillRect(
+            pos.x, 
+            pos.y, 
+            tileSize, 
+            tileSize
+          );
+        }
       }
     }
     ctx.globalCompositeOperation = 'source-over';
@@ -133,7 +176,7 @@ export default function WorldMap() {
   const flip = journey.facing === 'left' ? -1 : 1;
 
   return (
-    <div className="relative w-screen h-screen overflow-auto" ref={containerRef}
+    <div className="relative w-screen h-screen overflow-hidden bg-black" ref={containerRef}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       onWheel={onWheel} style={{ touchAction: 'pan-x pan-y' }}>
       <div
@@ -143,6 +186,7 @@ export default function WorldMap() {
           height: grid.rows * TILE_PX,
           backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
           backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
           transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
           transformOrigin: '0 0'
         }}
@@ -155,7 +199,7 @@ export default function WorldMap() {
         transform: `translate(-50%, -50%) scaleX(${flip})`
       }} />
       <canvas ref={fogRef} className="absolute inset-0 pointer-events-none" />
-      <StepPanel />
+      <StepPanel onOpenMovementModal={() => setShowMovementModal(true)} />
       <BottomNav />
       
       <PostSessionMovementModal
