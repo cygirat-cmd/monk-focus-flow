@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
 import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
-import { Camera, Grid, tileToWorld, getVisibleTileRect, tileCenterToWorld } from '@/utils/grid';
+import { Camera, Grid, tileToWorld, getVisibleTileRect, getVisibleTileRectWithLOD, tileCenterToWorld } from '@/utils/grid';
 import { GARDEN_COLS, GARDEN_ROWS, TILE_PX } from '@/utils/gardenMap';
 import { makeFog, fromSavedFog, isRevealed, initializeFogAroundMonk } from '@/features/fog/useFog';
 import StepPanel from '@/components/world/StepPanel';
@@ -112,7 +112,7 @@ export default function WorldMap() {
     });
   };
 
-  // Memoized fog rendering for performance optimization
+  // Memoized fog rendering with enhanced culling and fixed darkening
   const renderFog = useCallback(() => {
     const canvas = fogRef.current;
     const ctx = canvas?.getContext('2d');
@@ -123,54 +123,76 @@ export default function WorldMap() {
     canvas.width = clientWidth;
     canvas.height = clientHeight;
     
-    // Fill with dark fog with blur effect
-    ctx.fillStyle = 'rgba(0,0,0,0.95)';
-    ctx.fillRect(0, 0, clientWidth, clientHeight);
-    
-    // Apply blur to the fog
-    ctx.filter = 'blur(3px)';
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(0, 0, clientWidth, clientHeight);
-    ctx.filter = 'none';
-    
-    // Completely clear revealed areas (no darkening)
-    ctx.globalCompositeOperation = 'destination-out';
-    const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
-    
-    // Optimize for small tile sizes - batch adjacent revealed tiles
+    // Get enhanced culling rect with LOD
+    const cullInfo = getVisibleTileRectWithLOD(clientWidth, clientHeight, grid, camera);
     const tileSize = TILE_PX * camera.zoom;
     
     // Performance optimization: skip rendering tiles that are too small to see
-    if (tileSize < 2) {
-      ctx.globalCompositeOperation = 'source-over';
+    if (tileSize < 1) {
       return;
     }
     
-    for (let ty = rect.y0; ty <= rect.y1; ty++) {
-      for (let tx = rect.x0; tx <= rect.x1; tx++) {
-        if (!isRevealed(tx, ty, fog)) continue;
-        
-        const pos = tileToWorld(tx, ty, grid, camera);
-        
-        // Use lower resolution for very small tiles to improve performance
-        if (tileSize < 8) {
-          ctx.fillRect(
-            Math.floor(pos.x), 
-            Math.floor(pos.y), 
-            Math.ceil(tileSize), 
-            Math.ceil(tileSize)
-          );
-        } else {
-          ctx.fillRect(
-            pos.x, 
-            pos.y, 
-            tileSize, 
-            tileSize
-          );
+    // Only render fog on unrevealed areas - don't darken revealed areas
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+    
+    // Use different rendering strategies based on LOD
+    if (cullInfo.lod === 'low') {
+      // For very zoomed out view, render fog in larger blocks for performance
+      const step = cullInfo.step || 2;
+      for (let ty = cullInfo.y0; ty <= cullInfo.y1; ty += step) {
+        for (let tx = cullInfo.x0; tx <= cullInfo.x1; tx += step) {
+          // Check if any tile in this block is unrevealed
+          let hasUnrevealedTile = false;
+          for (let sy = 0; sy < step && ty + sy <= cullInfo.y1; sy++) {
+            for (let sx = 0; sx < step && tx + sx <= cullInfo.x1; sx++) {
+              if (!isRevealed(tx + sx, ty + sy, fog)) {
+                hasUnrevealedTile = true;
+                break;
+              }
+            }
+            if (hasUnrevealedTile) break;
+          }
+          
+          if (hasUnrevealedTile) {
+            const pos = tileToWorld(tx, ty, grid, camera);
+            ctx.fillRect(
+              Math.floor(pos.x), 
+              Math.floor(pos.y), 
+              Math.ceil(tileSize * step), 
+              Math.ceil(tileSize * step)
+            );
+          }
+        }
+      }
+    } else {
+      // For normal/high LOD, render individual tiles
+      for (let ty = cullInfo.y0; ty <= cullInfo.y1; ty++) {
+        for (let tx = cullInfo.x0; tx <= cullInfo.x1; tx++) {
+          // Only render fog on unrevealed tiles
+          if (!isRevealed(tx, ty, fog)) {
+            const pos = tileToWorld(tx, ty, grid, camera);
+            
+            if (tileSize < 4) {
+              // Batch small tiles for performance
+              ctx.fillRect(
+                Math.floor(pos.x), 
+                Math.floor(pos.y), 
+                Math.ceil(tileSize), 
+                Math.ceil(tileSize)
+              );
+            } else {
+              // Normal tile rendering
+              ctx.fillRect(
+                pos.x, 
+                pos.y, 
+                tileSize, 
+                tileSize
+              );
+            }
+          }
         }
       }
     }
-    ctx.globalCompositeOperation = 'source-over';
   }, [camera, fog, grid]);
 
   // Draw fog each frame when camera changes
