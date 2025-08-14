@@ -133,9 +133,9 @@ export default function WorldMap() {
   const flip = journey.facing === 'left' ? -1 : 1;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden" ref={containerRef}
+    <div className="relative w-screen h-screen overflow-auto" ref={containerRef}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
-      onWheel={onWheel} style={{ touchAction: 'none' }}>
+      onWheel={onWheel} style={{ touchAction: 'pan-x pan-y' }}>
       <div
         className="absolute top-0 left-0"
         style={{
