@@ -28,8 +28,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
-
+          fetch-depth: 
+      - uses: anthropics/claude-code-action@v1
+        with:
+        target_branch: 'main'  # Forces all changes to main
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@beta
