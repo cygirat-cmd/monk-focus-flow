@@ -21,10 +21,10 @@ export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
       setProgress(loadProgress());
     };
     
-    // Update every second to keep statistics fresh
-    const interval = setInterval(handleStorageChange, 1000);
+    // Reduce polling frequency to 5 seconds to improve performance
+    const interval = setInterval(handleStorageChange, 5000);
     
-    // Listen to storage events (for same-tab updates)
+    // Listen to storage events (for same-tab updates) - provides real-time updates when needed
     window.addEventListener('storage', handleStorageChange);
     
     return () => {
@@ -34,7 +34,15 @@ export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
   }, []);
 
   const executeStep = () => {
-    if ((progress.pendingSteps || 0) <= 0) return;
+    // Dev button: always allow movement regardless of pending steps
+    // If no pending steps, add a temporary step for dev purposes
+    if ((progress.pendingSteps || 0) <= 0) {
+      setProgress(prev => {
+        const updated = { ...prev, pendingSteps: 1 };
+        saveProgress(updated);
+        return updated;
+      });
+    }
     
     // Open movement modal to choose where to move
     onOpenMovementModal?.();
@@ -60,7 +68,7 @@ export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
   const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
 
   return (
-    <div className="absolute top-2 left-2 bg-black/50 text-white p-2 rounded space-y-1 text-xs">
+    <div className="absolute top-2 left-2 bg-background/90 text-foreground border border-border p-2 rounded-lg space-y-1 text-xs backdrop-blur-sm">
       <div>Steps today: {progress.stepsToday ?? 0}/9</div>
       <div>Sparks: {progress.sparks ?? 0}/3</div>
       <div>Avg mins today: {avg}</div>
@@ -68,9 +76,9 @@ export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
       
       <Button
         onClick={executeStep}
-        disabled={(progress.pendingSteps || 0) <= 0}
         size="sm"
-        className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs"
+        className="mt-2 w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+        title="Dev button: Click to move freely (always enabled)"
       >
         Execute Step ({progress.pendingSteps || 0})
       </Button>

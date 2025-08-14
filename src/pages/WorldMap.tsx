@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
 import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
@@ -59,7 +59,7 @@ export default function WorldMap() {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
-    if (drag.current.id === e.pointerId) {
+    if (drag.current.id === e.pointerId && containerRef.current) {
       const dx = e.clientX - drag.current.x;
       const dy = e.clientY - drag.current.y;
       setCamera(c => {
@@ -84,12 +84,15 @@ export default function WorldMap() {
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    const rect = containerRef.current!.getBoundingClientRect();
+    if (!containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
     const scale = Math.exp(-e.deltaY * 0.001);
     setCamera(c => {
-      const zoom = Math.min(2.5, Math.max(0.3, c.zoom * scale));
+      // Limit zoom range to prevent seeing outside map
+      const zoom = Math.min(2.0, Math.max(0.5, c.zoom * scale));
       const wx = (px - c.x) / c.zoom;
       const wy = (py - c.y) / c.zoom;
       
@@ -109,8 +112,8 @@ export default function WorldMap() {
     });
   };
 
-  // Draw fog each frame when camera changes
-  useEffect(() => {
+  // Memoized fog rendering for performance optimization
+  const renderFog = useCallback(() => {
     const canvas = fogRef.current;
     const ctx = canvas?.getContext('2d');
     const el = containerRef.current;
@@ -121,21 +124,27 @@ export default function WorldMap() {
     canvas.height = clientHeight;
     
     // Fill with dark fog with blur effect
-    ctx.fillStyle = 'rgba(0,0,0,0.9)';
+    ctx.fillStyle = 'rgba(0,0,0,0.95)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     
     // Apply blur to the fog
-    ctx.filter = 'blur(2px)';
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.filter = 'blur(3px)';
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
     ctx.filter = 'none';
     
-    // Clear revealed areas as rectangles (optimized rendering)
+    // Completely clear revealed areas (no darkening)
     ctx.globalCompositeOperation = 'destination-out';
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
     
     // Optimize for small tile sizes - batch adjacent revealed tiles
     const tileSize = TILE_PX * camera.zoom;
+    
+    // Performance optimization: skip rendering tiles that are too small to see
+    if (tileSize < 2) {
+      ctx.globalCompositeOperation = 'source-over';
+      return;
+    }
     
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
@@ -162,7 +171,12 @@ export default function WorldMap() {
       }
     }
     ctx.globalCompositeOperation = 'source-over';
-  }, [camera, fog, progress, grid]);
+  }, [camera, fog, grid]);
+
+  // Draw fog each frame when camera changes
+  useEffect(() => {
+    renderFog();
+  }, [renderFog]);
 
   const handleMoveToTile = (tx: number, ty: number, steps: number) => {
     const updatedProgress = { ...progress };
@@ -179,14 +193,17 @@ export default function WorldMap() {
     <div className="relative w-screen h-screen overflow-hidden bg-black" ref={containerRef}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       onWheel={onWheel} style={{ touchAction: 'pan-x pan-y' }}>
+      {/* Background with grid overlay */}
       <div
         className="absolute top-0 left-0"
         style={{
           width: grid.cols * TILE_PX,
           height: grid.rows * TILE_PX,
-          backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png')`,
-          backgroundSize: 'cover',
-          backgroundRepeat: 'no-repeat',
+          backgroundImage: `url('/lovable-uploads/c50dd7cf-237e-4338-9eeb-fce7866e2d36.png'), 
+                           repeating-linear-gradient(0deg, transparent, transparent ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX}px),
+                           repeating-linear-gradient(90deg, transparent, transparent ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX - 1}px, rgba(255,255,255,0.1) ${TILE_PX}px)`,
+          backgroundSize: 'cover, 64px 64px, 64px 64px',
+          backgroundRepeat: 'no-repeat, repeat, repeat',
           transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
           transformOrigin: '0 0'
         }}
