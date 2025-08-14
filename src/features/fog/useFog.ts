@@ -11,6 +11,29 @@ export const fromSavedFog = (data: { cols: number; rows: number; revealed: numbe
   return f;
 };
 
+// Cache for expensive radius calculations
+type RadiusPosition = { x: number; y: number };
+const radiusCache = new Map<string, RadiusPosition[]>();
+
+function getRadiusPositions(r: number): RadiusPosition[] {
+  const cacheKey = `r${r}`;
+  if (radiusCache.has(cacheKey)) {
+    return radiusCache.get(cacheKey)!;
+  }
+
+  const positions: RadiusPosition[] = [];
+  for (let y = -r; y <= r; y++) {
+    for (let x = -r; x <= r; x++) {
+      if (x * x + y * y <= r * r) {
+        positions.push({ x, y });
+      }
+    }
+  }
+  
+  radiusCache.set(cacheKey, positions);
+  return positions;
+}
+
 const idx = (x: number, y: number, f: Fog) => y * f.cols + x;
 
 export const isRevealed = (x: number, y: number, f: Fog) => 
@@ -23,11 +46,12 @@ const reveal = (x: number, y: number, f: Fog) => {
 };
 
 export function revealRadius(cx: number, cy: number, r: number, f: Fog) {
-  for (let y = cy - r; y <= cy + r; y++) {
-    for (let x = cx - r; x <= cx + r; x++) {
-      if (x < 0 || y < 0 || x >= f.cols || y >= f.rows) continue;
-      const dx = x - cx, dy = y - cy; 
-      if (dx * dx + dy * dy <= r * r) reveal(x, y, f);
+  const positions = getRadiusPositions(r);
+  for (const pos of positions) {
+    const x = cx + pos.x;
+    const y = cy + pos.y;
+    if (x >= 0 && y >= 0 && x < f.cols && y < f.rows) {
+      reveal(x, y, f);
     }
   }
 }
