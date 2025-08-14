@@ -114,14 +114,19 @@ export default function WorldMap() {
 
   // Memoized fog rendering with enhanced culling and fixed darkening
   const renderFog = useCallback(() => {
-    const canvas = fogRef.current;
-    const ctx = canvas?.getContext('2d');
-    const el = containerRef.current;
-    if (!canvas || !ctx || !el) return;
-    
-    const { clientWidth, clientHeight } = el;
-    canvas.width = clientWidth;
-    canvas.height = clientHeight;
+    try {
+      const canvas = fogRef.current;
+      const ctx = canvas?.getContext('2d');
+      const el = containerRef.current;
+      if (!canvas || !ctx || !el) return;
+      
+      const { clientWidth, clientHeight } = el;
+      
+      // Only resize canvas if dimensions changed to prevent thrashing
+      if (canvas.width !== clientWidth || canvas.height !== clientHeight) {
+        canvas.width = clientWidth;
+        canvas.height = clientHeight;
+      }
     
     // Get enhanced culling rect with LOD
     const cullInfo = getVisibleTileRectWithLOD(clientWidth, clientHeight, grid, camera);
@@ -192,6 +197,8 @@ export default function WorldMap() {
           }
         }
       }
+    } catch (error) {
+      console.error('Canvas rendering failed:', error);
     }
   }, [camera, fog, grid]);
 
