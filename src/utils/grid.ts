@@ -1,6 +1,13 @@
 export type Grid = { tileW: number; tileH: number; cols: number; rows: number };
 export type Camera = { x: number; y: number; zoom: number };
 
+// Constants for visibility and performance optimization
+const BUFFER_SIZE_DIVISOR = 64;
+const MIN_BUFFER_SIZE = 1;
+const VERY_LOW_ZOOM_THRESHOLD = 4;
+const LOW_ZOOM_THRESHOLD = 16;
+const LOD_STEP_DIVISOR = 8;
+
 export function worldToTile(px: number, py: number, grid: Grid, camera: Camera) {
   const x = (px - camera.x) / camera.zoom;
   const y = (py - camera.y) / camera.zoom;
@@ -27,7 +34,7 @@ export function getVisibleTileRect(viewportW: number, viewportH: number, grid: G
   const tileSize = grid.tileW * camera.zoom;
   
   // Add buffer to prevent pop-in at edges
-  const buffer = Math.max(1, Math.ceil(64 / tileSize));
+  const buffer = Math.max(MIN_BUFFER_SIZE, Math.ceil(BUFFER_SIZE_DIVISOR / tileSize));
   
   const left = Math.floor(-camera.x / tileSize) - buffer;
   const top = Math.floor(-camera.y / tileSize) - buffer;
@@ -48,15 +55,15 @@ export function getVisibleTileRectWithLOD(viewportW: number, viewportH: number, 
   const tileSize = grid.tileW * camera.zoom;
   
   // Different detail levels based on zoom
-  if (tileSize < 4) {
+  if (tileSize < VERY_LOW_ZOOM_THRESHOLD) {
     // Very far zoom - aggressive culling, larger tile groups
-    const step = Math.max(2, Math.floor(8 / tileSize));
+    const step = Math.max(2, Math.floor(LOD_STEP_DIVISOR / tileSize));
     return {
       ...baseRect,
       step, // Process every 'step' tiles for performance
       lod: 'low'
     };
-  } else if (tileSize < 16) {
+  } else if (tileSize < LOW_ZOOM_THRESHOLD) {
     // Medium zoom - moderate culling
     return {
       ...baseRect,

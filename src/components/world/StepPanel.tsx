@@ -21,15 +21,21 @@ export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
       setProgress(loadProgress());
     };
     
-    // Reduce polling frequency to 5 seconds to improve performance
-    const interval = setInterval(handleStorageChange, 5000);
+    const handleProgressUpdate = (event: CustomEvent) => {
+      if (event.detail?.progress) {
+        setProgress(event.detail.progress);
+      }
+    };
     
-    // Listen to storage events (for same-tab updates) - provides real-time updates when needed
+    // Use custom events for real-time updates and reduce polling to 10 seconds for cross-tab sync only
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('monk:progress-updated', handleProgressUpdate as EventListener);
+    const interval = setInterval(handleStorageChange, 10000);
     
     return () => {
       clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('monk:progress-updated', handleProgressUpdate as EventListener);
     };
   }, []);
 
@@ -49,9 +55,10 @@ export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
   };
 
   const watchAd = () => {
-    stepMonk(progress, 0, { extraStep: true });
-    saveProgress(progress);
-    setProgress({ ...progress });
+    const updatedProgress = { ...progress };
+    const awarded = stepMonk(updatedProgress, 0, { extraStep: true });
+    saveProgress(updatedProgress);
+    setProgress(updatedProgress);
   };
 
   const today = new Date().toDateString();
@@ -83,13 +90,15 @@ export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
         Execute Step ({progress.pendingSteps || 0})
       </Button>
       
-      <button
+      <Button
         onClick={watchAd}
         disabled={progress.adStepUsed || (progress.stepsToday ?? 0) >= 9}
-        className="mt-1 px-1 py-0.5 border rounded disabled:opacity-50 w-full"
+        variant="outline"
+        size="sm"
+        className="mt-1 w-full text-xs"
       >
         Watch Ad +1 step
-      </button>
+      </Button>
     </div>
   );
 }

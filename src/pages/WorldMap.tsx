@@ -38,10 +38,13 @@ export default function WorldMap() {
   useEffect(() => {
     if (!progress.fog?.revealed.length || progress.fog.revealed.every(v => v === 0)) {
       initializeFogAroundMonk(journey.tx, journey.ty, fog);
-      progress.fog = { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) };
-      progress.journey = journey;
-      saveProgress(progress);
-      setProgress({ ...progress });
+      const updatedProgress = {
+        ...progress,
+        fog: { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) },
+        journey: { ...journey }
+      };
+      saveProgress(updatedProgress);
+      setProgress(updatedProgress);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
