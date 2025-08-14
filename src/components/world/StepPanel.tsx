@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { loadProgress, saveProgress, ProgressData } from '@/utils/storageClient';
 import { useMonkStepOnSession } from '@/hooks/useMonkStepOnSession';
 import { useMonkMovement } from '@/hooks/useMonkMovement';
@@ -6,45 +6,38 @@ import { makeFog, fromSavedFog, revealRadius } from '@/features/fog/useFog';
 import { GARDEN_COLS, GARDEN_ROWS } from '@/utils/gardenMap';
 import { Button } from '@/components/ui/button';
 
-export default function StepPanel() {
+interface StepPanelProps {
+  onOpenMovementModal?: () => void;
+}
+
+export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
   const [progress, setProgress] = useState<ProgressData>(() => loadProgress());
   const stepMonk = useMonkStepOnSession();
   const moveMonk = useMonkMovement();
+  
+  // Update progress state when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setProgress(loadProgress());
+    };
+    
+    // Update every second to keep statistics fresh
+    const interval = setInterval(handleStorageChange, 1000);
+    
+    // Listen to storage events (for same-tab updates)
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const executeStep = () => {
     if ((progress.pendingSteps || 0) <= 0) return;
     
-    const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0, facing: 'right' };
-    const currentDir = journey.facing || 'right';
-    
-    // Calculate target position based on monk's facing direction
-    let targetTx = journey.tx;
-    let targetTy = journey.ty;
-    
-    switch (currentDir) {
-      case 'up':
-        targetTy = Math.max(0, journey.ty - 1);
-        break;
-      case 'down':
-        targetTy = Math.min(GARDEN_ROWS - 1, journey.ty + 1);
-        break;
-      case 'left':
-        targetTx = Math.max(0, journey.tx - 1);
-        break;
-      case 'right':
-        targetTx = Math.min(GARDEN_COLS - 1, journey.tx + 1);
-        break;
-    }
-    
-    // Create fog instance for movement
-    const fog = progress.fog ? fromSavedFog(progress.fog) : makeFog(GARDEN_COLS, GARDEN_ROWS);
-    
-    // Move monk
-    moveMonk(progress, fog, targetTx, targetTy, 1);
-    
-    // Update progress
-    saveProgress(progress);
-    setProgress({ ...progress });
+    // Open movement modal to choose where to move
+    onOpenMovementModal?.();
   };
 
   const watchAd = () => {

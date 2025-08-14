@@ -115,19 +115,42 @@ export default function PostSessionMovementModal({
     canvas.height = clientHeight;
     ctx.clearRect(0, 0, clientWidth, clientHeight);
 
-    // Draw fog
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    // Draw fog with blur
+    ctx.fillStyle = 'rgba(0,0,0,0.9)';
     ctx.fillRect(0, 0, clientWidth, clientHeight);
+    
+    // Apply blur to the fog
+    ctx.filter = 'blur(2px)';
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, 0, clientWidth, clientHeight);
+    ctx.filter = 'none';
+    
     ctx.globalCompositeOperation = 'destination-out';
 
     const rect = getVisibleTileRect(clientWidth, clientHeight, grid, camera);
+    const tileSize = TILE_PX * camera.zoom;
+    
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
         if (!isRevealed(tx, ty, fog)) continue;
         const pos = tileToWorld(tx, ty, grid, camera);
-        ctx.beginPath();
-        ctx.arc(pos.x + TILE_PX * camera.zoom / 2, pos.y + TILE_PX * camera.zoom / 2, TILE_PX * camera.zoom / 2, 0, Math.PI * 2);
-        ctx.fill();
+        
+        // Use lower resolution for very small tiles to improve performance
+        if (tileSize < 8) {
+          ctx.fillRect(
+            Math.floor(pos.x), 
+            Math.floor(pos.y), 
+            Math.ceil(tileSize), 
+            Math.ceil(tileSize)
+          );
+        } else {
+          ctx.fillRect(
+            pos.x, 
+            pos.y, 
+            tileSize, 
+            tileSize
+          );
+        }
       }
     }
 
