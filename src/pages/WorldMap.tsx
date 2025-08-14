@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import BottomNav from '@/components/layout/BottomNav';
 import { loadProgress, saveProgress } from '@/utils/storageClient';
 import { monkGif } from '@/assets/monk';
@@ -59,7 +59,7 @@ export default function WorldMap() {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
-    if (drag.current.id === e.pointerId) {
+    if (drag.current.id === e.pointerId && containerRef.current) {
       const dx = e.clientX - drag.current.x;
       const dy = e.clientY - drag.current.y;
       setCamera(c => {
@@ -84,12 +84,15 @@ export default function WorldMap() {
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    const rect = containerRef.current!.getBoundingClientRect();
+    if (!containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
     const scale = Math.exp(-e.deltaY * 0.001);
     setCamera(c => {
-      const zoom = Math.min(2.5, Math.max(0.3, c.zoom * scale));
+      // Limit zoom range to prevent seeing outside map
+      const zoom = Math.min(2.0, Math.max(0.5, c.zoom * scale));
       const wx = (px - c.x) / c.zoom;
       const wy = (py - c.y) / c.zoom;
       
@@ -109,8 +112,8 @@ export default function WorldMap() {
     });
   };
 
-  // Draw fog each frame when camera changes
-  useEffect(() => {
+  // Memoized fog rendering for performance optimization
+  const renderFog = useCallback(() => {
     const canvas = fogRef.current;
     const ctx = canvas?.getContext('2d');
     const el = containerRef.current;
@@ -137,6 +140,12 @@ export default function WorldMap() {
     // Optimize for small tile sizes - batch adjacent revealed tiles
     const tileSize = TILE_PX * camera.zoom;
     
+    // Performance optimization: skip rendering tiles that are too small to see
+    if (tileSize < 2) {
+      ctx.globalCompositeOperation = 'source-over';
+      return;
+    }
+    
     for (let ty = rect.y0; ty <= rect.y1; ty++) {
       for (let tx = rect.x0; tx <= rect.x1; tx++) {
         if (!isRevealed(tx, ty, fog)) continue;
@@ -162,7 +171,12 @@ export default function WorldMap() {
       }
     }
     ctx.globalCompositeOperation = 'source-over';
-  }, [camera, fog, progress, grid]);
+  }, [camera, fog, grid]);
+
+  // Draw fog each frame when camera changes
+  useEffect(() => {
+    renderFog();
+  }, [renderFog]);
 
   const handleMoveToTile = (tx: number, ty: number, steps: number) => {
     const updatedProgress = { ...progress };

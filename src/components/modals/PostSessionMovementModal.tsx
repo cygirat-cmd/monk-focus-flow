@@ -16,18 +16,26 @@ interface PostSessionMovementModalProps {
   camera: Camera;
 }
 
-const isWalkable = (tx: number, ty: number): boolean => {
-  // For now, all tiles within bounds are walkable
-  return tx >= 0 && ty >= 0 && tx < GARDEN_COLS && ty < GARDEN_ROWS;
+const isWalkable = (tx: number, ty: number, fog?: Fog): boolean => {
+  // Check bounds first
+  if (tx < 0 || ty < 0 || tx >= GARDEN_COLS || ty >= GARDEN_ROWS) return false;
+  
+  // For obstacle-aware pathfinding, consider revealed areas as walkable
+  // Unrevealed areas (fog) are treated as obstacles unless specifically allowed
+  if (fog && !isRevealed(tx, ty, fog)) {
+    return false;
+  }
+  
+  return true;
 };
 
-const getAdjacentTiles = (tx: number, ty: number): Array<{ tx: number; ty: number }> => {
+const getAdjacentTiles = (tx: number, ty: number, fog?: Fog): Array<{ tx: number; ty: number }> => {
   return [
     { tx: tx + 1, ty }, // right
     { tx: tx - 1, ty }, // left
     { tx, ty: ty + 1 }, // down
     { tx, ty: ty - 1 }, // up
-  ].filter(pos => isWalkable(pos.tx, pos.ty));
+  ].filter(pos => isWalkable(pos.tx, pos.ty, fog));
 };
 
 export default function PostSessionMovementModal({
@@ -45,6 +53,7 @@ export default function PostSessionMovementModal({
   const [highlightedTiles, setHighlightedTiles] = useState<Array<{ tx: number; ty: number }>>([]);
   const [selectedTile, setSelectedTile] = useState<{ tx: number; ty: number } | null>(null);
   const [movePath, setMovePath] = useState<Array<{ tx: number; ty: number }>>([]);
+  const [keyboardSelection, setKeyboardSelection] = useState<{ tx: number; ty: number }>(currentPosition);
 
   const grid = useMemo<Grid>(() => ({ tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS }), []);
 
@@ -68,7 +77,7 @@ export default function PostSessionMovementModal({
       for (let step = 0; step < availableSteps; step++) {
         const nextTiles: Array<{ tx: number; ty: number }> = [];
         currentTiles.forEach(tile => {
-          const adjacent = getAdjacentTiles(tile.tx, tile.ty);
+          const adjacent = getAdjacentTiles(tile.tx, tile.ty, fog);
           adjacent.forEach(adjTile => {
             if (!reachableTiles.some(t => t.tx === adjTile.tx && t.ty === adjTile.ty) &&
                 !nextTiles.some(t => t.tx === adjTile.tx && t.ty === adjTile.ty) &&
@@ -85,22 +94,117 @@ export default function PostSessionMovementModal({
     }
   }, [isOpen, currentPosition, availableSteps, camera.zoom, grid]);
 
+  // Keyboard navigation for accessibility
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (selectedTile) {
+          handleConfirm();
+        } else if (highlightedTiles.some(t => t.tx === keyboardSelection.tx && t.ty === keyboardSelection.ty)) {
+          setSelectedTile(keyboardSelection);
+          setMovePath(computePath(currentPosition, keyboardSelection));
+        }
+        return;
+      }
+
+      // Arrow key navigation
+      let newSelection = { ...keyboardSelection };
+      switch (e.key) {
+        case 'ArrowUp':
+          newSelection.ty = Math.max(0, keyboardSelection.ty - 1);
+          break;
+        case 'ArrowDown':
+          newSelection.ty = Math.min(GARDEN_ROWS - 1, keyboardSelection.ty + 1);
+          break;
+        case 'ArrowLeft':
+          newSelection.tx = Math.max(0, keyboardSelection.tx - 1);
+          break;
+        case 'ArrowRight':
+          newSelection.tx = Math.min(GARDEN_COLS - 1, keyboardSelection.tx + 1);
+          break;
+        default:
+          return;
+      }
+
+      e.preventDefault();
+      if (highlightedTiles.some(t => t.tx === newSelection.tx && t.ty === newSelection.ty)) {
+        setKeyboardSelection(newSelection);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, keyboardSelection, highlightedTiles, selectedTile, currentPosition]);
+
+  // A* pathfinding algorithm for obstacle-aware movement
   const computePath = (
     start: { tx: number; ty: number },
     end: { tx: number; ty: number }
-  ) => {
-    const path = [{ ...start }];
-    let tx = start.tx;
-    let ty = start.ty;
-    while (tx !== end.tx) {
-      tx += Math.sign(end.tx - tx);
-      path.push({ tx, ty });
+  ): Array<{ tx: number; ty: number }> => {
+    if (start.tx === end.tx && start.ty === end.ty) return [start];
+    
+    const heuristic = (a: { tx: number; ty: number }, b: { tx: number; ty: number }) =>
+      Math.abs(a.tx - b.tx) + Math.abs(a.ty - b.ty);
+    
+    const openSet = [{ ...start, f: 0, g: 0, h: heuristic(start, end) }];
+    const closedSet = new Set<string>();
+    const cameFrom = new Map<string, { tx: number; ty: number }>();
+    
+    while (openSet.length > 0) {
+      openSet.sort((a, b) => a.f - b.f);
+      const current = openSet.shift()!;
+      const currentKey = `${current.tx},${current.ty}`;
+      
+      if (current.tx === end.tx && current.ty === end.ty) {
+        // Reconstruct path
+        const path = [];
+        let node: { tx: number; ty: number } | undefined = current;
+        while (node) {
+          path.unshift(node);
+          node = cameFrom.get(`${node.tx},${node.ty}`);
+        }
+        return path;
+      }
+      
+      closedSet.add(currentKey);
+      
+      const neighbors = getAdjacentTiles(current.tx, current.ty, fog);
+      for (const neighbor of neighbors) {
+        const neighborKey = `${neighbor.tx},${neighbor.ty}`;
+        
+        if (closedSet.has(neighborKey)) continue;
+        
+        const tentativeG = current.g + 1;
+        const existingInOpen = openSet.find(n => n.tx === neighbor.tx && n.ty === neighbor.ty);
+        
+        if (!existingInOpen) {
+          const h = heuristic(neighbor, end);
+          openSet.push({
+            tx: neighbor.tx,
+            ty: neighbor.ty,
+            g: tentativeG,
+            h,
+            f: tentativeG + h
+          });
+          cameFrom.set(neighborKey, current);
+        } else if (tentativeG < existingInOpen.g) {
+          existingInOpen.g = tentativeG;
+          existingInOpen.f = tentativeG + existingInOpen.h;
+          cameFrom.set(neighborKey, current);
+        }
+      }
     }
-    while (ty !== end.ty) {
-      ty += Math.sign(end.ty - ty);
-      path.push({ tx, ty });
-    }
-    return path;
+    
+    // No path found, return direct path for fallback
+    return [start, end];
   };
 
   // Draw fog and highlights
@@ -156,29 +260,39 @@ export default function PostSessionMovementModal({
 
     ctx.globalCompositeOperation = 'source-over';
 
-    // Draw highlighted tiles
+    // Draw highlighted tiles using design system colors
     highlightedTiles.forEach(tile => {
       const pos = tileToWorld(tile.tx, tile.ty, grid, camera);
-      ctx.strokeStyle = '#10b981';
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+      ctx.strokeStyle = 'hsl(142 76% 36%)'; // emerald-600 equivalent for accessibility
+      ctx.fillStyle = 'hsla(142 76% 36% / 0.3)';
       ctx.lineWidth = 3;
       ctx.fillRect(pos.x, pos.y, TILE_PX * camera.zoom, TILE_PX * camera.zoom);
       ctx.strokeRect(pos.x, pos.y, TILE_PX * camera.zoom, TILE_PX * camera.zoom);
     });
 
-    // Draw selected tile
+    // Draw selected tile using accent colors
     if (selectedTile) {
       const pos = tileToWorld(selectedTile.tx, selectedTile.ty, grid, camera);
-      ctx.strokeStyle = '#f59e0b';
-      ctx.fillStyle = 'rgba(245, 158, 11, 0.5)';
+      ctx.strokeStyle = 'hsl(38 92% 50%)'; // amber-500 equivalent
+      ctx.fillStyle = 'hsla(38 92% 50% / 0.5)';
       ctx.lineWidth = 4;
       ctx.fillRect(pos.x, pos.y, TILE_PX * camera.zoom, TILE_PX * camera.zoom);
       ctx.strokeRect(pos.x, pos.y, TILE_PX * camera.zoom, TILE_PX * camera.zoom);
     }
 
-    // Draw movement path
+    // Draw keyboard selection indicator
+    if (keyboardSelection && highlightedTiles.some(t => t.tx === keyboardSelection.tx && t.ty === keyboardSelection.ty)) {
+      const pos = tileToWorld(keyboardSelection.tx, keyboardSelection.ty, grid, camera);
+      ctx.strokeStyle = 'hsl(0 0% 100%)'; // white border for keyboard focus
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(pos.x + 2, pos.y + 2, TILE_PX * camera.zoom - 4, TILE_PX * camera.zoom - 4);
+      ctx.setLineDash([]);
+    }
+
+    // Draw movement path using primary color
     if (movePath.length > 1) {
-      ctx.strokeStyle = '#3b82f6';
+      ctx.strokeStyle = 'hsl(217 91% 60%)'; // blue-500 equivalent for path visibility
       ctx.lineWidth = 4;
       ctx.lineCap = 'round';
       ctx.beginPath();
@@ -192,7 +306,7 @@ export default function PostSessionMovementModal({
       }
       ctx.stroke();
     }
-  }, [camera, fog, grid, highlightedTiles, selectedTile, movePath]);
+  }, [camera, fog, grid, highlightedTiles, selectedTile, movePath, keyboardSelection]);
 
   const onClick = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
@@ -235,6 +349,9 @@ export default function PostSessionMovementModal({
             ref={containerRef}
             className="flex-1 relative overflow-hidden cursor-pointer"
             onClick={onClick}
+            tabIndex={0}
+            role="button"
+            aria-label="Map navigation - Use arrow keys to select tile, Enter or Space to confirm"
           >
             <div
               className="absolute top-0 left-0"
