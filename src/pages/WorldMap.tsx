@@ -15,8 +15,8 @@ export default function WorldMap() {
   const [progress, setProgress] = useState(loadProgress());
   const [showMovementModal, setShowMovementModal] = useState(false);
   const grid = useMemo<Grid>(() => ({ tileW: TILE_PX, tileH: TILE_PX, cols: GARDEN_COLS, rows: GARDEN_ROWS }), []);
-  const [camera, setCamera] = useState<Camera>(progress.camera || { x: 0, y: 0, zoom: 1 });
-  const journey = progress.journey || { tx: 0, ty: 0, pathId: 'default', step: 0 };
+  const [camera, setCamera] = useState<Camera>(progress.camera ?? { x: 0, y: 0, zoom: 1 });
+  const journey = progress.journey ?? { tx: 0, ty: 0, pathId: 'default', step: 0 };
   const moveMonk = useMonkMovement();
   
   const fog = useRef(
@@ -38,18 +38,28 @@ export default function WorldMap() {
   useEffect(() => {
     if (!progress.fog?.revealed.length || progress.fog.revealed.every(v => v === 0)) {
       initializeFogAroundMonk(journey.tx, journey.ty, fog);
-      progress.fog = { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) };
-      progress.journey = journey;
-      saveProgress(progress);
-      setProgress({ ...progress });
+      
+      // Create new object instead of mutating props directly
+      const updatedProgress = {
+        ...progress,
+        fog: { cols: fog.cols, rows: fog.rows, revealed: Array.from(fog.revealed) },
+        journey: journey
+      };
+      
+      saveProgress(updatedProgress);
+      setProgress(updatedProgress);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Check for pending steps and show movement modal
   useEffect(() => {
-    if ((progress.pendingSteps || 0) > 0 && !showMovementModal) {
-      setShowMovementModal(true);
+    const pendingSteps = progress.pendingSteps ?? 0;
+    if (pendingSteps > 0 && !showMovementModal) {
+      // Small delay to ensure UI updates have processed
+      setTimeout(() => {
+        setShowMovementModal(true);
+      }, 10);
     }
   }, [progress.pendingSteps, showMovementModal]);
 
@@ -115,13 +125,23 @@ export default function WorldMap() {
   // Memoized fog rendering with enhanced culling and fixed darkening
   const renderFog = useCallback(() => {
     const canvas = fogRef.current;
-    const ctx = canvas?.getContext('2d');
     const el = containerRef.current;
-    if (!canvas || !ctx || !el) return;
+    if (!canvas || !el) return;
     
-    const { clientWidth, clientHeight } = el;
-    canvas.width = clientWidth;
-    canvas.height = clientHeight;
+    try {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.warn('Failed to get 2D context for fog canvas');
+        return;
+      }
+      
+      const { clientWidth, clientHeight } = el;
+      
+      // Only resize canvas when dimensions actually change to prevent thrashing
+      if (canvas.width !== clientWidth || canvas.height !== clientHeight) {
+        canvas.width = clientWidth;
+        canvas.height = clientHeight;
+      }
     
     // Get enhanced culling rect with LOD
     const cullInfo = getVisibleTileRectWithLOD(clientWidth, clientHeight, grid, camera);
@@ -172,26 +192,32 @@ export default function WorldMap() {
           if (!isRevealed(tx, ty, fog)) {
             const pos = tileToWorld(tx, ty, grid, camera);
             
-            if (tileSize < 4) {
-              // Batch small tiles for performance
-              ctx.fillRect(
-                Math.floor(pos.x), 
-                Math.floor(pos.y), 
-                Math.ceil(tileSize), 
-                Math.ceil(tileSize)
-              );
-            } else {
-              // Normal tile rendering
-              ctx.fillRect(
-                pos.x, 
-                pos.y, 
-                tileSize, 
-                tileSize
-              );
+            try {
+              if (tileSize < 4) {
+                // Batch small tiles for performance
+                ctx.fillRect(
+                  Math.floor(pos.x), 
+                  Math.floor(pos.y), 
+                  Math.ceil(tileSize), 
+                  Math.ceil(tileSize)
+                );
+              } else {
+                // Normal tile rendering
+                ctx.fillRect(
+                  pos.x, 
+                  pos.y, 
+                  tileSize, 
+                  tileSize
+                );
+              }
+            } catch (error) {
+              console.warn('Canvas rendering error for tile:', { tx, ty, pos, tileSize }, error);
             }
           }
         }
       }
+    } catch (error) {
+      console.error('Canvas rendering failed:', error);
     }
   }, [camera, fog, grid]);
 
@@ -246,7 +272,7 @@ export default function WorldMap() {
         onClose={() => setShowMovementModal(false)}
         onMoveToTile={handleMoveToTile}
         currentPosition={{ tx: journey.tx, ty: journey.ty }}
-        availableSteps={progress.pendingSteps || 0}
+        availableSteps={progress.pendingSteps ?? 0}
         fog={fog}
         camera={camera}
       />

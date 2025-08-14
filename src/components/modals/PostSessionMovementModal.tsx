@@ -342,7 +342,7 @@ export default function PostSessionMovementModal({
           <div className="p-4 border-b">
             <h2 className="text-lg font-semibold">Choose Your Path</h2>
             <p className="text-sm text-muted-foreground">
-              You earned {availableSteps} step{availableSteps !== 1 ? 's' : ''}! Select where to move.
+              You have {availableSteps} step{availableSteps !== 1 ? 's' : ''} available. Select where to move.
             </p>
           </div>
           

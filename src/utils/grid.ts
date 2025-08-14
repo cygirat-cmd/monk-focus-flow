@@ -1,6 +1,12 @@
 export type Grid = { tileW: number; tileH: number; cols: number; rows: number };
 export type Camera = { x: number; y: number; zoom: number };
 
+// Constants for rendering and culling optimization
+const EDGE_BUFFER_SIZE = 64; // Minimum buffer around viewport edges to prevent pop-in
+const MIN_TILE_SIZE_FOR_BATCHING = 4; // Below this size, tiles are batched for performance
+const MEDIUM_LOD_THRESHOLD = 16; // Threshold for medium level-of-detail rendering
+const LOD_STEP_MULTIPLIER = 8; // Used to calculate step size for low LOD rendering
+
 export function worldToTile(px: number, py: number, grid: Grid, camera: Camera) {
   const x = (px - camera.x) / camera.zoom;
   const y = (py - camera.y) / camera.zoom;
@@ -27,7 +33,7 @@ export function getVisibleTileRect(viewportW: number, viewportH: number, grid: G
   const tileSize = grid.tileW * camera.zoom;
   
   // Add buffer to prevent pop-in at edges
-  const buffer = Math.max(1, Math.ceil(64 / tileSize));
+  const buffer = Math.max(1, Math.ceil(EDGE_BUFFER_SIZE / tileSize));
   
   const left = Math.floor(-camera.x / tileSize) - buffer;
   const top = Math.floor(-camera.y / tileSize) - buffer;
@@ -48,27 +54,27 @@ export function getVisibleTileRectWithLOD(viewportW: number, viewportH: number, 
   const tileSize = grid.tileW * camera.zoom;
   
   // Different detail levels based on zoom
-  if (tileSize < 4) {
+  if (tileSize < MIN_TILE_SIZE_FOR_BATCHING) {
     // Very far zoom - aggressive culling, larger tile groups
-    const step = Math.max(2, Math.floor(8 / tileSize));
+    const step = Math.max(2, Math.floor(LOD_STEP_MULTIPLIER / tileSize));
     return {
       ...baseRect,
       step, // Process every 'step' tiles for performance
-      lod: 'low'
+      lod: 'low' as const
     };
-  } else if (tileSize < 16) {
+  } else if (tileSize < MEDIUM_LOD_THRESHOLD) {
     // Medium zoom - moderate culling
     return {
       ...baseRect,
       step: 1,
-      lod: 'medium'
+      lod: 'medium' as const
     };
   } else {
     // Close zoom - full detail
     return {
       ...baseRect,
       step: 1,
-      lod: 'high'
+      lod: 'high' as const
     };
   }
 }
