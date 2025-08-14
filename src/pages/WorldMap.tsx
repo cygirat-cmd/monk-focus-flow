@@ -215,6 +215,7 @@ export default function WorldMap() {
             }
           }
         }
+      }
     } catch (error) {
       console.error('Canvas rendering failed:', error);
     }
