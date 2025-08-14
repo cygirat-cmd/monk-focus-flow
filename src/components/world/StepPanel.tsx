@@ -34,17 +34,17 @@ export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
   }, []);
 
   const executeStep = () => {
-    // Dev button: always allow movement regardless of pending steps
-    // If no pending steps, add a temporary step for dev purposes
-    if ((progress.pendingSteps || 0) <= 0) {
-      setProgress(prev => {
-        const updated = { ...prev, pendingSteps: 1 };
-        saveProgress(updated);
-        return updated;
-      });
+    // Guarantee one step execution: always add exactly 1 step and allow immediate execution
+    const currentSteps = progress.pendingSteps || 0;
+    
+    // Add exactly 1 step if none available
+    if (currentSteps <= 0) {
+      const updated = { ...progress, pendingSteps: 1 };
+      setProgress(updated);
+      saveProgress(updated);
     }
     
-    // Open movement modal to choose where to move
+    // Open movement modal immediately to execute the guaranteed step
     onOpenMovementModal?.();
   };
 
@@ -78,7 +78,7 @@ export default function StepPanel({ onOpenMovementModal }: StepPanelProps) {
         onClick={executeStep}
         size="sm"
         className="mt-2 w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
-        title="Dev button: Click to move freely (always enabled)"
+        title="Guarantees one step - adds step if none available and allows immediate movement"
       >
         Execute Step ({progress.pendingSteps || 0})
       </Button>
